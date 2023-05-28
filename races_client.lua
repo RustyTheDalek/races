@@ -29,11 +29,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --]]
-
 local STATE_IDLE <const> = 0
 local STATE_EDITING <const> = 1
 local STATE_JOINING <const> = 2
 local STATE_RACING <const> = 3
+local STATE_GRID <const> = 3
 local raceState = STATE_IDLE -- race state
 
 local GHOSTING_IDLE <const> = 0
@@ -41,139 +41,183 @@ local GHOSTING_DOWN <const> = 1
 local GHOSTING_UP <const> = 2
 local ghostState = GHOSTING_IDLE
 local ghosting = false
-local ghostingTime = 0 --Timer for how long you've been ghosting
+local ghostingTime = 0               --Timer for how long you've been ghosting
 local ghostingMaxTime = 3000
-local ghostingInterval = 0.0 --Timer for the animation of ghosting
+local ghostingInterval = 0.0         --Timer for the animation of ghosting
 local ghostingInternalMaxTime = 0.25 --How quickly alpha values animates (s)
 
-local ROLE_EDIT <const> = 1 -- edit tracks role
+local gridRadius <const> = 5.0
+local gridCheckpoint
+
+local ROLE_EDIT <const> = 1     -- edit tracks role
 local ROLE_REGISTER <const> = 2 -- register races role
-local ROLE_SPAWN <const> = 4 -- spawn vehicles role
+local ROLE_SPAWN <const> = 4    -- spawn vehicles role
 
-local white <const> = {r = 255, g = 255, b = 255}
-local red <const> = {r = 255, g = 0, b = 0}
-local green <const> = {r = 0, g = 255, b = 0}
-local blue <const> = {r = 0, g = 0, b = 255}
-local yellow <const> = {r = 255, g = 255, b = 0}
-local purple <const> = {r = 255, g = 0, b = 255}
+local white <const> = { r = 255, g = 255, b = 255 }
+local red <const> = { r = 255, g = 0, b = 0 }
+local green <const> = { r = 0, g = 255, b = 0 }
+local blue <const> = { r = 0, g = 0, b = 255 }
+local yellow <const> = { r = 255, g = 255, b = 0 }
+local purple <const> = { r = 255, g = 0, b = 255 }
 
-local startFinishBlipColor <const> = 5 -- yellow
-local startBlipColor <const> = 2 -- green
-local finishBlipColor <const> = 0 -- white
-local midBlipColor <const> = 38 -- dark blue
-local registerBlipColor <const> = 83 -- purple
-local racerBlipColor <const> = 2 -- green
+local startFinishBlipColor <const> = 5    -- yellow
+local startBlipColor <const> = 2          -- green
+local finishBlipColor <const> = 0         -- white
+local midBlipColor <const> = 38           -- dark blue
+local registerBlipColor <const> = 83      -- purple
+local racerBlipColor <const> = 2          -- green
 
-local selectedBlipColor <const> = 1 -- red
+local selectedBlipColor <const> = 1       -- red
 
-local blipRouteColor <const> = 18 -- light blue
+local blipRouteColor <const> = 18         -- light blue
 
-local startFinishSprite <const> = 38 -- checkered flag
-local startSprite <const> = 38 -- checkered flag
-local finishSprite <const> = 38 -- checkered flag
-local midSprite <const> = 1 -- numbered circle
-local registerSprite <const> = 58 -- circled star
-local racerSprite <const> = 1 -- circle
+local startFinishSprite <const> = 38      -- checkered flag
+local startSprite <const> = 38            -- checkered flag
+local finishSprite <const> = 38           -- checkered flag
+local midSprite <const> = 1               -- numbered circle
+local registerSprite <const> = 58         -- circled star
+local racerSprite <const> = 1             -- circle
 
-local finishCheckpoint <const> = 9 -- cylinder checkered flag
-local midCheckpoint <const> = 42 -- cylinder with number
-local plainCheckpoint <const> = 45 -- cylinder
-local arrow3Checkpoint <const> = 7 -- cylinder with 3 arrows
+local finishCheckpoint <const> = 9        -- cylinder checkered flag
+local midCheckpoint <const> = 42          -- cylinder with number
+local plainCheckpoint <const> = 45        -- cylinder
+local arrow3Checkpoint <const> = 7        -- cylinder with 3 arrows
 
-local defaultBuyin <const> = 500 -- default race buy-in
-local defaultLaps <const> = 1 -- default number of laps in a race
-local defaultTimeout <const> = 120 -- default DNF timeout
-local defaultDelay <const> = 30 -- default race start delay
-local defaultVehicle <const> = "adder" -- default spawned vehicle
-local defaultRadius <const> = 5.0 -- default waypoint radius
+local defaultBuyin <const> = 0            -- default race buy-in
+local defaultLaps <const> = 3             -- default number of laps in a race
+local defaultTimeout <const> = 1200       -- default DNF timeout
+local defaultDelay <const> = 5            -- default race start delay
+local defaultVehicle <const> = "adder"    -- default spawned vehicle
+local defaultRadius <const> = 8.0         -- default waypoint radius
 
-local minRadius <const> = 0.5 -- minimum waypoint radius
-local maxRadius <const> = 10.0 -- maximum waypoint radius
+local minRadius <const> = 0.5             -- minimum waypoint radius
+local maxRadius <const> = 20.0            -- maximum waypoint radius
 
-local topSide <const> = 0.45 -- top position of HUD
-local leftSide <const> = 0.02 -- left position of HUD
+local topSide <const> = 0.45              -- top position of HUD
+local leftSide <const> = 0.02             -- left position of HUD
 local rightSide <const> = leftSide + 0.08 -- right position of HUD
 
-local maxNumVisible <const> = 3 -- maximum number of waypoints visible during a race
-local numVisible = maxNumVisible -- number of waypoints visible during a race - may be less than maxNumVisible
+local maxNumVisible <const> = 3           -- maximum number of waypoints visible during a race
+local numVisible = maxNumVisible          -- number of waypoints visible during a race - may be less than maxNumVisible
 
-local highlightedCheckpoint = 0 -- index of highlighted checkpoint
-local selectedIndex0 = 0 -- index of first selected waypoint
-local selectedIndex1 = 0 -- index of second selected waypoint
+local highlightedCheckpoint = 0           -- index of highlighted checkpoint
+local selectedIndex0 = 0                  -- index of first selected waypoint
+local selectedIndex1 = 0                  -- index of second selected waypoint
 
-local raceIndex = -1 -- index of race player has joined
-local isPublicTrack = false -- flag indicating if saved track is public or not
-local savedTrackName = nil -- name of saved track - nil if track not saved
+local raceIndex = -1                      -- index of race player has joined
+local isPublicTrack = false               -- flag indicating if saved track is public or not
+local savedTrackName = nil                -- name of saved track - nil if track not saved
 
-local waypoints = {} -- waypoints[] = {coord = {x, y, z, r}, checkpoint, blip, sprite, color, number, name}
-local startIsFinish = false -- flag indicating if start and finish are same waypoint
+local waypoints = {}                      -- waypoints[] = {coord = {x, y, z, r}, checkpoint, blip, sprite, color, number, name}
+local startIsFinish = false               -- flag indicating if start and finish are same waypoint
 
-local numLaps = -1 -- number of laps in current race
-local currentLap = -1 -- current lap
+local numLaps = -1                        -- number of laps in current race
+local currentLap = -1                     -- current lap
 
-local numWaypointsPassed = -1 -- number of waypoints player has passed
-local currentWaypoint = -1 -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
-local waypointCoord = nil -- coordinates of current waypoint
+local numWaypointsPassed = -1             -- number of waypoints player has passed
+local currentWaypoint = -1                -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
+local waypointCoord = nil                 -- coordinates of current waypoint
 
-local raceStart = -1 -- start time of race before delay
-local raceDelay = -1 -- delay before official start of race
-local countdown = -1 -- countdown before start
-local drawLights = false -- draw start lights
+local raceStart = -1                      -- start time of race before delay
+local raceDelay = -1                      -- delay before official start of race
+local countdown = -1                      -- countdown before start
+local drawLights = false                  -- draw start lights
 
-local position = -1 -- position in race out of numRacers players
-local numRacers = -1 -- number of players in race - no DNF players included
-local racerBlipGT = {} -- blips and gamer tags for all racers participating in race
+local position = -1                       -- position in race out of numRacers players
+local numRacers = -1                      -- number of players in race - no DNF players included
+local racerBlipGT = {}                    -- blips and gamer tags for all racers participating in race
 
-local lapTimeStart = -1 -- start time of current lap
-local bestLapTime = -1 -- best lap time
+local lapTimeStart = -1                   -- start time of current lap
+local bestLapTime = -1                    -- best lap time
 
-local raceCheckpoint = nil -- race checkpoint in world
+local raceCheckpoint = nil                -- race checkpoint in world
 
-local DNFTimeout = -1 -- DNF timeout after first player finishes the race
-local beginDNFTimeout = false -- flag indicating if DNF timeout should begin
-local timeoutStart = -1 -- start time of DNF timeout
+local DNFTimeout = -1                     -- DNF timeout after first player finishes the race
+local beginDNFTimeout = false             -- flag indicating if DNF timeout should begin
+local timeoutStart = -1                   -- start time of DNF timeout
 
-local vehicleList = {} -- vehicle list used for custom class races and random races
-local restrictedHash = nil -- vehicle hash of race with restricted vehicle
-local restrictedClass = nil -- restricted vehicle class
+local vehicleList = {}                    -- vehicle list used for custom class races and random races
+local restrictedHash = nil                -- vehicle hash of race with restricted vehicle
+local restrictedClass = nil               -- restricted vehicle class
 
-local customClassVehicleList = {} -- list of vehicles in class Custom (-1) race
+local customClassVehicleList = {}         -- list of vehicles in class Custom (-1) race
 
-local originalVehicleHash = nil -- vehicle hash of original vehicle before switching to other vehicles in random vehicle races
-local colorPri = -1 -- primary color of original vehicle
-local colorSec = -1 -- secondary color of original vehicle
+local originalVehicleHash = nil           -- vehicle hash of original vehicle before switching to other vehicles in random vehicle races
+local colorPri = -1                       -- primary color of original vehicle
+local colorSec = -1                       -- secondary color of original vehicle
 
-local startVehicle = nil -- vehicle name hash of starting vehicle used in random races
-local currentVehicleHash = nil -- hash of current vehicle being driven
-local currentVehicleName = nil -- name of current vehicle being driven
-local bestLapVehicleName = nil -- name of vehicle in which player recorded best lap time
+local startVehicle = nil                  -- vehicle name hash of starting vehicle used in random races
+local currentVehicleHash = nil            -- hash of current vehicle being driven
+local currentVehicleID = nil
+local currentVehicleName = nil            -- name of current vehicle being driven
+local bestLapVehicleName = nil            -- name of vehicle in which player recorded best lap time
 
-local randVehicles = {} -- list of random vehicles used in random vehicle races
+local randVehicles = {}                   -- list of random vehicles used in random vehicle races
 
-local respawnCtrlPressed = false -- flag indicating if respawn crontrol is pressed
-local respawnTime = -1 -- time when respawn control pressed
-local startCoord = nil -- coordinates of vehicle once race has started
+local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
+local respawnTime = -1                    -- time when respawn control pressed
+local respawnTimer = 1500
+local startCoord = nil                    -- coordinates of vehicle once race has started
 
-local results = {} -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
+local results = {}                        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
 
-local started = false -- flag indicating if race started
+local started = false                     -- flag indicating if race started
 
-local starts = {} -- starts[playerID] = {isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint} - registration points
+local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
 
-local speedo = false -- flag indicating if speedometer is displayed
-local unitom = "imperial" -- current unit of measurement
+local speedo = false                      -- flag indicating if speedometer is displayed
+local unitom = "imperial"                 -- current unit of measurement
 
-local panelShown = false -- flag indicating if main, edit, register, ai or list panel is shown
-local allVehiclesList = {} -- list of all vehicles from vehicles.txt
-local allVehiclesHTML = "" -- html option list of all vehicles
+local panelShown = false                  -- flag indicating if main, edit, register, ai or list panel is shown
+local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
+local allVehiclesHTML = ""                -- html option list of all vehicles
 
-local roleBits = 0 -- bit flag indicating if player is permitted to create tracks, register races, and/or spawn vehicles
+local roleBits = 0                        -- bit flag indicating if player is permitted to create tracks, register races, and/or spawn vehicles
 
-local aiState = nil -- table containing race info and AI driver info table
+local aiState = nil                       -- table containing race info and AI driver info table
 
-local enteringVehicle = false -- flag indicating if player is entering a vehicle
+local enteringVehicle = false             -- flag indicating if player is entering a vehicle
 
-local camTransStarted = false -- flag indicating if camera transition at start of race has started
+local camTransStarted = false             -- flag indicating if camera transition at start of race has started
+
+local localPlayerPed = GetPlayerPed(-1)
+local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
+
+exports.spawnmanager:setAutoSpawnCallback(function()
+    if STATE_RACING == raceState then
+        print("In race, spawning at race")
+        local coord = startCoord
+        if true == startIsFinish then
+            if currentWaypoint > 0 then
+                coord = waypoints[currentWaypoint].coord
+            end
+        else
+            if currentWaypoint > 1 then
+                coord = waypoints[currentWaypoint - 1].coord
+            end
+        end
+
+        exports.spawnmanager:spawnPlayer({
+            x = coord.x,
+            y = coord.y,
+            z = coord.z,
+            heading = coord.heading,
+            skipFade = true
+        })
+    else
+
+        print("Not in Race, spawning at airport")
+        exports.spawnmanager:spawnPlayer({
+            x = -1437.03,
+            y = -2993.15,
+            z = 13.94,
+            heading = 222.93,
+            skipFade = true
+        })
+
+    end
+end)
+exports.spawnmanager:setAutoSpawn(true)
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -181,9 +225,9 @@ TriggerServerEvent("races:init")
 
 local function notifyPlayer(msg)
     TriggerEvent("chat:addMessage", {
-        color = {255, 0, 0},
+        color = { 255, 0, 0 },
         multiline = true,
-        args = {"[races:client]", msg}
+        args = { "[races:client]", msg }
     })
 end
 
@@ -201,6 +245,80 @@ local function deleteWaypointCheckpoints()
     for i = 1, #waypoints do
         DeleteCheckpoint(waypoints[i].checkpoint)
     end
+end
+
+local gridSeparation <const> = 5
+local gridCheckpoints = {}
+
+local function CreateGridCheckpoint(position, gridNumber)
+    if gridCheckpoint ~= nil then
+        DeleteCheckpoint(gridCheckpoint)
+    end
+
+    gridCheckpoint = CreateCheckpoint(45,
+        position.x, position.y, position.z - gridRadius / 2.0,
+        position.x, position.y, position.z,
+        gridRadius,
+        0, 255, 0,
+        127, gridNumber)
+
+    SetCheckpointCylinderHeight(gridCheckpoint, 10.0, 10.0, gridRadius * 2.0)
+
+    return gridCheckpoint
+end
+
+local function DeleteGridCheckPoints()
+    print("Deleting grid")
+    for _, checkpoint in pairs(gridCheckpoints) do
+        DeleteCheckpoint(checkpoint)
+    end
+
+    for k in next, gridCheckpoints do rawset(gridCheckpoints, k, nil) end
+end
+
+local function GenerateStartingGrid(startWaypoint, totalGridPositions)
+    DeleteGridCheckPoints()
+
+    print("Generating starting grid")
+    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
+
+    -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
+    -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
+
+    --Calculate the forwardVector of the starting Waypoint
+    local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
+    local y = math.cos(math.rad(startWaypoint.heading)) * math.cos(0)
+    local z = math.sin(0);
+    local forwardVector = norm(vector3(x, y, z))
+
+    local leftVector = norm(vector3(
+        math.cos(math.rad(startWaypoint.heading)),
+        math.sin(math.rad(startWaypoint.heading)),
+        0.0)
+    )
+
+    -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
+    -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
+
+    for i = 1, totalGridPositions do
+
+        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
+
+        -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y,
+        -- gridPosition.z))
+
+        if math.fmod(i, 2) == 0 then
+            -- print("Right Grid")
+            gridPosition = gridPosition + -leftVector * 3
+        else
+            -- print("Left Grid")
+            gridPosition = gridPosition + leftVector * 3
+        end
+
+        table.insert(gridCheckpoints, CreateGridCheckpoint(gridPosition, i))
+    end
+
+    return gridPositions
 end
 
 local function getCheckpointColor(blipColor)
@@ -228,16 +346,19 @@ local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, nu
     else
         zCoord = zCoord + coord.r / 2.0
     end
-    local checkpoint = CreateCheckpoint(checkpointType, coord.x, coord.y, zCoord, nextCoord.x, nextCoord.y, nextCoord.z, coord.r * 2.0, color.r, color.g, color.b, alpha, num)
+    local checkpoint = CreateCheckpoint(checkpointType, coord.x, coord.y, zCoord, nextCoord.x, nextCoord.y, nextCoord.z,
+    coord.r * 2.0, color.r, color.g, color.b, alpha, num)
     SetCheckpointCylinderHeight(checkpoint, 10.0, 10.0, coord.r * 2.0)
     return checkpoint
 end
 
+--Load waypoints
 local function setStartToFinishCheckpoints()
     for i = 1, #waypoints do
         local color = getCheckpointColor(waypoints[i].color)
         local checkpointType = 38 == waypoints[i].sprite and finishCheckpoint or midCheckpoint
-        waypoints[i].checkpoint = makeCheckpoint(checkpointType, waypoints[i].coord, waypoints[i].coord, color, 127, i - 1)
+        waypoints[i].checkpoint = makeCheckpoint(checkpointType, waypoints[i].coord, waypoints[i].coord, color, 127,
+        i - 1)
     end
 end
 
@@ -299,7 +420,8 @@ local function loadWaypointBlips(waypointCoords)
 
     for i = 1, #waypointCoords - 1 do
         local blip = AddBlipForCoord(waypointCoords[i].x, waypointCoords[i].y, waypointCoords[i].z)
-        waypoints[i] = {coord = waypointCoords[i], checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil}
+        waypoints[i] = { coord = waypointCoords[i], checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1,
+            name = nil }
     end
 
     startIsFinish =
@@ -308,8 +430,10 @@ local function loadWaypointBlips(waypointCoords)
         waypointCoords[1].z == waypointCoords[#waypointCoords].z
 
     if false == startIsFinish then
-        local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y, waypointCoords[#waypointCoords].z)
-        waypoints[#waypointCoords] = {coord = waypointCoords[#waypointCoords], checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil}
+        local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
+        waypointCoords[#waypointCoords].z)
+        waypoints[#waypointCoords] = { coord = waypointCoords[#waypointCoords], checkpoint = nil, blip = blip,
+            sprite = -1, color = -1, number = -1, name = nil }
     end
 
     setStartToFinishBlips()
@@ -325,8 +449,9 @@ local function restoreBlips()
 end
 
 local function removeRegistrationPoint(rIndex)
-    RemoveBlip(starts[rIndex].blip) -- delete registration blip
+    RemoveBlip(starts[rIndex].blip)             -- delete registration blip
     DeleteCheckpoint(starts[rIndex].checkpoint) -- delete registration checkpoint
+    DeleteCheckpoint(gridCheckpoint)
     starts[rIndex] = nil
 end
 
@@ -392,6 +517,9 @@ local function putPedInVehicle(ped, vehicleHash, coord)
 end
 
 local function switchVehicle(ped, vehicleHash)
+    sendMessage("Vehicle Hash " .. (vehicleHash))
+    sendMessage("Vehicle Display name " .. GetDisplayNameFromVehicleModel(vehicleHash))
+    sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
     if vehicleHash ~= nil then
         local pedVehicle = GetVehiclePedIsIn(ped, false)
@@ -405,7 +533,7 @@ local function switchVehicle(ped, vehicleHash)
                 for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(pedVehicle)) - 2 do
                     local passenger = GetPedInVehicleSeat(pedVehicle, i)
                     if passenger ~= 0 then
-                        passengers[#passengers + 1] = {ped = passenger, seat = i}
+                        passengers[#passengers + 1] = { ped = passenger, seat = i }
                     end
                 end
                 local coord = GetEntityCoords(pedVehicle)
@@ -491,7 +619,8 @@ local function vehicleInList(vehicle, list)
 end
 
 local function finishRace(time)
-    TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime, bestLapVehicleName, nil)
+    TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
+    bestLapVehicleName, nil)
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
@@ -507,8 +636,10 @@ local function finishRace(time)
 end
 
 local function editWaypoints(coord, heading)
+    print("Editing waypoints")
     local selectedIndex = 0
     local minDist = maxRadius
+    sendMessage(string.format("Heading: %.2f", heading))
     for index, waypoint in ipairs(waypoints) do
         local dist = #(coord - vector3(waypoint.coord.x, waypoint.coord.y, waypoint.coord.z))
         if dist < waypoint.coord.r and dist < minDist then
@@ -517,27 +648,37 @@ local function editWaypoints(coord, heading)
         end
     end
 
-    if 0 == selectedIndex then -- no existing waypoint selected
+    if (#waypoints > 0) then
+        GenerateStartingGrid(waypoints[1].coord, 8)
+    end
+
+    if 0 == selectedIndex then      -- no existing waypoint selected
+        print("No existing waypoints selected")
         if 0 == selectedIndex0 then -- no previous selected waypoints exist, add new waypoint
             local blip = AddBlipForCoord(coord.x, coord.y, coord.z)
 
-            waypoints[#waypoints + 1] = {coord = {x = coord.x, y = coord.y, z = coord.z, r = defaultRadius, heading = heading}, checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil }
+            waypoints[#waypoints + 1] = {
+                coord = { x = coord.x, y = coord.y, z = coord.z, r = defaultRadius, heading = heading },
+                checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil }
 
             startIsFinish = 1 == #waypoints
             setStartToFinishBlips()
             deleteWaypointCheckpoints()
             setStartToFinishCheckpoints()
-        else -- first selected waypoint exists
+        else                            -- first selected waypoint exists
             if 0 == selectedIndex1 then -- second selected waypoint does not exist, move first selected waypoint to new location
                 local selectedWaypoint0 = waypoints[selectedIndex0]
-                selectedWaypoint0.coord = {x = coord.x, y = coord.y, z = coord.z, r = selectedWaypoint0.coord.r, heading = heading}
+                selectedWaypoint0.coord = { x = coord.x, y = coord.y, z = coord.z, r = selectedWaypoint0.coord.r,
+                    heading = heading }
 
                 SetBlipCoords(selectedWaypoint0.blip, coord.x, coord.y, coord.z)
 
                 DeleteCheckpoint(selectedWaypoint0.checkpoint)
                 local color = getCheckpointColor(selectedBlipColor)
                 local checkpointType = 38 == selectedWaypoint0.sprite and finishCheckpoint or midCheckpoint
-                selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord, coord, color, 127, selectedIndex0 - 1)
+                selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord, coord, color, 127,
+                selectedIndex0 - 1)
+                GenerateStartingGrid(waypoints[1].coord, 8)
             else -- second selected waypoint exists, add waypoint between first and second selected waypoints
                 for i = #waypoints, selectedIndex1, -1 do
                     waypoints[i + 1] = waypoints[i]
@@ -545,7 +686,9 @@ local function editWaypoints(coord, heading)
 
                 local blip = AddBlipForCoord(coord.x, coord.y, coord.z)
 
-                waypoints[selectedIndex1] = {coord = {x = coord.x, y = coord.y, z = coord.z, r = defaultRadius, heading = heading}, checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil}
+                waypoints[selectedIndex1] = {
+                    coord = { x = coord.x, y = coord.y, z = coord.z, r = defaultRadius, heading = heading },
+                    checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1, name = nil }
 
                 setStartToFinishBlips()
                 deleteWaypointCheckpoints()
@@ -561,6 +704,7 @@ local function editWaypoints(coord, heading)
         SetBlipRoute(waypoints[1].blip, true)
         SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
     else -- existing waypoint selected
+        print("Existing waypoint selected")
         local selectedWaypoint = waypoints[selectedIndex]
         selectedWaypoint.coord.heading = heading
         if 0 == selectedIndex0 then -- no previous selected waypoint exists, show that waypoint is selected
@@ -570,7 +714,7 @@ local function editWaypoints(coord, heading)
             SetCheckpointRgba2(selectedWaypoint.checkpoint, color.r, color.g, color.b, 127)
 
             selectedIndex0 = selectedIndex
-        else -- first selected waypoint exists
+        else                                        -- first selected waypoint exists
             if selectedIndex == selectedIndex0 then -- selected waypoint and first selected waypoint are the same, unselect
                 SetBlipColour(selectedWaypoint.blip, selectedWaypoint.color)
                 local color = getCheckpointColor(selectedWaypoint.color)
@@ -590,7 +734,7 @@ local function editWaypoints(coord, heading)
                 SetCheckpointRgba2(selectedWaypoint.checkpoint, color.r, color.g, color.b, 127)
 
                 selectedIndex1 = 0
-            else -- selected waypoint and first and second selected waypoints are different
+            else                            -- selected waypoint and first and second selected waypoints are different
                 if 0 == selectedIndex1 then -- second selected waypoint does not exist
                     local splitCombine = false
                     local checkpointType = finishCheckpoint
@@ -641,7 +785,8 @@ local function editWaypoints(coord, heading)
 
                         DeleteCheckpoint(waypoints[#waypoints].checkpoint)
                         color = getCheckpointColor(waypoints[#waypoints].color)
-                        waypoints[#waypoints].checkpoint = makeCheckpoint(checkpointType, waypoints[#waypoints].coord, waypoints[#waypoints].coord, color, 127, waypointNum)
+                        waypoints[#waypoints].checkpoint = makeCheckpoint(checkpointType, waypoints[#waypoints].coord,
+                        waypoints[#waypoints].coord, color, 127, waypointNum)
 
                         selectedIndex0 = 0
                         savedTrackName = nil
@@ -745,7 +890,7 @@ local function respawnAI(driver)
     for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(driver.vehicle)) - 2 do
         local passenger = GetPedInVehicleSeat(driver.vehicle, i)
         if passenger ~= 0 then
-            passengers[#passengers + 1] = {ped = passenger, seat = i}
+            passengers[#passengers + 1] = { ped = passenger, seat = i }
         end
     end
     local vehicleHash = GetEntityModel(driver.vehicle)
@@ -812,6 +957,9 @@ local function edit()
     if STATE_IDLE == raceState then
         raceState = STATE_EDITING
         SetWaypointOff()
+        if(#waypoints > 0) then
+            GenerateStartingGrid(waypoints[1].coord, 8)
+        end
         setStartToFinishCheckpoints()
         sendMessage("Editing started.\n")
     elseif STATE_EDITING == raceState then
@@ -870,6 +1018,7 @@ local function reverse()
             selectedIndex0 = 0
             selectedIndex1 = 0
             deleteWaypointCheckpoints()
+            GenerateStartingGrid(waypoints[1].coord, 8)
             loadWaypointBlips(waypointsToCoordsRev())
             setStartToFinishCheckpoints()
             sendMessage("Waypoints reversed.\n")
@@ -1053,7 +1202,8 @@ local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
                                             sendMessage("Cannot register.  Invalid start vehicle.\n")
                                             return
                                         elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
-                                            sendMessage("Cannot register.  Start vehicle not of restricted vehicle class.\n")
+                                            sendMessage(
+                                            "Cannot register.  Start vehicle not of restricted vehicle class.\n")
                                             return
                                         end
                                     end
@@ -1062,10 +1212,13 @@ local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
                                     sendMessage("Cannot register.  Unknown race type.\n")
                                     return
                                 end
-                                local rdata = {rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle, vehicleList = vehList}
-                                TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName, buyin, laps, timeout, allowAI, rdata)
+                                local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
+                                    vehicleList = vehList }
+                                TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
+                                buyin, laps, timeout, allowAI, rdata)
                             else
-                                sendMessage("For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
+                                sendMessage(
+                                "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
                             end
                         else
                             sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
@@ -1095,6 +1248,15 @@ local function unregister()
         return
     end
     TriggerServerEvent("races:unregister")
+end
+
+local function setupGrid()
+    if 0 == roleBits & ROLE_REGISTER then
+        sendMessage("Permission required.\n")
+        return
+    end
+
+    TriggerServerEvent("races:grid")
 end
 
 local function startRace(delay)
@@ -1272,7 +1434,8 @@ local function spawnAIDriver(aiName, vehicleHash)
                                 elseif "class" == aiState.rtype then
                                     if aiState.vclass ~= -1 then
                                         if GetVehicleClassFromName(vehicleHash) ~= aiState.vclass then
-                                            sendMessage("Cannot join race.  AI needs to be in vehicle of " .. getClassName(aiState.vclass) .. " class.")
+                                            sendMessage("Cannot join race.  AI needs to be in vehicle of " ..
+                                            getClassName(aiState.vclass) .. " class.")
                                             return false
                                         end
                                     else
@@ -1291,7 +1454,9 @@ local function spawnAIDriver(aiName, vehicleHash)
                                             end
                                             if false == found then
                                                 list = string.sub(list, 1, -3)
-                                                sendMessage("Cannot join race.  AI needs to be in one of the following vehicles: " .. list)
+                                                sendMessage(
+                                                "Cannot join race.  AI needs to be in one of the following vehicles: " ..
+                                                list)
                                                 return false
                                             end
                                         end
@@ -1304,7 +1469,8 @@ local function spawnAIDriver(aiName, vehicleHash)
                                         if aiState.vclass ~= nil then
                                             if nil == aiState.svehicle then
                                                 if GetVehicleClassFromName(vehicleHash) ~= aiState.vclass then
-                                                    sendMessage("Cannot join race.  AI needs to be in vehicle of " .. getClassName(aiState.vclass) .. " class.")
+                                                    sendMessage("Cannot join race.  AI needs to be in vehicle of " ..
+                                                    getClassName(aiState.vclass) .. " class.")
                                                     return false
                                                 end
                                             end
@@ -1316,7 +1482,8 @@ local function spawnAIDriver(aiName, vehicleHash)
                                 while HasModelLoaded(vehicleHash) == false do
                                     Citizen.Wait(0)
                                 end
-                                driver.vehicle = CreateVehicle(vehicleHash, driver.startCoord.x, driver.startCoord.y, driver.startCoord.z, driver.heading, true, false)
+                                driver.vehicle = CreateVehicle(vehicleHash, driver.startCoord.x, driver.startCoord.y,
+                                driver.startCoord.z, driver.heading, true, false)
                                 SetModelAsNoLongerNeeded(vehicleHash)
                                 SetVehicleEngineOn(driver.vehicle, true, true, false)
                                 SetVehRadioStation(driver.vehicle, "OFF")
@@ -1330,7 +1497,8 @@ local function spawnAIDriver(aiName, vehicleHash)
                                 while HasModelLoaded(pedHash) == false do
                                     Citizen.Wait(0)
                                 end
-                                driver.ped = CreatePedInsideVehicle(driver.vehicle, PED_TYPE_CIVMALE, pedHash, -1, true, false)
+                                driver.ped = CreatePedInsideVehicle(driver.vehicle, PED_TYPE_CIVMALE, pedHash, -1, true,
+                                false)
                                 SetModelAsNoLongerNeeded(pedHash)
                                 SetDriverAbility(driver.ped, 1.0)
                                 SetDriverAggressiveness(driver.ped, 0.0)
@@ -1498,7 +1666,8 @@ local function saveGrp(access, name)
                 local group = {}
                 for aiName, driver in pairs(aiState.drivers) do
                     if driver.ped ~= nil and driver.vehicle ~= nil then
-                        group[aiName] = {startCoord = driver.startCoord, heading = driver.heading, vehicleHash = GetEntityModel(driver.vehicle)}
+                        group[aiName] = { startCoord = driver.startCoord, heading = driver.heading,
+                            vehicleHash = GetEntityModel(driver.vehicle) }
                     else
                         allSpawned = false
                         break
@@ -1532,7 +1701,8 @@ local function overwriteGrp(access, name)
                 local group = {}
                 for aiName, driver in pairs(aiState.drivers) do
                     if driver.ped ~= nil and driver.vehicle ~= nil then
-                        group[aiName] = {startCoord = driver.startCoord, heading = driver.heading, vehicleHash = GetEntityModel(driver.vehicle)}
+                        group[aiName] = { startCoord = driver.startCoord, heading = driver.heading,
+                            vehicleHash = GetEntityModel(driver.vehicle) }
                     else
                         allSpawned = false
                         break
@@ -1804,6 +1974,7 @@ local function leave()
         raceState = STATE_IDLE
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
         removeRacerBlipGT()
+        DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     elseif STATE_RACING == raceState then
         if IsPedInAnyVehicle(player, false) == 1 then
@@ -1813,6 +1984,7 @@ local function leave()
         DeleteCheckpoint(raceCheckpoint)
         finishRace(-1)
         removeRacerBlipGT()
+        DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     else
         sendMessage("Cannot leave.  Not joined to any race.\n")
@@ -1841,24 +2013,21 @@ local function SetGhosting(_ghosting)
     end
 end
 
+local function repairVehicle(vehicle)
+    SetVehicleEngineHealth(vehicle, 1000.0)
+    SetVehicleBodyHealth(vehicle, 1000.0)
+    SetVehiclePetrolTankHealth(vehicle, 1000.0)
+    SetVehicleDeformationFixed(vehicle)
+    SetVehicleFixed(vehicle)
+end
+
 local function respawn()
-    SetGhosting(true)
     if STATE_RACING == raceState then
+        SetGhosting(true)
         local passengers = {}
         local player = PlayerPedId()
-        local vehicle = GetVehiclePedIsIn(player, false)
-        if vehicle ~= 0 then
-            if GetPedInVehicleSeat(vehicle, -1) == player then
-                for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(vehicle)) - 2 do
-                    local passenger = GetPedInVehicleSeat(vehicle, i)
-                    if passenger ~= 0 then
-                        passengers[#passengers + 1] = {ped = passenger, seat = i}
-                    end
-                end
-                SetEntityAsMissionEntity(vehicle, true, true)
-                DeleteVehicle(vehicle)
-            end
-        end
+        local vehicle = GetVehiclePedIsIn(player, true)
+
         local coord = startCoord
         if true == startIsFinish then
             if currentWaypoint > 0 then
@@ -1869,20 +2038,35 @@ local function respawn()
                 coord = waypoints[currentWaypoint - 1].coord
             end
         end
-        if currentVehicleHash ~= nil then
+
+        print(vehicle)
+        print(currentVehicleHash)
+        
+        --Spawn vehicle is there is none
+        if vehicle == 0 and currentVehicleHash ~= nil then
+            print("No vehicle found")
             RequestModel(currentVehicleHash)
             while HasModelLoaded(currentVehicleHash) == false do
                 Citizen.Wait(0)
             end
-            SetEntityHeading(vehicle, coord.heading)
             vehicle = putPedInVehicle(player, currentVehicleHash, coord)
             SetEntityAsNoLongerNeeded(vehicle)
+            SetEntityHeading(vehicle, coord.heading)
+            repairVehicle(vehicle)
             for _, passenger in pairs(passengers) do
                 SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
             end
-        else
+        elseif currentVehicleHash == nil then
+            print("Respawning on foot")
             SetEntityCoords(player, coord.x, coord.y, coord.z, false, false, false, true)
             SetEntityHeading(player, coord.heading)
+        else
+            print("Using previous vehicle found")
+            SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
+            SetEntityHeading(vehicle, coord.heading)
+            SetVehicleEngineOn(vehicle, true, true, false)
+            SetVehRadioStation(vehicle, "OFF")
+            SetPedIntoVehicle(player, vehicle, -1)
         end
     else
         sendMessage("Cannot respawn.  Not in a race.\n")
@@ -1905,7 +2089,9 @@ local function viewResults(chatOnly)
             else
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
                 local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
-                msg = msg .. ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds, result.playerName, lMinutes, lSeconds, result.vehicleName)
+                msg = msg ..
+                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
+                result.playerName, lMinutes, lSeconds, result.vehicleName)
             end
         end
     else
@@ -2043,6 +2229,8 @@ local function showPanel(panel)
         panelShown = false
     end
 end
+
+--#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
     request(data.role)
@@ -2315,6 +2503,8 @@ RegisterNUICallback("close", function()
     SetNuiFocus(false, false)
 end)
 
+--#endregion
+
 --[[
 local function testSound(audioRef, audioName)
     PlaySoundFrontend(-1, audioName, audioRef, true)
@@ -2536,6 +2726,59 @@ AddEventHandler("vehicles", function(list)
     end
 end)
 --]]
+--#region Command Registering
+
+local function resetupgrades(vehicle)
+
+    if vehicle == nil then
+        local player = PlayerPedId()
+        vehicle = GetVehiclePedIsIn(player, true)
+    end
+
+    local eUpgrade = GetVehicleMod(vehicle, 11) 
+    local bUpgrade = GetVehicleMod(vehicle, 12)
+    local gUpgrade = GetVehicleMod(vehicle, 13)
+    local nUpgrade = IsToggleModOn(vehicle, 17)
+    local tUpgrade = IsToggleModOn(vehicle, 18)
+
+    -- print("Engine Upgrade: " .. eUpgrade) --Engine upgrade
+    -- print("Brakes Upgrade: " .. bUpgrade) --Brakes
+    -- print("Gearbox Upgrade: " .. gUpgrade) --Gearbox
+    -- print("Nitrous Upgrade: " .. tostring(nUpgrade)) --Nitrous
+    -- print("Turbo Upgrade: " .. tostring(tUpgrade)) --Turbo
+
+    if eUpgrade ~= -1 then
+        SetVehicleMod(vehicle, 11, -1) --Engine upgrade
+        TriggerServerEvent("races:resetupgrade", 11)
+    end
+
+    if bUpgrade ~= -1 then
+        SetVehicleMod(vehicle, 12, -1) --Brakes upgrade
+        TriggerServerEvent("races:resetupgrade", 12)
+    end
+
+    if gUpgrade ~= -1 then 
+        SetVehicleMod(vehicle, 13, -1) --Gearbox upgrade
+        TriggerServerEvent("races:resetupgrade", 13)
+    end
+    
+    if nUpgrade ~= -1 then
+        ToggleVehicleMod(vehicle, 17, 0) --Nitrous upgrade
+        TriggerServerEvent("races:resetupgrade", 17)
+    end
+
+    if tUpgrade ~= -1 then
+        ToggleVehicleMod(vehicle, 18, 0) --Turbo upgrade
+        TriggerServerEvent("races:resetupgrade", 18)
+    end
+
+    -- print("Engine Upgrade: " .. GetVehicleMod(vehicle, 11)) --Engine upgrade
+    -- print("Brakes Upgrade: " .. GetVehicleMod(vehicle, 12)) --Brakes
+    -- print("Gearbox Upgrade: " .. GetVehicleMod(vehicle, 13)) --Gearbox
+    -- print("Nitrous Upgrade: " .. tostring(IsToggleModOn(vehicle, 17))) --Nitrous
+    -- print("Turbo Upgrade: " .. tostring(IsToggleModOn(vehicle, 18))) --Turbo
+
+end
 
 RegisterCommand("races", function(_, args)
     if nil == args[1] then
@@ -2547,7 +2790,8 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races clear - clear track waypoints\n"
         msg = msg .. "/races reverse - reverse order of track waypoints\n"
         msg = msg .. "\n"
-        msg = msg .. "For the following '/races' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private track and 'pub' operates on a public track\n"
+        msg = msg ..
+        "For the following '/races' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private track and 'pub' operates on a public track\n"
         msg = msg .. "/races load [access] [name] - load private or public track saved as [name]\n"
         msg = msg .. "/races save [access] [name] - save new private or public track as [name]\n"
         msg = msg .. "/races overwrite [access] [name] - overwrite existing private or public track saved as [name]\n"
@@ -2555,25 +2799,33 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races blt [access] [name] - list 10 best lap times of private or public track saved as [name]\n"
         msg = msg .. "/races list [access] - list saved private or public tracks\n"
         msg = msg .. "\n"
-        msg = msg .. "For the following '/races register' commands, (buy-in) defaults to 500, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\n"
-        msg = msg .. "/races register (buy-in) (laps) (DNF timeout) (allow AI) - register your race with no vehicle restrictions\n"
-        msg = msg .. "/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle] - register your race restricted to [vehicle]\n"
-        msg = msg .. "/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class] - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\n"
-        msg = msg .. "/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle) - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any\n"
+        msg = msg ..
+        "For the following '/races register' commands, (buy-in) defaults to 500, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\n"
+        msg = msg ..
+        "/races register (buy-in) (laps) (DNF timeout) (allow AI) - register your race with no vehicle restrictions\n"
+        msg = msg ..
+        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle] - register your race restricted to [vehicle]\n"
+        msg = msg ..
+        "/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class] - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\n"
+        msg = msg ..
+        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle) - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any\n"
         msg = msg .. "\n"
         msg = msg .. "/races unregister - unregister your race\n"
         msg = msg .. "/races start (delay) - start your registered race; (delay) defaults to 30 seconds\n"
         msg = msg .. "\n"
         msg = msg .. "/races ai add [name] - add an AI driver named [name]\n"
         msg = msg .. "/races ai delete [name] - delete an AI driver named [name]\n"
-        msg = msg .. "/races ai spawn [name] (vehicle) - spawn AI driver named [name] in (vehicle); (vehicle) defaults to 'adder'\n"
+        msg = msg ..
+        "/races ai spawn [name] (vehicle) - spawn AI driver named [name] in (vehicle); (vehicle) defaults to 'adder'\n"
         msg = msg .. "/races ai list - list AI driver names\n"
         msg = msg .. "/races ai deleteAll - delete all AI drivers\n"
         msg = msg .. "\n"
-        msg = msg .. "For the following '/races ai' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private AI group and 'pub' operates on a public AI group\n"
+        msg = msg ..
+        "For the following '/races ai' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private AI group and 'pub' operates on a public AI group\n"
         msg = msg .. "/races ai loadGrp [access] [name] - load private or public AI group saved as [name]\n"
         msg = msg .. "/races ai saveGrp [access] [name] - save new private or public AI group as [name]\n"
-        msg = msg .. "/races ai overwriteGrp [access] [name] - overwrite existing private or public AI group saved as [name]\n"
+        msg = msg ..
+        "/races ai overwriteGrp [access] [name] - overwrite existing private or public AI group saved as [name]\n"
         msg = msg .. "/races ai deleteGrp [access] [name] - delete private or public AI group saved as [name]\n"
         msg = msg .. "/races ai listGrps [access] - list saved private or public AI groups\n"
         msg = msg .. "\n"
@@ -2585,10 +2837,12 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races vl deleteAll - delete all vehicles from vehicle list\n"
         msg = msg .. "/races vl list - list all vehicles in vehicle list\n"
         msg = msg .. "\n"
-        msg = msg .. "For the following '/races vl' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\n"
+        msg = msg ..
+        "For the following '/races vl' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\n"
         msg = msg .. "/races vl loadLst [access] [name] - load private or public vehicle list saved as [name]\n"
         msg = msg .. "/races vl saveLst [access] [name] - save new private or public vehicle list as [name]\n"
-        msg = msg .. "/races vl overwriteLst [access] [name] - overwrite existing private or public vehicle list saved as [name]\n"
+        msg = msg ..
+        "/races vl overwriteLst [access] [name] - overwrite existing private or public vehicle list saved as [name]\n"
         msg = msg .. "/races vl deleteLst [access] [name] - delete private or public vehicle list saved as [name]\n"
         msg = msg .. "/races vl listLsts [access] - list saved private or public vehicle lists\n"
         msg = msg .. "\n"
@@ -2597,10 +2851,13 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races respawn - respawn at last waypoint\n"
         msg = msg .. "/races results - view latest race results\n"
         msg = msg .. "/races spawn (vehicle) - spawn a vehicle; (vehicle) defaults to 'adder'\n"
-        msg = msg .. "/races lvehicles (class) - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\n"
-        msg = msg .. "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
+        msg = msg ..
+        "/races lvehicles (class) - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\n"
+        msg = msg ..
+        "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
         msg = msg .. "/races funds - view available funds\n"
-        msg = msg .. "/races panel (panel) - display (panel) = {edit, register, ai, list} panel; otherwise display main panel if (panel) is not specified\n"
+        msg = msg ..
+        "/races panel (panel) - display (panel) = {edit, register, ai, list} panel; otherwise display main panel if (panel) is not specified\n"
         notifyPlayer(msg)
     elseif "request" == args[1] then
         request(args[2])
@@ -2626,6 +2883,8 @@ RegisterCommand("races", function(_, args)
         register(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
     elseif "unregister" == args[1] then
         unregister()
+    elseif "grid" == args[1] then
+        setupGrid()
     elseif "start" == args[1] then
         startRace(args[2])
     elseif "ai" == args[1] then
@@ -2703,7 +2962,9 @@ RegisterCommand("races", function(_, args)
         viewFunds()
     elseif "panel" == args[1] then
         showPanel(args[2])
---[[
+    elseif "upgrade" == args[1] then
+        resetupgrades()
+        --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
             TriggerEvent("races:finish", GetPlayerServerId(PlayerId()), "John Doe", (5 * 60 + 24) * 1000, (1 * 60 + 32) * 1000, "Duck")
@@ -2758,7 +3019,6 @@ end)
 
 RegisterNetEvent("setplayeralpha")
 AddEventHandler("setplayeralpha", function(playerID, alphaValue)
-    sendMessage(playerID)
     SetGhostedEntityAlpha(alphaValue)
 end)
 
@@ -2832,7 +3092,9 @@ AddEventHandler("races:blt", function(isPublic, trackName, bestLaps)
             msg = "Best lap times for " .. msg .. ":\n"
             for pos, bestLap in ipairs(bestLaps) do
                 local minutes, seconds = minutesSeconds(bestLap.bestLapTime)
-                msg = msg .. ("%d - %s - %02d:%05.2f using %s\n"):format(pos, bestLap.playerName, minutes, seconds, bestLap.vehicleName)
+                msg = msg ..
+                ("%d - %s - %02d:%05.2f using %s\n"):format(pos, bestLap.playerName, minutes, seconds,
+                bestLap.vehicleName)
             end
             sendMessage(msg)
         else
@@ -2857,7 +3119,8 @@ AddEventHandler("races:loadLst", function(isPublic, name, list)
 end)
 
 RegisterNetEvent("races:register")
-AddEventHandler("races:register", function(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
+AddEventHandler("races:register",
+function(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
     if rIndex ~= nil and coord ~= nil and isPublic ~= nil and owner ~= nil and buyin ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
         local blip = AddBlipForCoord(coord.x, coord.y, coord.z) -- registration blip
         SetBlipSprite(blip, registerSprite)
@@ -2913,7 +3176,11 @@ end)
 RegisterNetEvent("races:unregister")
 AddEventHandler("races:unregister", function(rIndex)
     if rIndex ~= nil then
+        if gridCheckpoint ~= nil then
+            DeleteCheckpoint(gridCheckpoint)
+        end
         if starts[rIndex] ~= nil then
+            DeleteGridCheckPoints()
             removeRegistrationPoint(rIndex)
         end
         if rIndex == raceIndex then
@@ -2988,7 +3255,8 @@ AddEventHandler("races:loadGrp", function(isPublic, name, group)
         if true == loaded then
             sendMessage((true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' loaded.\n")
         else
-            sendMessage("Could not load " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+            sendMessage("Could not load " ..
+            (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
         end
     else
         notifyPlayer("Ignoring load AI group event.  Invalid parameters.\n")
@@ -3024,7 +3292,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     drawLights = false
                     numRacers = -1
                     results = {}
-                    speedo = true
+                    speedo = false
                     startCoord = GetEntityCoords(PlayerPedId())
                     camTransStarted = false
 
@@ -3049,8 +3317,15 @@ AddEventHandler("races:start", function(rIndex, delay)
                     SetBlipRouteColour(waypointCoord, blipRouteColor)
 
                     raceState = STATE_RACING
+                    
+                    local player = PlayerPedId()
+                    local vehicle = GetVehiclePedIsIn(player, true)
 
-                    notifyPlayer("Race started.\n")
+                    repairVehicle(vehicle)
+                    resetupgrades(vehicle)
+                    notifyPlayer("Vehicle fixed.\n")
+
+
                 elseif STATE_RACING == raceState then
                     notifyPlayer("Ignoring start event.  Already in a race.\n")
                 elseif STATE_EDITING == raceState then
@@ -3085,6 +3360,12 @@ AddEventHandler("races:start", function(rIndex, delay)
     end
 end)
 
+RegisterNetEvent("races:respawn")
+AddEventHandler("races:respawn", function()
+    -- Citizen.Wait(250)
+    respawn()
+end)
+
 RegisterNetEvent("races:hide")
 AddEventHandler("races:hide", function(rIndex)
     if rIndex ~= nil then
@@ -3096,6 +3377,16 @@ AddEventHandler("races:hide", function(rIndex)
     else
         notifyPlayer("Ignoring hide event.  Invalid parameters.\n")
     end
+end)
+
+RegisterNetEvent("races:joinnotification")
+AddEventHandler("races:joinnotification", function(playerName, trackName)
+    sendMessage(string.format("%s has joined Race %s", playerName, trackName))
+end)
+
+RegisterNetEvent("races:leavenotification")
+AddEventHandler("races:leavenotification", function(message)
+    sendMessage(message)
 end)
 
 RegisterNetEvent("races:join")
@@ -3118,9 +3409,13 @@ AddEventHandler("races:join", function(rIndex, aiName, waypointCoords)
                     if nil == starts[rIndex].trackName then
                         msg = msg .. "unsaved track "
                     else
-                        msg = msg .. (true == starts[rIndex].isPublic and "publicly" or "privately") .. " saved track '" .. starts[rIndex].trackName .. "' "
+                        msg = msg ..
+                        (true == starts[rIndex].isPublic and "publicly" or "privately") ..
+                        " saved track '" .. starts[rIndex].trackName .. "' "
                     end
-                    msg = msg .. ("registered by %s : %d buy-in : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].buyin, starts[rIndex].laps)
+                    msg = msg ..
+                    ("registered by %s : %d buy-in : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].buyin,
+                    starts[rIndex].laps)
                     if "yes" == starts[rIndex].allowAI then
                         msg = msg .. " : AI allowed"
                     end
@@ -3201,7 +3496,8 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                     notifyPlayer(playerName .. " did not finish.\n")
                 else
                     local minutes, seconds = minutesSeconds(raceBestLapTime)
-                    notifyPlayer(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(playerName, minutes, seconds, raceVehicleName))
+                    notifyPlayer(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(
+                    playerName, minutes, seconds, raceVehicleName))
                 end
             else
                 local currentTime = GetGameTimer()
@@ -3216,7 +3512,8 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
 
                 local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
                 local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
-                notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
+                notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
+                playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
         end
     else
@@ -3278,7 +3575,7 @@ AddEventHandler("races:addRacer", function(netID, name)
             SetBlipColour(blip, racerBlipColor)
             local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
             SetMpGamerTagVisibility(gamerTag, 0, true)
-            racerBlipGT[netID] = {blip = blip, gamerTag = gamerTag, netID = netID, name = name}
+            racerBlipGT[netID] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
         end
     else
         notifyPlayer("Ignoring addRacer event.  Invalid parameters.\n")
@@ -3289,6 +3586,7 @@ RegisterNetEvent("races:delRacer")
 AddEventHandler("races:delRacer", function(netID)
     if netID ~= nil then
         if racerBlipGT[netID] ~= nil then
+            DeleteCheckpoint(gridCheckpoint)
             RemoveBlip(racerBlipGT[netID].blip)
             RemoveMpGamerTag(racerBlipGT[netID].gamerTag)
             racerBlipGT[netID] = nil
@@ -3371,6 +3669,31 @@ AddEventHandler("races:listNames", function(isPublic, listNames)
     end
 end)
 
+RegisterNetEvent("races:spawncheckpoint")
+AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
+    CreateGridCheckpoint(position, gridNumber)
+end)
+
+RegisterNetEvent("races:setupgrid")
+AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
+    local player = PlayerPedId()
+    local vehicle = GetVehiclePedIsIn(player, false)
+
+    local entityToMove
+    if vehicle ~= nil then
+        entityToMove = vehicle
+    else
+        entityToMove = player
+    end
+
+    SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
+    SetEntityHeading(entityToMove, heading)
+
+    CreateGridCheckpoint(position, gridNumber)
+end)
+
+--#endregion
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)
@@ -3384,7 +3707,8 @@ Citizen.CreateThread(function()
             for aiName, driver in pairs(aiState.drivers) do
                 if STATE_RACING == driver.raceState then
                     local distance = #(GetEntityCoords(driver.ped) - vector3(driver.destCoord.x, driver.destCoord.y, driver.destCoord.z))
-                    TriggerServerEvent("races:report", GetPlayerServerId(PlayerId()), driver.netID, aiName, driver.numWaypointsPassed, distance)
+                    TriggerServerEvent("races:report", GetPlayerServerId(PlayerId()), driver.netID, aiName,
+                    driver.numWaypointsPassed, distance)
                 end
             end
         end
@@ -3410,19 +3734,23 @@ Citizen.CreateThread(function()
 
             if closestIndex ~= 0 then
                 if highlightedCheckpoint ~= 0 and closestIndex ~= highlightedCheckpoint then
-                    local color = (highlightedCheckpoint == selectedIndex0 or highlightedCheckpoint == selectedIndex1) and getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[highlightedCheckpoint].color)
+                    local color = (highlightedCheckpoint == selectedIndex0 or highlightedCheckpoint == selectedIndex1) and
+                    getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[highlightedCheckpoint].color)
                     SetCheckpointRgba(waypoints[highlightedCheckpoint].checkpoint, color.r, color.g, color.b, 127)
                 end
-                local color = (closestIndex == selectedIndex0 or closestIndex == selectedIndex1) and getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[closestIndex].color)
+                local color = (closestIndex == selectedIndex0 or closestIndex == selectedIndex1) and
+                getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[closestIndex].color)
                 SetCheckpointRgba(waypoints[closestIndex].checkpoint, color.r, color.g, color.b, 255)
                 highlightedCheckpoint = closestIndex
                 drawMsg(0.50, 0.50, "Press [ENTER] key, [A] button or [CROSS] button to select waypoint", 0.7, 0)
             elseif highlightedCheckpoint ~= 0 then
-                local color = (highlightedCheckpoint == selectedIndex0 or highlightedCheckpoint == selectedIndex1) and getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[highlightedCheckpoint].color)
+                local color = (highlightedCheckpoint == selectedIndex0 or highlightedCheckpoint == selectedIndex1) and
+                getCheckpointColor(selectedBlipColor) or getCheckpointColor(waypoints[highlightedCheckpoint].color)
                 SetCheckpointRgba(waypoints[highlightedCheckpoint].checkpoint, color.r, color.g, color.b, 127)
                 highlightedCheckpoint = 0
             end
 
+            --Add waypoints by using waypoint system
             if IsWaypointActive() == 1 then
                 SetWaypointOff()
                 local coord = GetBlipCoords(GetFirstBlipInfoId(8))
@@ -3457,6 +3785,7 @@ Citizen.CreateThread(function()
                             startIsFinish = true
                         end
                         setStartToFinishBlips()
+                        GenerateStartingGrid(waypoints[1].coord, 8)
                         deleteWaypointCheckpoints()
                         setStartToFinishCheckpoints()
                         SetBlipRoute(waypoints[1].blip, true)
@@ -3467,14 +3796,16 @@ Citizen.CreateThread(function()
                     DeleteCheckpoint(selectedWaypoint0.checkpoint)
                     local color = getCheckpointColor(selectedBlipColor)
                     local checkpointType = 38 == selectedWaypoint0.sprite and finishCheckpoint or midCheckpoint
-                    selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord, selectedWaypoint0.coord, color, 127, selectedIndex0 - 1)
+                    selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord,
+                    selectedWaypoint0.coord, color, 127, selectedIndex0 - 1)
                     savedTrackName = nil
                 elseif IsControlJustReleased(0, 188) == 1 and selectedWaypoint0.coord.r < maxRadius then -- arrow up or DPAD UP
                     selectedWaypoint0.coord.r = selectedWaypoint0.coord.r + 0.5
                     DeleteCheckpoint(selectedWaypoint0.checkpoint)
                     local color = getCheckpointColor(selectedBlipColor)
                     local checkpointType = 38 == selectedWaypoint0.sprite and finishCheckpoint or midCheckpoint
-                    selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord, selectedWaypoint0.coord, color, 127, selectedIndex0 - 1)
+                    selectedWaypoint0.checkpoint = makeCheckpoint(checkpointType, selectedWaypoint0.coord,
+                    selectedWaypoint0.coord, color, 127, selectedIndex0 - 1)
                     savedTrackName = nil
                 end
             end
@@ -3489,7 +3820,8 @@ Citizen.CreateThread(function()
                 if false == camTransStarted then
                     camTransStarted = true
                     Citizen.CreateThread(function()
-                        local entity = IsPedInAnyVehicle(player, false) == 1 and GetVehiclePedIsIn(player, false) or player
+                        local entity = IsPedInAnyVehicle(player, false) == 1 and GetVehiclePedIsIn(player, false) or
+                        player
 
                         local cam0 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
                         SetCamCoord(cam0, GetOffsetFromEntityInWorldCoords(entity, 0.0, 5.0, 1.0))
@@ -3553,10 +3885,10 @@ Citizen.CreateThread(function()
                 if true == ghosting then
                     local ghostingDifference = currentTime - ghostingTime
                     local deltaTime = GetFrameTime()
-    
+
                     if ghostState == GHOSTING_UP then
-                        if(ghostingInterval >= ghostingInternalMaxTime) then
-                            SetGhostedEntityAlpha( 128 )
+                        if (ghostingInterval >= ghostingInternalMaxTime) then
+                            SetGhostedEntityAlpha(128)
                             TriggerServerEvent('setplayeralpha', player, 150)
                             ghostState = GHOSTING_DOWN
                             ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
@@ -3564,10 +3896,9 @@ Citizen.CreateThread(function()
                         else
                             ghostingInterval = ghostingInterval + deltaTime
                         end
-                        
                     elseif ghostState == GHOSTING_DOWN then
-                        if(ghostingInterval <= 0) then
-                            SetGhostedEntityAlpha( 50 )
+                        if (ghostingInterval <= 0) then
+                            SetGhostedEntityAlpha(50)
                             TriggerServerEvent('setplayeralpha', player, 50)
                             ghostState = GHOSTING_UP
                             ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
@@ -3576,17 +3907,17 @@ Citizen.CreateThread(function()
                             ghostingInterval = ghostingInterval - deltaTime
                         end
                     end
-    
-                    SetGhostedEntityAlpha( ghostingInterval * 254 )
+
+                    SetGhostedEntityAlpha(ghostingInterval * 254)
                     if ghostingDifference > ghostingMaxTime then
                         SetGhosting(false)
                     end
                 end
 
-                if IsControlPressed(0, 73) == 1 then -- X key or A button or cross button
+                if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
                     if true == respawnCtrlPressed then
-                        drawRespawnMessage(currentTime - respawnTime, 1000)
-                        if currentTime - respawnTime > 1000 then
+                        drawRespawnMessage(currentTime - respawnTime, respawnTimer)
+                        if currentTime - respawnTime > respawnTimer then
                             respawnCtrlPressed = false
                             respawn()
                         end
@@ -3671,6 +4002,8 @@ Citizen.CreateThread(function()
                         end
 
                         if true == waypointPassed then
+
+                            resetupgrades(vehicle)
                             DeleteCheckpoint(raceCheckpoint)
                             PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
 
@@ -3688,7 +4021,10 @@ Citizen.CreateThread(function()
                                 if currentLap < numLaps then
                                     currentLap = currentLap + 1
                                     if #randVehicles > 0 then
-                                        local randVehicle = switchVehicle(player, randVehicles[math.random(#randVehicles)])
+                                        local randIndex = math.random(#randVehicles)
+                                        sendMessage("Random Index: " .. randIndex)
+                                        local randVehicle = switchVehicle(player,
+                                        randVehicles[randIndex])
                                         if randVehicle ~= nil then
                                             SetEntityAsNoLongerNeeded(randVehicle)
                                         end
@@ -3720,7 +4056,8 @@ Citizen.CreateThread(function()
                                         addLast = false
                                     end
                                     curr = curr % #waypoints + 1
-                                    checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or arrow3Checkpoint
+                                    checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or
+                                    arrow3Checkpoint
                                 else
                                     if last > #waypoints then
                                         addLast = false
@@ -3762,7 +4099,9 @@ Citizen.CreateThread(function()
                 if nil == starts[closestIndex].trackName then
                     msg = msg .. "unsaved track "
                 else
-                    msg = msg .. (true == starts[closestIndex].isPublic and "publicly" or "privately") .. " saved track '" .. starts[closestIndex].trackName .. "' "
+                    msg = msg ..
+                    (true == starts[closestIndex].isPublic and "publicly" or "privately") ..
+                    " saved track '" .. starts[closestIndex].trackName .. "' "
                 end
                 msg = msg .. "registered by " .. starts[closestIndex].owner
                 drawMsg(0.50, 0.50, msg, 0.7, 0)
@@ -3810,11 +4149,13 @@ Citizen.CreateThread(function()
                             if vehicle ~= nil then
                                 if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
                                     joinRace = false
-                                    notifyPlayer("Cannot join race.  Player needs to be in vehicle of " .. getClassName(starts[closestIndex].vclass) .. " class.")
+                                    notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                    getClassName(starts[closestIndex].vclass) .. " class.")
                                 end
                             else
                                 joinRace = false
-                                notifyPlayer("Cannot join race.  Player needs to be in vehicle of " .. getClassName(starts[closestIndex].vclass) .. " class.")
+                                notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                getClassName(starts[closestIndex].vclass) .. " class.")
                             end
                         else
                             if #starts[closestIndex].vehicleList == 0 then
@@ -3829,11 +4170,14 @@ Citizen.CreateThread(function()
                                 if vehicle ~= nil then
                                     if vehicleInList(vehicle, starts[closestIndex].vehicleList) == false then
                                         joinRace = false
-                                        notifyPlayer("Cannot join race.  Player needs to be in one of the following vehicles: " .. list)
+                                        notifyPlayer(
+                                        "Cannot join race.  Player needs to be in one of the following vehicles: " ..
+                                        list)
                                     end
                                 else
                                     joinRace = false
-                                    notifyPlayer("Cannot join race.  Player needs to be in one of the following vehicles: " .. list)
+                                    notifyPlayer(
+                                    "Cannot join race.  Player needs to be in one of the following vehicles: " .. list)
                                 end
                             end
                         end
@@ -3851,11 +4195,13 @@ Citizen.CreateThread(function()
                                     if vehicle ~= nil then
                                         if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
                                             joinRace = false
-                                            notifyPlayer("Cannot join race.  Player needs to be in vehicle of " .. getClassName(starts[closestIndex].vclass) .. " class.")
+                                            notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                            getClassName(starts[closestIndex].vclass) .. " class.")
                                         end
                                     else
                                         joinRace = false
-                                        notifyPlayer("Cannot join race.  Player needs to be in vehicle of " .. getClassName(starts[closestIndex].vclass) .. " class.")
+                                        notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                        getClassName(starts[closestIndex].vclass) .. " class.")
                                     end
                                 end
                             end
@@ -3925,7 +4271,8 @@ Citizen.CreateThread(function()
                         if true == aiState.beginDNFTimeout then
                             if aiState.timeoutStart + aiState.DNFTimeout - currentTime <= 0 then
                                 driver.raceState = STATE_IDLE
-                                TriggerServerEvent("races:finish", GetPlayerServerId(PlayerId()), driver.netID, aiName, driver.numWaypointsPassed, -1, driver.bestLapTime, driver.bestLapVehicleName, nil)
+                                TriggerServerEvent("races:finish", GetPlayerServerId(PlayerId()), driver.netID, aiName,
+                                driver.numWaypointsPassed, -1, driver.bestLapTime, driver.bestLapVehicleName, nil)
                             end
                         end
                         if IsEntityDead(driver.ped) == false and STATE_RACING == driver.raceState then
@@ -3961,7 +4308,9 @@ Citizen.CreateThread(function()
                                         -- On public track '01' and waypoint 7, AI would miss waypoint 7, move past it, wander a long way around, then come back to waypoint 7 when using TaskVehicleDriveToCoordLongrange
                                         -- Using TaskVehicleDriveToCoord instead.  Waiting to see if there is any weird behaviour with this function.
                                         -- TaskVehicleDriveToCoord(ped, vehicle, x, y, z, speed, p6, vehicleModel, drivingMode, stopRange, p10)
-                                        TaskVehicleDriveToCoord(driver.ped, driver.vehicle, driver.destCoord.x, driver.destCoord.y, driver.destCoord.z, 70.0, 1.0, GetEntityModel(driver.vehicle), 787004, driver.destCoord.r * 0.5, true)
+                                        TaskVehicleDriveToCoord(driver.ped, driver.vehicle, driver.destCoord.x,
+                                        driver.destCoord.y, driver.destCoord.z, 70.0, 1.0, GetEntityModel(driver.vehicle),
+                                        787004, driver.destCoord.r * 0.5, true)
                                     else
                                         if #(GetEntityCoords(driver.ped) - vector3(driver.destCoord.x, driver.destCoord.y, driver.destCoord.z)) < driver.destCoord.r then
                                             driver.numWaypointsPassed = driver.numWaypointsPassed + 1
@@ -3977,15 +4326,19 @@ Citizen.CreateThread(function()
                                                 if driver.currentLap < aiState.numLaps then
                                                     driver.currentLap = driver.currentLap + 1
                                                     if #aiState.randVehicles > 0 then
-                                                        driver.vehicle = switchVehicle(driver.ped, aiState.randVehicles[math.random(#aiState.randVehicles)])
+                                                        driver.vehicle = switchVehicle(driver.ped,
+                                                        aiState.randVehicles[math.random(#aiState.randVehicles)])
                                                     end
                                                 else
                                                     driver.raceState = STATE_IDLE
-                                                    TriggerServerEvent("races:finish", GetPlayerServerId(PlayerId()), driver.netID, aiName, driver.numWaypointsPassed, elapsedTime, driver.bestLapTime, driver.bestLapVehicleName, nil)
+                                                    TriggerServerEvent("races:finish", GetPlayerServerId(PlayerId()),
+                                                    driver.netID, aiName, driver.numWaypointsPassed, elapsedTime,
+                                                    driver.bestLapTime, driver.bestLapVehicleName, nil)
                                                 end
                                             end
                                             if STATE_RACING == driver.raceState then
-                                                local curr = true == startIsFinish and driver.currentWP % #aiState.waypointCoords + 1 or driver.currentWP
+                                                local curr = true == startIsFinish and
+                                                driver.currentWP % #aiState.waypointCoords + 1 or driver.currentWP
                                                 driver.destCoord = aiState.waypointCoords[curr]
                                                 driver.destSet = true
                                             end

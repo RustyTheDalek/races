@@ -61,6 +61,9 @@ local ROLE_EDIT <const> = 1 -- edit tracks role
 local ROLE_REGISTER <const> = 2 -- register races role
 local ROLE_SPAWN <const> = 4 -- spawn vehicles role
 
+local gridLineup = {}
+UseRaceResults = false
+
 local requirePermissionToEdit <const> = false -- flag indicating if permission is required to edit tracks
 local requirePermissionToRegister <const> = false -- flag indicating if permission is required to register races
 local requirePermissionToSpawn <const> = false -- flag indicating if permission is required to spawn vehicles
@@ -834,6 +837,29 @@ local function saveResults(race)
     end
 end
 
+local function SetNextGridLineup(results)
+
+    UseRaceResults = true
+    for k in next, gridLineup do rawset(gridLineup, k, nil) end
+
+    print(gridLineup)
+    print(gridLineup[1])
+    print(#gridLineup)
+
+    print("Grid lineup setup")
+    print(string.format("Total results: %i", #results))
+    for i=1, #results do
+        print(string.format("Index: %i", #results + 1 - i))
+        local racer = results[#results + 1 - i]
+        print(racer.source)
+        print(racer.playerName)
+        table.insert(gridLineup, racer.source)
+    end
+
+    print(gridLineup)
+    print(#gridLineup)
+end
+
 local function round(f)
     return (f - math.floor(f) >= 0.5) and math.ceil(f) or math.floor(f)
 end
@@ -857,10 +883,123 @@ local function getRoleBits(source)
     return roleBits
 end
 
+local gridSeparation <const> = 5
+
+local function GenerateStartingGrid(startWaypoint, totalGridPositions)
+
+    print("Generating starting grid")
+    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
+
+    print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
+    print(string.format("Starting Heading: %.2f", startWaypoint.heading))
+
+    --TriggerClientEvent("races:spawncheckpoint", -1, startWaypoint, i)
+
+    --Calculate the forwardVector of the starting Waypoint
+    local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
+    local y = math.cos(math.rad(startWaypoint.heading)) * math.cos(0)
+    local z = math.sin(0);
+    local forwardVector = vector3(x, y, z)
+
+    local leftVector = vector3(
+        math.cos(math.rad(startWaypoint.heading)),
+        math.sin(math.rad(startWaypoint.heading)),
+        0.0
+    )
+
+    print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
+    print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
+
+    local gridPositions = {}
+
+    for i=1, 8 do
+
+        local gridPosition = startPoint - forwardVector * (i+1) * gridSeparation
+
+        print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
+
+        if math.fmod(i, 2) == 0 then
+            print("Right Grid")
+            gridPosition = gridPosition + -leftVector * 3
+        else
+            print("Left Grid")
+            gridPosition = gridPosition + leftVector * 3
+        end
+
+        TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
+
+        table.insert(gridPositions, gridPosition)
+    end
+
+    return gridPositions
+end
+
+local function placePlayers(gridPositions, players, totalPlayers, heading)
+
+    local index = 1;
+
+    print(string.format("Grid positions length %i", #gridPositions))
+    for _, player in pairs(players) do
+
+        --Get assigned Grid
+        print(string.format("Find position for Index %i", index))
+        local gridPosition = gridPositions[index]
+
+        print(gridPositions[index])
+        print(player)
+        print(player)
+        print(gridPosition)
+
+        TriggerClientEvent("races:setupgrid", player, gridPosition, heading, index)
+
+        index = index+1
+    end
+end
+
+local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
+
+    print("Spawning racers on grid")
+
+    print(gridLineup)
+    print(gridPositions)
+    print(players)
+    print(heading)
+    print(string.format("Total Players: %i", totalPlayers))
+
+    placePlayers(gridPositions, gridLineup, totalPlayers, heading)
+
+end
+
+AddEventHandler("respawnPlayerPedEvent", function(player, content)
+    TriggerClientEvent('races:respawn', player)
+end)
+
 RegisterNetEvent("setplayeralpha")
 AddEventHandler('setplayeralpha', function(alphaValue)
     TriggerClientEvent('setplayeralpha', -1, alphaValue)
 end)
+
+RegisterNetEvent("races:resetupgrade")
+AddEventHandler('races:resetupgrade', function(vehiclemodint)
+
+    local source = source
+    local playerName = GetPlayerName(source)
+
+    if vehiclemodint == 11 then
+        print("Engine reset for " .. playerName)
+    elseif vehiclemodint == 12 then
+        print("Brakes reset for "  .. playerName)
+    elseif vehiclemodint == 13 then
+        print("Gearbox reset for "  .. playerName)
+    elseif vehiclemodint == 17 then
+        print("Nitrous reset for "  .. playerName)
+    elseif vehiclemodint == 18 then
+        print("Turbo reset for "  .. playerName)
+    else
+        print(vehiclemodint .. " Reset, unknown for"  .. playerName)
+    end
+end)
+
 
 RegisterCommand("races", function(_, args)
     if nil == args[1] then
@@ -1390,7 +1529,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                                 vehicleList = rdata.vehicleList,
                                 numRacing = 0,
                                 players = {},
-                                results = {}
+                                results = {},
+                                gridPositions = {}
                             }
                             TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
                         else
@@ -1441,6 +1581,37 @@ AddEventHandler("races:unregister", function()
     end
 end)
 
+RegisterNetEvent("races:grid")
+AddEventHandler("races:grid", function()
+    local source = source
+
+    --#region Validation
+    if 0 == getRoleBits(source) & ROLE_REGISTER then
+        sendMessage(source, "Permission required.\n")
+        return
+    end
+
+    if races[source] == nil then
+        sendMessage(source, "Cannot setup grid. Race does not exist.\n")
+    end
+
+    if STATE_REGISTERING ~= races[source].state then
+        sendMessage(source, "Cannot setup grid.  Race in progress.\n")
+    end
+
+    if races[source].numRacing == 0 then
+        sendMessage(source, "Cannot setup grid. No players have joined race.\n")
+    end
+    --#endregion 
+
+    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].numRacing)
+    
+    if(gridPositions ~= nil) then
+        PlaceRacersOnGrid(gridPositions, races[source].players, races[source].numRacing, races[source].waypointCoords[1].heading)
+    end
+
+end)
+
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay)
     local source = source
@@ -1448,11 +1619,12 @@ AddEventHandler("races:start", function(delay)
         sendMessage(source, "Permission required.\n")
         return
     end
+
     if delay ~= nil then
         if races[source] ~= nil then
             if STATE_REGISTERING == races[source].state then
                 if delay >= 5 then
-                    if races[source].numRacing > 0 then
+                    if races[source].numRacing > 0 then 
                         races[source].state = STATE_RACING
                         local aiStart = false
                         local sourceJoined = false
@@ -1771,17 +1943,32 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
         if races[rIndex] ~= nil then
             if STATE_REGISTERING == races[rIndex].state then
                 if races[rIndex].players[netID] ~= nil then
+                    
+                    for i = 1, #gridLineup do
+                        if gridLineup[i] == races[rIndex].players[netID].source then
+                            table.remove(gridLineup, i)
+                            break
+                        end
+                    end
+
+                    table.remove(gridLineup, races[rIndex].players[netID].source)
+
+                    TriggerClientEvent("races:leavenotification", -1, string.format("%s has left Race %s", races[rIndex].players[netID].playerName, races[rIndex].trackName))
+
                     races[rIndex].players[netID] = nil
                     races[rIndex].numRacing = races[rIndex].numRacing - 1
                     if races[rIndex].buyin > 0 and nil == aiName then
                         Deposit(source, races[rIndex].buyin)
                         sendMessage(source, races[rIndex].buyin .. " was deposited in your funds.\n")
+                        TriggerClientEvent("races:addRacer", player.source, netID, playerName)
                     end
                     for nID, player in pairs(races[rIndex].players) do
                         if player.aiName ~= nil then -- don't need to check nID == netID because player removed from table already
                             TriggerClientEvent("races:delRacer", player.source, netID)
                         end
                     end
+
+
                 else
                     sendMessage(source, "Cannot leave.  Not a member of this race.\n")
                 end
@@ -1856,6 +2043,12 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         numWaypointsPassed = -1,
                         data = -1,
                     }
+
+                    if UseRaceResults == false then
+                        print("No race results, adding racer")
+                        table.insert(gridLineup, source)
+                    end
+                    TriggerClientEvent("races:joinnotification", -1, playerName, races[rIndex].trackName)
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
                     notifyPlayer(source, "Cannot join.  Race in progress.\n")
@@ -1980,6 +2173,8 @@ AddEventHandler("races:finish", function(rIndex, netID, aiName, numWaypointsPass
                         end
 
                         saveResults(race)
+
+                        SetNextGridLineup(race.results)
 
                         if race.trackName ~= nil then
                             updateBestLapTimes(rIndex)
