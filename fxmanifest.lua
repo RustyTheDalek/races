@@ -5,10 +5,13 @@ lua54 "yes"
 
 dependency "chat"
 
-client_script "races_client.lua"
+client_script {
+    "client/race.lua",
+    "client/editor.lua"
+}
 
 server_scripts {
-    "races_server.lua",
+    "server/races.lua",
     "port.lua"
 }
 
