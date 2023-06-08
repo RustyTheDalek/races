@@ -251,9 +251,6 @@ local gridSeparation <const> = 5
 local gridCheckpoints = {}
 
 local function CreateGridCheckpoint(position, gridNumber)
-    if gridCheckpoint ~= nil then
-        DeleteCheckpoint(gridCheckpoint)
-    end
 
     gridCheckpoint = CreateCheckpoint(45,
         position.x, position.y, position.z - gridRadius / 2.0,
