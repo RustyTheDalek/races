@@ -95,7 +95,7 @@ local maxRadius <const> = 20.0            -- maximum waypoint radius
 
 local topSide <const> = 0.45              -- top position of HUD
 local leftSide <const> = 0.02             -- left position of HUD
-local rightSide <const> = leftSide + 0.08 -- right position of HUD
+local rightSide <const> = leftSide + 0.055 -- right position of HUD
 
 local maxNumVisible <const> = 3           -- maximum number of waypoints visible during a race
 local numVisible = maxNumVisible          -- number of waypoints visible during a race - may be less than maxNumVisible
@@ -3929,7 +3929,7 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide - 0.01, 0.21, 0.35, 0, 0, 0, 127)
+                drawRect(leftSide - 0.01, topSide - 0.01, 0.17, 0.3, 0, 0, 0, 127)
 
                 drawMsg(leftSide, topSide, "Position", 0.5, 1)
                 if -1 == position then
@@ -3952,28 +3952,28 @@ Citizen.CreateThread(function()
                 drawMsg(leftSide, topSide + 0.09, "Total time", 0.5, 1)
                 drawMsg(rightSide, topSide + 0.09, ("%02d:%05.2f"):format(minutes, seconds), 0.5, 1)
 
-                drawMsg(leftSide, topSide + 0.12, "Vehicle", 0.5, 1)
-                drawMsg(rightSide, topSide + 0.12, currentVehicleName, 0.5, 1)
+                drawMsg(leftSide, topSide + 0.12, "Vehicle:", 0.5, 1)
+                drawMsg(rightSide, topSide + 0.12, currentVehicleName, 0.46, 1)
 
                 local lapTime = currentTime - lapTimeStart
                 minutes, seconds = minutesSeconds(lapTime)
-                drawMsg(leftSide, topSide + 0.17, "Lap time", 0.7, 1)
-                drawMsg(rightSide, topSide + 0.17, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
+                drawMsg(leftSide, topSide + 0.16, "Lap time", 0.6, 1)
+                drawMsg(rightSide, topSide + 0.16, ("%02d:%05.2f"):format(minutes, seconds), 0.6, 1)
 
-                drawMsg(leftSide, topSide + 0.21, "Best lap", 0.7, 1)
+                drawMsg(leftSide, topSide + 0.19, "Best lap", 0.5, 1)
                 if -1 == bestLapTime then
-                    drawMsg(rightSide, topSide + 0.21, "- - : - -", 0.7, 1)
+                    drawMsg(rightSide, topSide + 0.19, "- - : - -", 0.5, 1)
                 else
                     minutes, seconds = minutesSeconds(bestLapTime)
-                    drawMsg(rightSide, topSide + 0.21, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
+                    drawMsg(rightSide, topSide + 0.19, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
                 end
 
                 if true == beginDNFTimeout then
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
                     if milliseconds > 0 then
                         minutes, seconds = minutesSeconds(milliseconds)
-                        drawMsg(leftSide, topSide + 0.29, "DNF time", 0.7, 1)
-                        drawMsg(rightSide, topSide + 0.29, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
+                        drawMsg(leftSide, topSide + 0.22, "DNF time", 0.3, 1)
+                        drawMsg(rightSide, topSide + 0.22, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
                     else -- DNF
                         DeleteCheckpoint(raceCheckpoint)
                         finishRace(-1)
