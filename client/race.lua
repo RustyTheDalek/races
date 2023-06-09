@@ -3671,6 +3671,13 @@ AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
     CreateGridCheckpoint(position, gridNumber)
 end)
 
+RegisterNetEvent("races:autojoin")
+AddEventHandler("races:autojoin", function(raceIndex)
+    removeRacerBlipGT()
+    local player = PlayerPedId()
+    TriggerServerEvent("races:join", raceIndex, PedToNet(player), nil)
+end)
+
 RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
     local player = PlayerPedId()
