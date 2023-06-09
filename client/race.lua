@@ -249,6 +249,7 @@ end
 
 local gridSeparation <const> = 5
 local gridCheckpoints = {}
+local sologridCheckpoint = {}
 
 local function CreateGridCheckpoint(position, gridNumber)
 
@@ -971,6 +972,7 @@ local function edit()
             selectedIndex1 = 0
         end
         deleteWaypointCheckpoints()
+        DeleteGridCheckPoints()
         sendMessage("Editing stopped.\n")
     else
         sendMessage("Cannot edit waypoints.  Leave race first.\n")
@@ -990,6 +992,7 @@ local function clear()
         selectedIndex1 = 0
         deleteWaypointCheckpoints()
         deleteWaypointBlips()
+        DeleteGridCheckPoints()
         waypoints = {}
         startIsFinish = false
         savedTrackName = nil
@@ -3320,6 +3323,9 @@ AddEventHandler("races:start", function(rIndex, delay)
 
                     repairVehicle(vehicle)
                     resetupgrades(vehicle)
+                    DeleteGridCheckPoints()
+                    print(sologridCheckpoint)
+                    DeleteCheckpoint(sologridCheckpoint)
                     notifyPlayer("Vehicle fixed.\n")
 
 
@@ -3668,6 +3674,7 @@ end)
 
 RegisterNetEvent("races:spawncheckpoint")
 AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
+    print('spawncheckpoint event')
     CreateGridCheckpoint(position, gridNumber)
 end)
 
@@ -3693,7 +3700,7 @@ AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
     SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
     SetEntityHeading(entityToMove, heading)
 
-    CreateGridCheckpoint(position, gridNumber)
+    sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
 end)
 
 --#endregion

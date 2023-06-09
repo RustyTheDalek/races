@@ -926,7 +926,7 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
             gridPosition = gridPosition + leftVector * 3
         end
 
-        TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
+        -- TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
 
         table.insert(gridPositions, gridPosition)
     end
