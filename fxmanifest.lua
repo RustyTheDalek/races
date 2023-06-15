@@ -5,13 +5,14 @@ lua54 "yes"
 
 dependency "chat"
 
-client_script {
-    "client/race.lua",
-    "client/editor.lua"
+shared_scripts {
+    "shared/utility.lua"
 }
 
+client_script { "client/*.lua"}
+
 server_scripts {
-    "server/races.lua",
+    "server/*.lua",
     "port.lua"
 }
 
@@ -20,5 +21,9 @@ files {
     "html/index.css",
     "html/index.html",
     "html/index.js",
-    "html/reset.css"
+    "html/reset.css",
+    'vehicles.txt',
+    'raceData.json',
+    'vehicleListData.json',
+    'rolesData.json'
 }
