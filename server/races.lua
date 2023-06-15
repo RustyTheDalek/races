@@ -82,8 +82,6 @@ safeLoadJson('vehicleListData.json')
 local saveLog <const> = false -- flag indicating if certain events should be logged
 local logFilePath <const> = "./resources/races/log.txt" -- log file path
 
-local allVehicleFileName <const> = "vehicles.txt" -- list of all vehicles filename
-
 local defaultRadius <const> = 5.0 -- default waypoint radius
 
 local requests = {} -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
@@ -1204,32 +1202,29 @@ AddEventHandler("races:init", function()
     end
 
     local allVehicles = {}
-    local vehicleFilePath = "./resources/races/" .. allVehicleFileName
-    local file, errMsg, errCode = io.open(vehicleFilePath, "r")
-    if file ~= fail then
-        for vehicle in file:lines() do
-            if string.len(vehicle) > 0 then
-                allVehicles[#allVehicles + 1] = vehicle
-            end
-        end
-        table.sort(allVehicles)
-        local current = allVehicles[1]
-        for i = 2, #allVehicles do
-            while true do
-                if allVehicles[i] ~= nil then
-                    if allVehicles[i] == current then
-                        table.remove(allVehicles, i)
-                    else
-                        current = allVehicles[i]
-                        break
-                    end
+    
+    safeLoadJson('vehicles.json')
+    local allVehicles = loadJson('vehicles.json')
+
+    if allVehicles == nill then
+        notifyPlayer(source, "Error opening file '" .. vehicleFilePath .. "' for read : '" .. errMsg .. "' : " .. errCode)
+    end
+
+    table.sort(allVehicles)
+    local current = allVehicles[1]
+    for i = 2, #allVehicles do
+        while true do
+            if allVehicles[i] ~= nil then
+                if allVehicles[i] == current then
+                    table.remove(allVehicles, i)
                 else
+                    current = allVehicles[i]
                     break
                 end
+            else
+                break
             end
         end
-    else
-        notifyPlayer(source, "Error opening file '" .. vehicleFilePath .. "' for read : '" .. errMsg .. "' : " .. errCode)
     end
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 end)

@@ -5,6 +5,10 @@ function safeLoadJson(path)
 end
 
 function loadJson(path)
-    local string = LoadResourceFile(GetCurrentResourceName(), path)
+    local string = loadFile(path)
     return json.decode(string)
+end
+
+function loadFile(path)
+    return LoadResourceFile(GetCurrentResourceName(), path)
 end
