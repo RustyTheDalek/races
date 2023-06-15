@@ -72,25 +72,12 @@ local requirePermissionBits <const> = -- bit flag indicating if permission is re
     (true == requirePermissionToEdit and ROLE_EDIT or 0) |
     (true == requirePermissionToRegister and ROLE_REGISTER or 0) |
     (true == requirePermissionToSpawn and ROLE_SPAWN or 0)
+    
 
-if loadJson('raceData.json') == nil then
-    SaveResourceFile(GetCurrentResourceName(), 'raceData.json', {}, -1)
-end
-
-local rolesDataFilePath <const> = "./resources/races/rolesData.json" -- roles data file path
-if readData(rolesDataFilePath) == nil then
-    writeData(rolesDataFilePath, {})
-end
-
-local aiGroupDataFilePath <const> = "./resources/races/aiGroupData.json" -- AI group data file path
-if readData(aiGroupDataFilePath) == nil then
-    writeData(aiGroupDataFilePath, {})
-end
-
-local vehicleListDataFilePath <const> = "./resources/races/vehicleListData.json" -- vehicle list data file path
-if readData(vehicleListDataFilePath) == nil then
-    writeData(vehicleListDataFilePath, {})
-end
+safeLoadJson('raceData.json')
+safeLoadJson('rolesData.json')
+safeLoadJson('aiGroupData.json')
+safeLoadJson('vehicleListData.json')
 
 local saveLog <const> = false -- flag indicating if certain events should be logged
 local logFilePath <const> = "./resources/races/log.txt" -- log file path
@@ -272,7 +259,7 @@ local function approve(playerID)
             if requests[playerID] ~= nil then
                 local license = GetPlayerIdentifier(playerID, 0)
                 if license ~= nil then
-                    local rolesData = readData(rolesDataFilePath)
+                    local rolesData = loadJson('rolesData.json')
                     if rolesData ~= nil then
                         license = string.sub(license, 9)
                         --requests[playerID] = {name, roleBit}
@@ -347,7 +334,7 @@ local function listRoles()
     print("Permission to register races: " .. (true == requirePermissionToRegister and "required" or "NOT required"))
     print("Permission to spawn vehicles: " .. (true == requirePermissionToSpawn and "required" or "NOT required"))
     -- rolesData[license] = {name, roleBits}
-    local rolesData = readData(rolesDataFilePath)
+    local rolesData = loadJson('rolesData.json')
     if rolesData ~= nil then
         local rolesFound = false
         for _, role in pairs(rolesData) do
@@ -378,7 +365,7 @@ end
 
 local function removeRole(playerName, roleName)
     if playerName ~= nil then
-        local rolesData = readData(rolesDataFilePath)
+        local rolesData = loadJson('rolesData.json')
         if rolesData ~= nil then
             local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN)
             local roleType = ""
@@ -606,7 +593,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = readData(vehicleListDataFilePath)
+        local vehicleListData = loadJson('vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -627,7 +614,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = readData(vehicleListDataFilePath)
+        local vehicleListData = loadJson('vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -652,7 +639,7 @@ end
 local function loadAIGroup(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local aiGroupData = readData(aiGroupDataFilePath)
+        local aiGroupData = loadJson('aiGroupData.json')
         if aiGroupData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -673,7 +660,7 @@ end
 local function saveAIGroup(isPublic, source, name, group)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local aiGroupData = readData(aiGroupDataFilePath)
+        local aiGroupData = loadJson('aiGroupData.json')
         if aiGroupData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -865,7 +852,7 @@ end
 
 local function getRoleBits(source)
     local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) & ~requirePermissionBits
-    local rolesData = readData(rolesDataFilePath)
+    local rolesData = loadJson('rolesData.json')
     if rolesData ~= nil then
         local license = GetPlayerIdentifier(source, 0)
         if license ~= nil then
@@ -1256,7 +1243,7 @@ AddEventHandler("races:request", function(roleBit)
                 if roleBit & requirePermissionBits ~= 0 then
                     local license = GetPlayerIdentifier(source, 0)
                     if license ~= nil then
-                        local rolesData = readData(rolesDataFilePath)
+                        local rolesData = loadJson('rolesData.json')
                         if rolesData ~= nil then
                             local roleType = "SPAWN"
                             if ROLE_EDIT == roleBit then
@@ -1301,7 +1288,6 @@ AddEventHandler("races:load", function(isPublic, trackName)
     local source = source
     if isPublic ~= nil and trackName ~= nil then
         local track = loadTrack(isPublic, source, trackName)
-        print(track)
         if track ~= nil then
             TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords)
         else
@@ -1766,7 +1752,7 @@ AddEventHandler("races:listGrps", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local aiGroupData = readData(aiGroupDataFilePath)
+            local aiGroupData = loadJson('aiGroupData.json')
             if aiGroupData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1904,7 +1890,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = readData(vehicleListDataFilePath)
+            local vehicleListData = loadJson('vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -2258,7 +2244,7 @@ AddEventHandler("races:aiGrpNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local aiGroupData = readData(aiGroupDataFilePath)
+            local aiGroupData = loadJson('aiGroupData.json')
             if aiGroupData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -2291,7 +2277,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = readData(vehicleListDataFilePath)
+            local vehicleListData = loadJson('vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
