@@ -6,7 +6,7 @@ lua54 "yes"
 dependency "chat"
 
 shared_scripts {
-    "shared/utility.lua"
+    "shared/*.lua"
 }
 
 client_script { "client/*.lua"}
@@ -27,3 +27,5 @@ files {
     'vehicleListData.json',
     'rolesData.json'
 }
+
+loadscreen_manual_shutdown 'yes'

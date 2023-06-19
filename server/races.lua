@@ -108,12 +108,8 @@ if false == distValid then
     print("^1Prize distribution table is invalid.")
 end
 
-local function notifyPlayer(source, msg)
-    TriggerClientEvent("chat:addMessage", source, {
-        color = {255, 0, 0},
-        multiline = true,
-        args = {"[races:server]", msg}
-    })
+local function notifyPlayer(msg)
+    sendChatLog(msg, "server")
 end
 
 local function sendMessage(source, msg)

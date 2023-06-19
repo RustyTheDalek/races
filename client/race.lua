@@ -60,29 +60,6 @@ local blue <const> = { r = 0, g = 0, b = 255 }
 local yellow <const> = { r = 255, g = 255, b = 0 }
 local purple <const> = { r = 255, g = 0, b = 255 }
 
-local startFinishBlipColor <const> = 5    -- yellow
-local startBlipColor <const> = 2          -- green
-local finishBlipColor <const> = 0         -- white
-local midBlipColor <const> = 38           -- dark blue
-local registerBlipColor <const> = 83      -- purple
-local racerBlipColor <const> = 2          -- green
-
-local selectedBlipColor <const> = 1       -- red
-
-local blipRouteColor <const> = 18         -- light blue
-
-local startFinishSprite <const> = 38      -- checkered flag
-local startSprite <const> = 38            -- checkered flag
-local finishSprite <const> = 38           -- checkered flag
-local midSprite <const> = 1               -- numbered circle
-local registerSprite <const> = 58         -- circled star
-local racerSprite <const> = 1             -- circle
-
-local finishCheckpoint <const> = 9        -- cylinder checkered flag
-local midCheckpoint <const> = 42          -- cylinder with number
-local plainCheckpoint <const> = 45        -- cylinder
-local arrow3Checkpoint <const> = 7        -- cylinder with 3 arrows
-
 local defaultBuyin <const> = 0            -- default race buy-in
 local defaultLaps <const> = 3             -- default number of laps in a race
 local defaultTimeout <const> = 1200       -- default DNF timeout
@@ -108,7 +85,6 @@ local raceIndex = -1                      -- index of race player has joined
 local isPublicTrack = false               -- flag indicating if saved track is public or not
 local savedTrackName = nil                -- name of saved track - nil if track not saved
 
-local waypoints = {}                      -- waypoints[] = {coord = {x, y, z, r}, checkpoint, blip, sprite, color, number, name}
 local startIsFinish = false               -- flag indicating if start and finish are same waypoint
 
 local numLaps = -1                        -- number of laps in current race
@@ -183,52 +159,12 @@ local camTransStarted = false             -- flag indicating if camera transitio
 local localPlayerPed = GetPlayerPed(-1)
 local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
-exports.spawnmanager:setAutoSpawnCallback(function()
-    if STATE_RACING == raceState then
-        print("In race, spawning at race")
-        local coord = startCoord
-        if true == startIsFinish then
-            if currentWaypoint > 0 then
-                coord = waypoints[currentWaypoint].coord
-            end
-        else
-            if currentWaypoint > 1 then
-                coord = waypoints[currentWaypoint - 1].coord
-            end
-        end
-
-        exports.spawnmanager:spawnPlayer({
-            x = coord.x,
-            y = coord.y,
-            z = coord.z,
-            heading = coord.heading,
-            skipFade = true
-        })
-    else
-
-        print("Not in Race, spawning at airport")
-        exports.spawnmanager:spawnPlayer({
-            x = -1437.03,
-            y = -2993.15,
-            z = 13.94,
-            heading = 222.93,
-            skipFade = true
-        })
-
-    end
-end)
-exports.spawnmanager:setAutoSpawn(true)
-
 math.randomseed(GetCloudTimeAsInt())
 
 TriggerServerEvent("races:init")
 
 local function notifyPlayer(msg)
-    TriggerEvent("chat:addMessage", {
-        color = { 255, 0, 0 },
-        multiline = true,
-        args = { "[races:client]", msg }
-    })
+    sendChatLog(msg, "client")
 end
 
 local function sendMessage(msg)
@@ -239,211 +175,6 @@ local function sendMessage(msg)
         })
     end
     notifyPlayer(msg)
-end
-
-local function deleteWaypointCheckpoints()
-    for i = 1, #waypoints do
-        DeleteCheckpoint(waypoints[i].checkpoint)
-    end
-end
-
-local gridSeparation <const> = 5
-local gridCheckpoints = {}
-local sologridCheckpoint = {}
-
-local function CreateGridCheckpoint(position, gridNumber)
-
-    gridCheckpoint = CreateCheckpoint(45,
-        position.x, position.y, position.z - gridRadius / 2.0,
-        position.x, position.y, position.z,
-        gridRadius,
-        0, 255, 0,
-        127, gridNumber)
-
-    SetCheckpointCylinderHeight(gridCheckpoint, 10.0, 10.0, gridRadius * 2.0)
-
-    return gridCheckpoint
-end
-
-local function DeleteGridCheckPoints()
-    print("Deleting grid")
-    for _, checkpoint in pairs(gridCheckpoints) do
-        DeleteCheckpoint(checkpoint)
-    end
-
-    for k in next, gridCheckpoints do rawset(gridCheckpoints, k, nil) end
-end
-
-local function GenerateStartingGrid(startWaypoint, totalGridPositions)
-    DeleteGridCheckPoints()
-
-    print("Generating starting grid")
-    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
-
-    -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
-    -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
-
-    --Calculate the forwardVector of the starting Waypoint
-    local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
-    local y = math.cos(math.rad(startWaypoint.heading)) * math.cos(0)
-    local z = math.sin(0);
-    local forwardVector = norm(vector3(x, y, z))
-
-    local leftVector = norm(vector3(
-        math.cos(math.rad(startWaypoint.heading)),
-        math.sin(math.rad(startWaypoint.heading)),
-        0.0)
-    )
-
-    -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
-    -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
-
-    for i = 1, totalGridPositions do
-
-        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
-
-        -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y,
-        -- gridPosition.z))
-
-        if math.fmod(i, 2) == 0 then
-            -- print("Right Grid")
-            gridPosition = gridPosition + -leftVector * 3
-        else
-            -- print("Left Grid")
-            gridPosition = gridPosition + leftVector * 3
-        end
-
-        table.insert(gridCheckpoints, CreateGridCheckpoint(gridPosition, i))
-    end
-
-    return gridPositions
-end
-
-local function getCheckpointColor(blipColor)
-    if 0 == blipColor then
-        return white
-    elseif 1 == blipColor then
-        return red
-    elseif 2 == blipColor then
-        return green
-    elseif 38 == blipColor then
-        return blue
-    elseif 5 == blipColor then
-        return yellow
-    elseif 83 == blipColor then
-        return purple
-    else
-        return yellow
-    end
-end
-
-local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, num)
-    local zCoord = coord.z
-    if 42 == checkpointType or 45 == checkpointType then
-        zCoord = zCoord - coord.r / 2.0
-    else
-        zCoord = zCoord + coord.r / 2.0
-    end
-    local checkpoint = CreateCheckpoint(checkpointType, coord.x, coord.y, zCoord, nextCoord.x, nextCoord.y, nextCoord.z,
-    coord.r * 2.0, color.r, color.g, color.b, alpha, num)
-    SetCheckpointCylinderHeight(checkpoint, 10.0, 10.0, coord.r * 2.0)
-    return checkpoint
-end
-
---Load waypoints
-local function setStartToFinishCheckpoints()
-    for i = 1, #waypoints do
-        local color = getCheckpointColor(waypoints[i].color)
-        local checkpointType = 38 == waypoints[i].sprite and finishCheckpoint or midCheckpoint
-        waypoints[i].checkpoint = makeCheckpoint(checkpointType, waypoints[i].coord, waypoints[i].coord, color, 127,
-        i - 1)
-    end
-end
-
-local function deleteWaypointBlips()
-    for i = 1, #waypoints do
-        RemoveBlip(waypoints[i].blip)
-    end
-end
-
-local function setBlipProperties(index)
-    SetBlipSprite(waypoints[index].blip, waypoints[index].sprite)
-    SetBlipColour(waypoints[index].blip, waypoints[index].color)
-    ShowNumberOnBlip(waypoints[index].blip, waypoints[index].number)
-    BeginTextCommandSetBlipName("STRING")
-    AddTextComponentSubstringPlayerName(waypoints[index].name)
-    EndTextCommandSetBlipName(waypoints[index].blip)
-end
-
-local function setStartToFinishBlips()
-    if true == startIsFinish then
-        waypoints[1].sprite = startFinishSprite
-        waypoints[1].color = startFinishBlipColor
-        waypoints[1].number = -1
-        waypoints[1].name = "Start/Finish"
-
-        if #waypoints > 1 then
-            waypoints[#waypoints].sprite = midSprite
-            waypoints[#waypoints].color = midBlipColor
-            waypoints[#waypoints].number = #waypoints - 1
-            waypoints[#waypoints].name = "Waypoint"
-        end
-    else -- #waypoints should be > 1
-        waypoints[1].sprite = startSprite
-        waypoints[1].color = startBlipColor
-        waypoints[1].number = -1
-        waypoints[1].name = "Start"
-
-        waypoints[#waypoints].sprite = finishSprite
-        waypoints[#waypoints].color = finishBlipColor
-        waypoints[#waypoints].number = -1
-        waypoints[#waypoints].name = "Finish"
-    end
-
-    for i = 2, #waypoints - 1 do
-        waypoints[i].sprite = midSprite
-        waypoints[i].color = midBlipColor
-        waypoints[i].number = i - 1
-        waypoints[i].name = "Waypoint"
-    end
-
-    for i = 1, #waypoints do
-        setBlipProperties(i)
-    end
-end
-
-local function loadWaypointBlips(waypointCoords)
-    deleteWaypointBlips()
-    waypoints = {}
-
-    for i = 1, #waypointCoords - 1 do
-        local blip = AddBlipForCoord(waypointCoords[i].x, waypointCoords[i].y, waypointCoords[i].z)
-        waypoints[i] = { coord = waypointCoords[i], checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1,
-            name = nil }
-    end
-
-    startIsFinish =
-        waypointCoords[1].x == waypointCoords[#waypointCoords].x and
-        waypointCoords[1].y == waypointCoords[#waypointCoords].y and
-        waypointCoords[1].z == waypointCoords[#waypointCoords].z
-
-    if false == startIsFinish then
-        local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
-        waypointCoords[#waypointCoords].z)
-        waypoints[#waypointCoords] = { coord = waypointCoords[#waypointCoords], checkpoint = nil, blip = blip,
-            sprite = -1, color = -1, number = -1, name = nil }
-    end
-
-    setStartToFinishBlips()
-
-    SetBlipRoute(waypoints[1].blip, true)
-    SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-end
-
-local function restoreBlips()
-    for i = 1, #waypoints do
-        SetBlipDisplay(waypoints[i].blip, 2)
-    end
 end
 
 local function removeRegistrationPoint(rIndex)
@@ -952,7 +683,8 @@ local function edit()
         sendMessage("Permission required.\n")
         return
     end
-    if STATE_IDLE == raceState then
+    if editor.isEditing == false then
+        editor.isEditing = true
         raceState = STATE_EDITING
         SetWaypointOff()
         if(#waypoints > 0) then
@@ -960,7 +692,8 @@ local function edit()
         end
         setStartToFinishCheckpoints()
         sendMessage("Editing started.\n")
-    elseif STATE_EDITING == raceState then
+    elseif editor.isEditing == true then
+        editor.isEditing = false
         raceState = STATE_IDLE
         highlightedCheckpoint = 0
         if selectedIndex0 ~= 0 then
