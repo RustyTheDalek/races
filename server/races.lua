@@ -992,10 +992,10 @@ AddEventHandler('races:resetupgrade', function(vehiclemodint)
         print("Brakes reset for "  .. playerName)
     elseif vehiclemodint == 13 then
         print("Gearbox reset for "  .. playerName)
-    elseif vehiclemodint == 17 then
-        print("Nitrous reset for "  .. playerName)
-    elseif vehiclemodint == 18 then
-        print("Turbo reset for "  .. playerName)
+    --elseif vehiclemodint == 17 then
+        --print("Nitrous reset for "  .. playerName)
+    --elseif vehiclemodint == 18 then
+        --print("Turbo reset for "  .. playerName)
     else
         print(vehiclemodint .. " Reset, unknown for"  .. playerName)
     end
