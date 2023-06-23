@@ -142,13 +142,11 @@ local started = false                     -- flag indicating if race started
 local speedo = false                      -- flag indicating if speedometer is displayed
 local unitom = "imperial"                 -- current unit of measurement
 
-local panelShown = false                  -- flag indicating if main, edit, register, ai or list panel is shown
+local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
 local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
 local allVehiclesHTML = ""                -- html option list of all vehicles
 
 local roleBits = 0                        -- bit flag indicating if player is permitted to create tracks, register races, and/or spawn vehicles
-
-local aiState = nil                       -- table containing race info and AI driver info table
 
 local enteringVehicle = false             -- flag indicating if player is entering a vehicle
 
@@ -816,11 +814,6 @@ local function validateRegister(buyin, laps, timeout, allowAI)
         return false
     end
 
-    if allowAI ~= "yes" or allowAI ~= "no" then
-        sendMessage("Invalid AI allowed value.\n")
-        return false
-    end
-
     if raceState ~= STATE_IDLE then
         if raceState == STATE_EDITING then
             sendMessage("Cannot register.  Stop editing first.\n")
@@ -842,7 +835,6 @@ local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
     buyin = (nil == buyin or "." == buyin) and defaultBuyin or math.tointeger(tonumber(buyin))
     laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
     timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
-    allowAI = (nil == allowAI or "." == allowAI) and "no" or allowAI
 
     if validateRegister(buyin, laps, timeout, allowAI) == false then
         return
@@ -956,22 +948,7 @@ local function startRace(delay)
     end
     delay = math.tointeger(tonumber(delay)) or defaultDelay
     if delay ~= nil and delay >= 5 then
-        if aiState ~= nil then
-            local allSpawned = true
-            for _, driver in pairs(aiState.drivers) do
-                if nil == driver.ped or nil == driver.vehicle then
-                    allSpawned = false
-                    break
-                end
-            end
-            if true == allSpawned then
-                TriggerServerEvent("races:start", delay)
-            else
-                sendMessage("Cannot start.  Some AI drivers not spawned.\n")
-            end
-        else
-            TriggerServerEvent("races:start", delay)
-        end
+        TriggerServerEvent("races:start", delay)
     else
         sendMessage("Cannot start.  Invalid delay.\n")
     end
@@ -1429,15 +1406,6 @@ local function showPanel(panel)
             defaultLaps = defaultLaps,
             defaultTimeout = defaultTimeout,
             defaultDelay = defaultDelay,
-            allVehicles = allVehiclesHTML
-        })
-    elseif "ai" == panel then
-        SetNuiFocus(true, true)
-        TriggerServerEvent("races:aiGrpNames", false, nil)
-        TriggerServerEvent("races:aiGrpNames", true, nil)
-        SendNUIMessage({
-            panel = "ai",
-            defaultVehicle = defaultVehicle,
             allVehicles = allVehiclesHTML
         })
     elseif "list" == panel then
@@ -2024,35 +1992,8 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races blt [access] [name] - list 10 best lap times of private or public track saved as [name]\n"
         msg = msg .. "/races list [access] - list saved private or public tracks\n"
         msg = msg .. "\n"
-        msg = msg ..
-        "For the following '/races register' commands, (buy-in) defaults to 500, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\n"
-        msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) - register your race with no vehicle restrictions\n"
-        msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle] - register your race restricted to [vehicle]\n"
-        msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class] - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\n"
-        msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle) - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any\n"
-        msg = msg .. "\n"
         msg = msg .. "/races unregister - unregister your race\n"
         msg = msg .. "/races start (delay) - start your registered race; (delay) defaults to 30 seconds\n"
-        msg = msg .. "\n"
-        msg = msg .. "/races ai add [name] - add an AI driver named [name]\n"
-        msg = msg .. "/races ai delete [name] - delete an AI driver named [name]\n"
-        msg = msg ..
-        "/races ai spawn [name] (vehicle) - spawn AI driver named [name] in (vehicle); (vehicle) defaults to 'adder'\n"
-        msg = msg .. "/races ai list - list AI driver names\n"
-        msg = msg .. "/races ai deleteAll - delete all AI drivers\n"
-        msg = msg .. "\n"
-        msg = msg ..
-        "For the following '/races ai' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private AI group and 'pub' operates on a public AI group\n"
-        msg = msg .. "/races ai loadGrp [access] [name] - load private or public AI group saved as [name]\n"
-        msg = msg .. "/races ai saveGrp [access] [name] - save new private or public AI group as [name]\n"
-        msg = msg ..
-        "/races ai overwriteGrp [access] [name] - overwrite existing private or public AI group saved as [name]\n"
-        msg = msg .. "/races ai deleteGrp [access] [name] - delete private or public AI group saved as [name]\n"
-        msg = msg .. "/races ai listGrps [access] - list saved private or public AI groups\n"
         msg = msg .. "\n"
         msg = msg .. "/races vl add [vehicle] - add [vehicle] to vehicle list\n"
         msg = msg .. "/races vl delete [vehicle] - delete [vehicle] from vehicle list\n"
@@ -2082,7 +2023,7 @@ RegisterCommand("races", function(_, args)
         "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
         msg = msg .. "/races funds - view available funds\n"
         msg = msg ..
-        "/races panel (panel) - display (panel) = {edit, register, ai, list} panel; otherwise display main panel if (panel) is not specified\n"
+        "/races panel (panel) - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified\n"
         notifyPlayer(msg)
     elseif "request" == args[1] then
         request(args[2])
@@ -2112,35 +2053,6 @@ RegisterCommand("races", function(_, args)
         setupGrid()
     elseif "start" == args[1] then
         startRace(args[2])
-    elseif "ai" == args[1] then
-        if "add" == args[2] then
-            local player = PlayerPedId()
-            addAIDriver(args[3], GetEntityCoords(player), GetEntityHeading(player))
-        elseif "delete" == args[2] then
-            deleteAIDriver(args[3])
-        elseif "spawn" == args[2] then
-            if args[4] ~= nil then
-                spawnAIDriver(args[3], GetHashKey(args[4]))
-            else
-                spawnAIDriver(args[3], nil)
-            end
-        elseif "list" == args[2] then
-            listAIDrivers()
-        elseif "deleteAll" == args[2] then
-            deleteAllAIDrivers()
-        elseif "loadGrp" == args[2] then
-            loadGrp(args[3], args[4])
-        elseif "saveGrp" == args[2] then
-            saveGrp(args[3], args[4])
-        elseif "overwriteGrp" == args[2] then
-            overwriteGrp(args[3], args[4])
-        elseif "deleteGrp" == args[2] then
-            deleteGrp(args[3], args[4])
-        elseif "listGrps" == args[2] then
-            listGrps(args[3])
-        else
-            notifyPlayer("Unknown AI command.\n")
-        end
     elseif "vl" == args[1] then
         if "add" == args[2] then
             addVeh(args[3])
@@ -2343,44 +2255,12 @@ AddEventHandler("races:loadLst", function(isPublic, name, list)
     end
 end)
 
-RegisterNetEvent("races:loadGrp")
-AddEventHandler("races:loadGrp", function(isPublic, name, group)
-    if isPublic ~= nil and name ~= nil and group ~= nil then
-        local loaded = true
-        if deleteAllAIDrivers() == true then
-            -- group[aiName] = {startCoord = {x, y, z}, heading, vehicleHash}
-            for aiName, driver in pairs(group) do
-                if addAIDriver(aiName, vector3(driver.startCoord.x, driver.startCoord.y, driver.startCoord.z), driver.heading) == false then
-                    loaded = false
-                    break
-                end
-                if spawnAIDriver(aiName, driver.vehicleHash) == false then
-                    loaded = false
-                    break
-                end
-            end
-        else
-            loaded = false
-        end
-        if true == loaded then
-            sendMessage((true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' loaded.\n")
-        else
-            sendMessage("Could not load " ..
-            (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
-        end
-    else
-        notifyPlayer("Ignoring load AI group event.  Invalid parameters.\n")
-    end
-end)
-
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(rIndex, delay)
     if rIndex ~= nil and delay ~= nil then
         if delay >= 5 then
             local currentTime = GetGameTimer()
             -- SCENARIO:
-            -- 1. player registers ai race
-            -- 2. player adds ai
             -- 3. player does not join race they registered
             -- 4. player starts registered race -- receives start event
             -- player should not start in race they registered since they did not join
@@ -2447,24 +2327,6 @@ AddEventHandler("races:start", function(rIndex, delay)
                     notifyPlayer("Ignoring start event.  Currently idle.\n")
                 end
             end
-
-            -- SCENARIO:
-            -- 1. player registers ai race
-            -- 2. player adds ai
-            -- 3. player joins another race
-            -- 4. joined race starts -- receives start event from joined race
-            -- do not trigger start event for ai's in player's registered race
-            -- only trigger start event for ai's if player started their registered race
-            if aiState ~= nil and GetPlayerServerId(PlayerId()) == rIndex then
-                aiState.raceStart = currentTime
-                aiState.raceDelay = delay
-                for _, driver in pairs(aiState.drivers) do
-                    if aiState.svehicle ~= nil then
-                        driver.vehicle = switchVehicle(driver.ped, aiState.svehicle)
-                    end
-                    driver.raceState = STATE_RACING
-                end
-            end
         else
             notifyPlayer("Ignoring start event.  Invalid delay.\n")
         end
@@ -2491,7 +2353,7 @@ end)
 
 -- SCENARIO:
 -- 1. player finishes a race
--- 2. receives finish events from previous race because other players/AI finished
+-- 2. receives finish events from previous race because other players
 -- 3. player joins another race
 -- 4. joined race starts
 -- 5. receives finish event from previous race before current race
@@ -2516,10 +2378,6 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                     beginDNFTimeout = true
                     timeoutStart = currentTime
                 end
-                if aiState ~= nil and false == aiState.beginDNFTimeout then
-                    aiState.beginDNFTimeout = true
-                    aiState.timeoutStart = currentTime
-                end
 
                 local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
                 local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
@@ -2534,7 +2392,7 @@ end)
 
 -- SCENARIO:
 -- 1. player finishes a race
--- 2. doesn't receive results event because other players/AI have not finished
+-- 2. doesn't receive results event because other players
 -- 3. player joins another race
 -- 4. joined race starts
 -- 5. receives results event from previous race before current race
@@ -2554,7 +2412,7 @@ end)
 
 -- SCENARIO:
 -- 1. player finishes previous race
--- 2. still receiving position events from previous race because other players/AI have not finished
+-- 2. still receiving position events from previous race because other players
 -- 3. player joins another race
 -- 4. joined race started
 -- receiving position events from previous race and joined race
@@ -2720,16 +2578,6 @@ Citizen.CreateThread(function()
             local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
             TriggerServerEvent("races:report", raceIndex, PedToNet(player), nil, numWaypointsPassed, distance)
-        end
-
-        if aiState ~= nil then
-            for aiName, driver in pairs(aiState.drivers) do
-                if STATE_RACING == driver.raceState then
-                    local distance = #(GetEntityCoords(driver.ped) - vector3(driver.destCoord.x, driver.destCoord.y, driver.destCoord.z))
-                    TriggerServerEvent("races:report", GetPlayerServerId(PlayerId()), driver.netID, aiName,
-                    driver.numWaypointsPassed, distance)
-                end
-            end
         end
     end
 end)

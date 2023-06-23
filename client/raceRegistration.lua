@@ -9,58 +9,11 @@ function removeRegistrationPoint(rIndex)
     starts[rIndex] = nil
 end
 
-function register(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
-    if rIndex ~= nil and coord ~= nil and isPublic ~= nil and owner ~= nil and buyin ~= nil and laps ~= nil and timeout ~=
-        nil and allowAI ~= nil and rdata ~= nil then
-        local blip = AddBlipForCoord(coord.x, coord.y, coord.z) -- registration blip
-        SetBlipSprite(blip, registerSprite)
-        SetBlipColour(blip, registerBlipColor)
-        BeginTextCommandSetBlipName("STRING")
-        local msg = owner .. " (" .. buyin .. " buy-in"
-        if "yes" == allowAI then
-            msg = msg .. " : AI allowed"
-        end
-        if "rest" == rdata.rtype then
-            msg = msg .. " : using '" .. rdata.restrict .. "' vehicle"
-        elseif "class" == rdata.rtype then
-            msg = msg .. " : using " .. getClassName(rdata.vclass) .. " vehicle class"
-        elseif "rand" == rdata.rtype then
-            msg = msg .. " : using random "
-            if rdata.vclass ~= nil then
-                msg = msg .. getClassName(rdata.vclass) .. " vehicle class"
-            else
-                msg = msg .. "vehicles"
-            end
-            if rdata.svehicle ~= nil then
-                msg = msg .. " : '" .. rdata.svehicle .. "'"
-            end
-        end
-        msg = msg .. ")"
-        AddTextComponentSubstringPlayerName(msg)
-        EndTextCommandSetBlipName(blip)
-
-        coord.r = defaultRadius
-        local checkpoint = makeCheckpoint(plainCheckpoint, coord, coord, purple, 127, 0) -- registration checkpoint
-
-        starts[rIndex] = {
-            isPublic = isPublic,
-            trackName = trackName,
-            owner = owner,
-            buyin = buyin,
-            laps = laps,
-            timeout = timeout,
-            allowAI = allowAI,
-            rtype = rdata.rtype,
-            restrict = rdata.restrict,
-            vclass = rdata.vclass,
-            svehicle = rdata.svehicle,
-            vehicleList = rdata.vehicleList,
-            blip = blip,
-            checkpoint = checkpoint
-        }
-    else
-        notifyPlayer("Ignoring register event.  Invalid parameters.\n")
-    end
+function RaceRegistration:removeRegistrationPoint(rIndex)
+    RemoveBlip(self.starts[rIndex].blip) -- delete registration blip
+    DeleteCheckpoint(self.starts[rIndex].checkpoint) -- delete registration checkpoint
+    DeleteCheckpoint(gridCheckpoint)
+    self.starts[rIndex] = nil
 end
 
 function unregister(rIndex)
@@ -99,23 +52,6 @@ function unregister(rIndex)
                 end
                 notifyPlayer("Race canceled.\n")
             end
-        end
-        if aiState ~= nil and GetPlayerServerId(PlayerId()) == rIndex then
-            for _, driver in pairs(aiState.drivers) do
-                if driver.ped ~= nil then
-                    SetEntityAsNoLongerNeeded(driver.ped)
-                end
-                if IsEntityDead(driver.ped) == false and driver.originalVehicleHash ~= nil then
-                    driver.vehicle = switchVehicle(driver.ped, driver.originalVehicleHash)
-                    if driver.vehicle ~= nil then
-                        SetVehicleColours(driver.vehicle, driver.colorPri, driver.colorSec)
-                    end
-                end
-                if driver.vehicle ~= nil then
-                    SetEntityAsNoLongerNeeded(driver.vehicle)
-                end
-            end
-            aiState = nil
         end
     else
         notifyPlayer("Ignoring unregister event.  Invalid parameters.\n")
@@ -176,30 +112,6 @@ function join(rIndex, aiName, waypointCoords)
                 else
                     notifyPlayer("Ignoring join event.  Already joined to a race.\n")
                 end
-            elseif aiState ~= nil then
-                local driver = aiState.drivers[aiName]
-                if driver ~= nil then
-                    if nil == aiState.waypointCoords then
-                        aiState.waypointCoords = waypointCoords
-                        aiState.startIsFinish = waypointCoords[1].x == waypointCoords[#waypointCoords].x and
-                                                    waypointCoords[1].y == waypointCoords[#waypointCoords].y and
-                                                    waypointCoords[1].z == waypointCoords[#waypointCoords].z
-                        if true == aiState.startIsFinish then
-                            aiState.waypointCoords[#aiState.waypointCoords] = nil
-                        end
-                    end
-                    driver.destCoord = aiState.waypointCoords[1]
-                    driver.destSet = true
-                    driver.currentWP = true == aiState.startIsFinish and 0 or 1
-                    if "rand" == aiState.rtype then
-                        aiState.randVehicles = aiState.vehicleList
-                    end
-                    notifyPlayer("AI driver '" .. aiName .. "' joined race.\n")
-                else
-                    notifyPlayer("Ignoring join event.  '" .. aiName .. "' is not a valid AI driver.\n")
-                end
-            else
-                notifyPlayer("Ignoring join event.  No AI drivers added.\n")
             end
         else
             notifyPlayer("Ignoring join event.  Race does not exist.\n")
