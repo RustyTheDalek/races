@@ -1,3 +1,15 @@
+function drawMsg(x, y, msg, scale, justify)
+    SetTextFont(4)
+    SetTextScale(0, scale)
+    SetTextColour(255, 255, 0, 255)
+    SetTextOutline()
+    SetTextJustification(justify)
+    SetTextWrap(0.0, 1.0)
+    BeginTextCommandDisplayText("STRING")
+    AddTextComponentSubstringPlayerName(msg)
+    EndTextCommandDisplayText(x, y)
+end
+
 --chat
 function sendChatLog(msg, prefix)
     TriggerEvent("chat:addMessage", {
