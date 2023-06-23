@@ -15,7 +15,7 @@ function sendChatLog(msg, prefix)
     TriggerEvent("chat:addMessage", {
         color = { 255, 0, 0 },
         multiline = true,
-        args = { "[races:prefix]", msg }
+        args = { "[races:" .. prefix .. "]", msg }
     })
 end
 
