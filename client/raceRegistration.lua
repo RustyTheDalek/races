@@ -1,12 +1,14 @@
-raceRegistration = {}
+RaceRegistration = {
+    -- self.starts[playerID] = {isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
+    starts = {},
+    startIsFinish = false
+}
 
-raceRegistration.starts = {} -- starts[playerID] = {isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
-
-function removeRegistrationPoint(rIndex)
-    RemoveBlip(starts[rIndex].blip) -- delete registration blip
-    DeleteCheckpoint(starts[rIndex].checkpoint) -- delete registration checkpoint
-    DeleteCheckpoint(gridCheckpoint)
-    starts[rIndex] = nil
+function RaceRegistration:new (o)
+    o = o or {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
 
 function RaceRegistration:removeRegistrationPoint(rIndex)
@@ -16,12 +18,12 @@ function RaceRegistration:removeRegistrationPoint(rIndex)
     self.starts[rIndex] = nil
 end
 
-function unregister(rIndex)
+function RaceRegistration:unregister(rIndex)
     if rIndex ~= nil then
         if gridCheckpoint ~= nil then
             DeleteCheckpoint(gridCheckpoint)
         end
-        if starts[rIndex] ~= nil then
+        if self.starts[rIndex] ~= nil then
             DeleteGridCheckPoints()
             removeRegistrationPoint(rIndex)
         end
@@ -58,42 +60,45 @@ function unregister(rIndex)
     end
 end
 
-function join(rIndex, aiName, waypointCoords)
+function RaceRegistration:join(rIndex, aiName, waypointCoords)
     if rIndex ~= nil and waypointCoords ~= nil then
-        if starts[rIndex] ~= nil then
+        if self.starts[rIndex] ~= nil then
             if nil == aiName then
                 if STATE_IDLE == raceState then
                     raceState = STATE_JOINING
                     raceIndex = rIndex
-                    numLaps = starts[rIndex].laps
-                    DNFTimeout = starts[rIndex].timeout * 1000
+                    numLaps = self.starts[rIndex].laps
+                    DNFTimeout = self.starts[rIndex].timeout * 1000
                     restrictedHash = nil
-                    restrictedClass = starts[rIndex].vclass
+                    restrictedClass = self.starts[rIndex].vclass
                     customClassVehicleList = {}
-                    startVehicle = starts[rIndex].svehicle
+                    startVehicle = self.starts[rIndex].svehicle
                     randVehicles = {}
+
+                    self.startIsFinish =
+                    waypointCoords[1].x == waypointCoords[#waypointCoords].x and
+                    waypointCoords[1].y == waypointCoords[#waypointCoords].y and
+                    waypointCoords[1].z == waypointCoords[#waypointCoords].z
+
                     loadWaypointBlips(waypointCoords)
                     local msg = "Joined race using "
-                    if nil == starts[rIndex].trackName then
+                    if nil == self.starts[rIndex].trackName then
                         msg = msg .. "unsaved track "
                     else
                         msg =
-                            msg .. (true == starts[rIndex].isPublic and "publicly" or "privately") .. " saved track '" ..
-                                starts[rIndex].trackName .. "' "
+                            msg .. (true == self.starts[rIndex].isPublic and "publicly" or "privately") .. " saved track '" ..
+                                self.starts[rIndex].trackName .. "' "
                     end
                     msg = msg ..
-                              ("registered by %s : %d buy-in : %d lap(s)"):format(starts[rIndex].owner,
-                            starts[rIndex].buyin, starts[rIndex].laps)
-                    if "yes" == starts[rIndex].allowAI then
-                        msg = msg .. " : AI allowed"
-                    end
-                    if "rest" == starts[rIndex].rtype then
-                        msg = msg .. " : using '" .. starts[rIndex].restrict .. "' vehicle"
-                        restrictedHash = GetHashKey(starts[rIndex].restrict)
-                    elseif "class" == starts[rIndex].rtype then
+                              ("registered by %s : %d buy-in : %d lap(s)"):format(self.starts[rIndex].owner,
+                            self.starts[rIndex].buyin, self.starts[rIndex].laps)
+                    if "rest" == self.starts[rIndex].rtype then
+                        msg = msg .. " : using '" .. self.starts[rIndex].restrict .. "' vehicle"
+                        restrictedHash = GetHashKey(self.starts[rIndex].restrict)
+                    elseif "class" == self.starts[rIndex].rtype then
                         msg = msg .. " : using " .. getClassName(restrictedClass) .. " vehicle class"
-                        customClassVehicleList = starts[rIndex].vehicleList
-                    elseif "rand" == starts[rIndex].rtype then
+                        customClassVehicleList = self.starts[rIndex].vehicleList
+                    elseif "rand" == self.starts[rIndex].rtype then
                         msg = msg .. " : using random "
                         if restrictedClass ~= nil then
                             msg = msg .. getClassName(restrictedClass) .. " vehicle class"
@@ -103,7 +108,7 @@ function join(rIndex, aiName, waypointCoords)
                         if startVehicle ~= nil then
                             msg = msg .. " : '" .. startVehicle .. "'"
                         end
-                        randVehicles = starts[rIndex].vehicleList
+                        randVehicles = self.starts[rIndex].vehicleList
                     end
                     msg = msg .. ".\n"
                     notifyPlayer(msg)
@@ -121,9 +126,9 @@ function join(rIndex, aiName, waypointCoords)
     end
 end
 
-function hide(rIndex)
+function RaceRegistration:hide(rIndex)
     if rIndex ~= nil then
-        if starts[rIndex] ~= nil then
+        if self.starts[rIndex] ~= nil then
             removeRegistrationPoint(rIndex)
         else
             notifyPlayer("Ignoring hide event.  Race does not exist.\n")
@@ -133,10 +138,10 @@ function hide(rIndex)
     end
 end
 
-function handleRaceRegistration()
+function RaceRegistration:handleRaceRegistration()
     local closestIndex = -1
     local minDist = defaultRadius
-    for rIndex, start in pairs(starts) do
+    for rIndex, start in pairs(self.starts) do
         local dist = #(playerCoord - GetBlipCoords(start.blip))
         if dist < minDist then
             minDist = dist
@@ -145,31 +150,28 @@ function handleRaceRegistration()
     end
     if closestIndex ~= -1 then
         local msg = "Join race using "
-        if nil == starts[closestIndex].trackName then
+        if nil == self.starts[closestIndex].trackName then
             msg = msg .. "unsaved track "
         else
-            msg = msg .. (true == starts[closestIndex].isPublic and "publicly" or "privately") .. " saved track '" ..
-                      starts[closestIndex].trackName .. "' "
+            msg = msg .. (true == self.starts[closestIndex].isPublic and "publicly" or "privately") .. " saved track '" ..
+                      self.starts[closestIndex].trackName .. "' "
         end
-        msg = msg .. "registered by " .. starts[closestIndex].owner
+        msg = msg .. "registered by " .. self.starts[closestIndex].owner
         drawMsg(0.50, 0.50, msg, 0.7, 0)
-        msg = ("%d buy-in : %d lap(s)"):format(starts[closestIndex].buyin, starts[closestIndex].laps)
-        if "yes" == starts[closestIndex].allowAI then
-            msg = msg .. " : AI allowed"
-        end
-        if "rest" == starts[closestIndex].rtype then
-            msg = msg .. " : using '" .. starts[closestIndex].restrict .. "' vehicle"
-        elseif "class" == starts[closestIndex].rtype then
-            msg = msg .. " : using " .. getClassName(starts[closestIndex].vclass) .. " vehicle class"
-        elseif "rand" == starts[closestIndex].rtype then
+        msg = ("%d buy-in : %d lap(s)"):format(self.starts[closestIndex].buyin, self.starts[closestIndex].laps)
+        if "rest" == self.starts[closestIndex].rtype then
+            msg = msg .. " : using '" .. self.starts[closestIndex].restrict .. "' vehicle"
+        elseif "class" == self.starts[closestIndex].rtype then
+            msg = msg .. " : using " .. getClassName(self.starts[closestIndex].vclass) .. " vehicle class"
+        elseif "rand" == self.starts[closestIndex].rtype then
             msg = msg .. " : using random "
-            if starts[closestIndex].vclass ~= nil then
-                msg = msg .. getClassName(starts[closestIndex].vclass) .. " vehicle class"
+            if self.starts[closestIndex].vclass ~= nil then
+                msg = msg .. getClassName(self.starts[closestIndex].vclass) .. " vehicle class"
             else
                 msg = msg .. "vehicles"
             end
-            if starts[closestIndex].svehicle ~= nil then
-                msg = msg .. " : '" .. starts[closestIndex].svehicle .. "'"
+            if self.starts[closestIndex].svehicle ~= nil then
+                msg = msg .. " : '" .. self.starts[closestIndex].svehicle .. "'"
             end
         end
         drawMsg(0.50, 0.54, msg, 0.7, 0)
@@ -182,9 +184,9 @@ function handleRaceRegistration()
             if IsPedInAnyVehicle(player, false) == 1 then
                 vehicle = GetVehiclePedIsIn(player, false)
             end
-            if "rest" == starts[closestIndex].rtype then
+            if "rest" == self.starts[closestIndex].rtype then
                 if vehicle ~= nil then
-                    if GetEntityModel(vehicle) ~= GetHashKey(starts[closestIndex].restrict) then
+                    if GetEntityModel(vehicle) ~= GetHashKey(self.starts[closestIndex].restrict) then
                         joinRace = false
                         notifyPlayer("Cannot join race.  Player needs to be in restricted vehicle.")
                     end
@@ -192,31 +194,31 @@ function handleRaceRegistration()
                     joinRace = false
                     notifyPlayer("Cannot join race.  Player needs to be in restricted vehicle.")
                 end
-            elseif "class" == starts[closestIndex].rtype then
-                if starts[closestIndex].vclass ~= -1 then
+            elseif "class" == self.starts[closestIndex].rtype then
+                if self.starts[closestIndex].vclass ~= -1 then
                     if vehicle ~= nil then
-                        if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
+                        if GetVehicleClass(vehicle) ~= self.starts[closestIndex].vclass then
                             joinRace = false
                             notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
-                                             getClassName(starts[closestIndex].vclass) .. " class.")
+                                             getClassName(self.starts[closestIndex].vclass) .. " class.")
                         end
                     else
                         joinRace = false
                         notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
-                                         getClassName(starts[closestIndex].vclass) .. " class.")
+                                         getClassName(self.starts[closestIndex].vclass) .. " class.")
                     end
                 else
-                    if #starts[closestIndex].vehicleList == 0 then
+                    if #self.starts[closestIndex].vehicleList == 0 then
                         joinRace = false
                         notifyPlayer("Cannot join race.  No valid vehicles in vehicle list.")
                     else
                         local list = ""
-                        for _, vehName in pairs(starts[closestIndex].vehicleList) do
+                        for _, vehName in pairs(self.starts[closestIndex].vehicleList) do
                             list = list .. vehName .. ", "
                         end
                         list = string.sub(list, 1, -3)
                         if vehicle ~= nil then
-                            if vehicleInList(vehicle, starts[closestIndex].vehicleList) == false then
+                            if vehicleInList(vehicle, self.starts[closestIndex].vehicleList) == false then
                                 joinRace = false
                                 notifyPlayer(
                                     "Cannot join race.  Player needs to be in one of the following vehicles: " .. list)
@@ -228,8 +230,8 @@ function handleRaceRegistration()
                         end
                     end
                 end
-            elseif "rand" == starts[closestIndex].rtype then
-                if #starts[closestIndex].vehicleList == 0 then
+            elseif "rand" == self.starts[closestIndex].rtype then
+                if #self.starts[closestIndex].vehicleList == 0 then
                     joinRace = false
                     notifyPlayer("Cannot join race.  No valid vehicles in vehicle list.")
                 else
@@ -237,18 +239,18 @@ function handleRaceRegistration()
                         originalVehicleHash = GetEntityModel(vehicle)
                         colorPri, colorSec = GetVehicleColours(vehicle)
                     end
-                    if starts[closestIndex].vclass ~= nil then
-                        if nil == starts[closestIndex].svehicle then
+                    if self.starts[closestIndex].vclass ~= nil then
+                        if nil == self.starts[closestIndex].svehicle then
                             if vehicle ~= nil then
-                                if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
+                                if GetVehicleClass(vehicle) ~= self.starts[closestIndex].vclass then
                                     joinRace = false
                                     notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
-                                                     getClassName(starts[closestIndex].vclass) .. " class.")
+                                                     getClassName(self.starts[closestIndex].vclass) .. " class.")
                                 end
                             else
                                 joinRace = false
                                 notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
-                                                 getClassName(starts[closestIndex].vclass) .. " class.")
+                                                 getClassName(self.starts[closestIndex].vclass) .. " class.")
                             end
                         end
                     end
@@ -262,6 +264,67 @@ function handleRaceRegistration()
     end
 end
 
+local function notifyPlayer(msg)
+    sendChatLog(msg, "raceregistration")
+end
+
+
+local function register(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, rdata)
+    
+    print("RaceRegistration")
+    print(rIndex)
+
+    if rIndex == nil and coord == nil and isPublic == nil and owner == nil and buyin == nil and laps == nil and timeout == nil and rdata == nil then
+        notifyPlayer("Ignoring register event.  Invalid parameters.\n")
+        return
+    end
+
+    local blip = AddBlipForCoord(coord.x, coord.y, coord.z) -- registration blip
+    SetBlipSprite(blip, registerSprite)
+    SetBlipColour(blip, registerBlipColor)
+    BeginTextCommandSetBlipName("STRING")
+    local msg = owner .. " (" .. buyin .. " buy-in"
+    if "rest" == rdata.rtype then
+        msg = msg .. " : using '" .. rdata.restrict .. "' vehicle"
+    elseif "class" == rdata.rtype then
+        msg = msg .. " : using " .. getClassName(rdata.vclass) .. " vehicle class"
+    elseif "rand" == rdata.rtype then
+        msg = msg .. " : using random "
+        if rdata.vclass ~= nil then
+            msg = msg .. getClassName(rdata.vclass) .. " vehicle class"
+        else
+            msg = msg .. "vehicles"
+        end
+        if rdata.svehicle ~= nil then
+            msg = msg .. " : '" .. rdata.svehicle .. "'"
+        end
+    end
+    msg = msg .. ")"
+    AddTextComponentSubstringPlayerName(msg)
+    EndTextCommandSetBlipName(blip)
+
+    coord.r = defaultRadius
+    local checkpoint = makeCheckpoint(plainCheckpoint, coord, coord, purple, 127, 0) -- registration checkpoint
+
+    self.starts[rIndex] = {
+        isPublic = isPublic,
+        trackName = trackName,
+        owner = owner,
+        buyin = buyin,
+        laps = laps,
+        timeout = timeout,
+        allowAI = allowAI,
+        rtype = rdata.rtype,
+        restrict = rdata.restrict,
+        vclass = rdata.vclass,
+        svehicle = rdata.svehicle,
+        vehicleList = rdata.vehicleList,
+        blip = blip,
+        checkpoint = checkpoint
+    }
+end
+
+
 RegisterNetEvent("races:register")
 AddEventHandler("races:register", register)
 
@@ -273,5 +336,3 @@ AddEventHandler("races:hide", hide)
 
 RegisterNetEvent("races:join")
 AddEventHandler("races:join", join)
-
-return raceRegistration

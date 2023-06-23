@@ -157,6 +157,8 @@ local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
 math.randomseed(GetCloudTimeAsInt())
 
+local raceRegistration = RaceRegistration:new(nil)
+
 TriggerServerEvent("races:init")
 
 local function notifyPlayer(msg)
@@ -2952,7 +2954,7 @@ Citizen.CreateThread(function()
                 end
             end
         elseif STATE_IDLE == raceState then
-            raceRegistration.handleRaceRegistration()
+            -- raceRegistration:handleRaceRegistration()
         end
 
         if IsPedInAnyVehicle(player, true) == false then
