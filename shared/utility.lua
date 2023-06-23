@@ -1,3 +1,26 @@
+--waypoints
+local function waypointsToCoords()
+    local waypointCoords = {}
+    for i = 1, #waypoints do
+        waypointCoords[i] = waypoints[i].coord
+    end
+    if true == startIsFinish then
+        waypointCoords[#waypointCoords + 1] = waypointCoords[1]
+    end
+    return waypointCoords
+end
+
+local function waypointsToCoordsRev()
+    local waypointCoords = {}
+    if true == startIsFinish then
+        waypointCoords[1] = waypoints[1].coord
+    end
+    for i = #waypoints, 1, -1 do
+        waypointCoords[#waypointCoords + 1] = waypoints[i].coord
+    end
+    return waypointCoords
+end
+
 function drawMsg(x, y, msg, scale, justify)
     SetTextFont(4)
     SetTextScale(0, scale)

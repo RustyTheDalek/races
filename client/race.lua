@@ -185,28 +185,6 @@ local function drawRespawnMessage(numerator, denominator)
     DrawRect(0.92, 0.95, 0.1 * percent, 0.03, 255, 255, 0, 255)
 end
 
-local function waypointsToCoords()
-    local waypointCoords = {}
-    for i = 1, #waypoints do
-        waypointCoords[i] = waypoints[i].coord
-    end
-    if true == startIsFinish then
-        waypointCoords[#waypointCoords + 1] = waypointCoords[1]
-    end
-    return waypointCoords
-end
-
-local function waypointsToCoordsRev()
-    local waypointCoords = {}
-    if true == startIsFinish then
-        waypointCoords[1] = waypoints[1].coord
-    end
-    for i = #waypoints, 1, -1 do
-        waypointCoords[#waypointCoords + 1] = waypoints[i].coord
-    end
-    return waypointCoords
-end
-
 local function minutesSeconds(milliseconds)
     local seconds = milliseconds / 1000.0
     local minutes = math.floor(seconds / 60.0)
