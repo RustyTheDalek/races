@@ -804,13 +804,6 @@ local function validateRegister(buyin, laps, timeout)
         return false
     end
 
-    if laps > 2 or (laps <= 2 and startIsFinish == false) then
-        sendMessage(
-            "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n"
-        )
-        return false
-    end
-
     if validPositiveInt(timeout) == false then
         sendMessage("Invalid DNF timeout.\n")
         return false
@@ -828,6 +821,13 @@ local function validateRegister(buyin, laps, timeout)
     if #waypoints < 1 then
         sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
         return false
+    elseif #waypoints > 1 then
+        if laps > 1 and startIsFinish == false then
+            sendMessage(
+            "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n"
+            )
+            return false
+        end
     end
 
 end
@@ -876,56 +876,54 @@ local function tryRegister(buyin, laps, timeout, rtype, arg7, arg8)
             end
             vehList = vehicleList
         end
-        elseif "rand" == rtype then
-            if #vehicleList == 0 then
+    elseif "rand" == rtype then
+        if #vehicleList == 0 then
+            sendMessage("Cannot register.  Vehicle list is empty.\n")
+            return
+        end
+        vclass = math.tointeger(tonumber(arg7))
+        if nil == vclass then
+            vehList = vehicleList
+        else
+            if vclass < 0 or vclass > 21 then
+                sendMessage("Cannot register.  Invalid vehicle class.\n")
+                return
+            end
+            vehList = {}
+            for _, vehicle in pairs(vehicleList) do
+                if GetVehicleClassFromName(vehicle) == vclass then
+                    vehList[#vehList + 1] = vehicle
+                end
+            end
+            if #vehList == 0 then
                 sendMessage("Cannot register.  Vehicle list is empty.\n")
                 return
             end
-            vclass = math.tointeger(tonumber(arg7))
-            if nil == vclass then
-                vehList = vehicleList
-            else
-                if vclass < 0 or vclass > 21 then
-                    sendMessage("Cannot register.  Invalid vehicle class.\n")
-                    return
-                end
-                vehList = {}
-                for _, vehicle in pairs(vehicleList) do
-                    if GetVehicleClassFromName(vehicle) == vclass then
-                        vehList[#vehList + 1] = vehicle
-                    end
-                end
-                if #vehList == 0 then
-                    sendMessage("Cannot register.  Vehicle list is empty.\n")
-                    return
-                end
-            end
-            svehicle = arg8
-            if svehicle ~= nil then
-                if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
-                    sendMessage("Cannot register.  Invalid start vehicle.\n")
-                    return
-                elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
-                    sendMessage(
-                    "Cannot register.  Start vehicle not of restricted vehicle class.\n")
-                    return
-                end
-            end
-            buyin = 0
-        elseif rtype ~= nil then
-            sendMessage("Cannot register.  Unknown race type.\n")
-            return
         end
+        svehicle = arg8
+        if svehicle ~= nil then
+            if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
+                sendMessage("Cannot register.  Invalid start vehicle.\n")
+                return
+            elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
+                sendMessage(
+                "Cannot register.  Start vehicle not of restricted vehicle class.\n")
+                return
+            end
+        end
+        buyin = 0
+    elseif rtype ~= nil then
+        sendMessage("Cannot register.  Unknown race type.\n")
+        return
+    end
 
-        local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
+    local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
             vehicleList = vehList }
 
 
     TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
         buyin, laps, timeout, rdata)
 end
-
-
 
 local function unregister()
     if 0 == roleBits & ROLE_REGISTER then
@@ -2181,6 +2179,12 @@ AddEventHandler("races:load", function(isPublic, trackName, waypointCoords)
         if STATE_IDLE == raceState then
             isPublicTrack = isPublic
             savedTrackName = trackName
+
+            startIsFinish =
+            waypointCoords[1].x == waypointCoords[#waypointCoords].x and
+            waypointCoords[1].y == waypointCoords[#waypointCoords].y and
+            waypointCoords[1].z == waypointCoords[#waypointCoords].z
+
             loadWaypointBlips(waypointCoords)
             sendMessage("Loaded " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
         elseif STATE_EDITING == raceState then
