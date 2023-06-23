@@ -1369,13 +1369,13 @@ AddEventHandler("races:list", function(isPublic)
 end)
 
 RegisterNetEvent("races:register")
-AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, buyin, laps, timeout, allowAI, rdata)
+AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, buyin, laps, timeout, rdata)
     local source = source
     if 0 == getRoleBits(source) & ROLE_REGISTER then
         sendMessage(source, "Permission required.\n")
         return
     end
-    if waypointCoords ~= nil and isPublic ~= nil and buyin ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
+    if waypointCoords ~= nil and isPublic ~= nil and buyin ~= nil and laps ~= nil and timeout ~= nil and rdata ~= nil then
         if buyin >= 0 then
             if laps > 0 then
                 if timeout >= 0 then

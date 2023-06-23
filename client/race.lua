@@ -786,7 +786,7 @@ local function validPositiveInt(int)
     return int ~= nil and int >= 0
 end
 
-local function validateRegister(buyin, laps, timeout, allowAI)
+local function validateRegister(buyin, laps, timeout)
     if 0 == roleBits & ROLE_REGISTER then
         sendMessage("Permission required.\n")
         return false
@@ -830,19 +830,20 @@ local function validateRegister(buyin, laps, timeout, allowAI)
 
 end
 
-local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
+local function tryRegister(buyin, laps, timeout, rtype, arg7, arg8)
     
     buyin = (nil == buyin or "." == buyin) and defaultBuyin or math.tointeger(tonumber(buyin))
     laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
     timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
 
-    if validateRegister(buyin, laps, timeout, allowAI) == false then
+    if validateRegister(buyin, laps, timeout) == false then
         return
     end
 
     if "." == arg7 then
         arg7 = nil
     end
+    
     if "." == arg8 then
         arg8 = nil
     end
@@ -917,9 +918,9 @@ local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
         local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
             vehicleList = vehList }
 
-        TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
-        buyin, laps, timeout, allowAI, rdata)
 
+    TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
+        buyin, laps, timeout, rdata)
 end
 
 
@@ -1482,7 +1483,6 @@ RegisterNUICallback("register", function(data)
     if "" == timeout then
         timeout = nil
     end
-    local allowAI = data.allowAI
     local rtype = data.rtype
     if "norm" == rtype then
         rtype = nil
@@ -1500,13 +1500,13 @@ RegisterNUICallback("register", function(data)
         svehicle = nil
     end
     if nil == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, nil, nil)
+        tryRegister(buyin, laps, timeout, rtype, nil, nil)
     elseif "rest" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, restrict, nil)
+        tryRegister(buyin, laps, timeout, rtype, restrict, nil)
     elseif "class" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, vclass, nil)
+        tryRegister(buyin, laps, timeout, rtype, vclass, nil)
     elseif "rand" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, vclass, svehicle)
+        tryRegister(buyin, laps, timeout, rtype, vclass, svehicle)
     end
 end)
 
@@ -2046,7 +2046,7 @@ RegisterCommand("races", function(_, args)
     elseif "list" == args[1] then
         listTracks(args[2])
     elseif "register" == args[1] then
-        register(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+        tryRegister(args[2], args[3], args[4], args[5], args[6], args[7])
     elseif "unregister" == args[1] then
         unregister()
     elseif "grid" == args[1] then

@@ -1,5 +1,5 @@
 --waypoints
-local function waypointsToCoords()
+function waypointsToCoords()
     local waypointCoords = {}
     for i = 1, #waypoints do
         waypointCoords[i] = waypoints[i].coord
@@ -10,7 +10,7 @@ local function waypointsToCoords()
     return waypointCoords
 end
 
-local function waypointsToCoordsRev()
+function waypointsToCoordsRev()
     local waypointCoords = {}
     if true == startIsFinish then
         waypointCoords[1] = waypoints[1].coord
