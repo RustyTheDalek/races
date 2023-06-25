@@ -38,7 +38,6 @@ function RaceRegistration:unregister(rIndex)
                 restoreBlips()
                 SetBlipRoute(waypoints[1].blip, true)
                 SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-                speedo = false
                 removeRacerBlipGT()
                 RenderScriptCams(false, false, 0, true, true)
                 local player = PlayerPedId()

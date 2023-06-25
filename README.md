@@ -44,7 +44,6 @@ For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt
 **`/races results`** - view latest race results\
 **`/races spawn (vehicle)`** - spawn a vehicle; (vehicle) defaults to 'adder'\
 **`/races lvehicles (class)`** - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\
-**`/races speedo (unit)`** - change unit of speed measurement to (unit) = {imperial, metric}; otherwise toggle display of speedometer if (unit) is not specified\
 **`/races funds`** - view available funds\
 **`/races panel (panel)`** - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified
 
@@ -318,8 +317,6 @@ If you want to look at the race results again, type **`/races results`**.  If yo
 To spawn a vehicle, type **`/races spawn elegy2`** to spawn an **`elegy2`** vehicle.  If you do not indicate a vehicle name, the default is **`adder`**.  A list of vehicles you can spawn are listed in **`vehicles.txt`**.  This list has not been verified to work for all vehicles listed and there may be some missing.
 
 To list vehicles that can be used for any race, type **`/races lvehicles`**.  To list vehicles of a specific class, type **`/races lvehicles 0`** to list class Compacts (0) vehicles.  The vehicles displayed come from the **`vehicles.txt`** file which should contain every vehicle.
-
-To toggle the display of the speedometer at any time, type **`/races speedo`**.  The speedometer automatically displays when you are in a race and disappears when you finish or leave the race.  The default unit of measurement is imperial.  If you wish to change the unit of measurement type **`/races speedo (unit)`** where (unit) is either **`imperial`** for imperial or **`metric`** for metric.
 
 To view your available funds for race buy-ins, type **`/races funds`**.
 

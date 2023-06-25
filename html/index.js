@@ -176,19 +176,7 @@ $(function() {
             vclass: $("#main_vclass").val()
         }));
     });
-
-    $("#speedo").click(function() {
-        $.post("https://races/speedo", JSON.stringify({
-            unit: ""
-        }));
-    });
-
-    $("#change").click(function() {
-        $.post("https://races/speedo", JSON.stringify({
-            unit: $("#unit").val()
-        }));
-    });
-
+    
     $("#funds").click(function() {
         $.post("https://races/funds");
     });

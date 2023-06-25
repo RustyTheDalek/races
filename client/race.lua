@@ -139,7 +139,6 @@ local results = {}                        -- results[] = {source, playerName, fi
 
 local started = false                     -- flag indicating if race started
 
-local speedo = false                      -- flag indicating if speedometer is displayed
 local unitom = "imperial"                 -- current unit of measurement
 
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
@@ -349,7 +348,6 @@ local function finishRace(time)
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-    speedo = false
     if originalVehicleHash ~= nil then
         local vehicle = switchVehicle(PlayerPedId(), originalVehicleHash)
         if vehicle ~= nil then
@@ -1393,27 +1391,6 @@ local function lvehicles(vclass)
     end
 end
 
-local function setSpeedo(unit)
-    if unit ~= nil then
-        if "imperial" == unit then
-            unitom = "imperial"
-            sendMessage("Unit of measurement changed to Imperial.\n")
-        elseif "metric" == unit then
-            unitom = "metric"
-            sendMessage("Unit of measurement changed to Metric.\n")
-        else
-            sendMessage("Invalid unit of measurement.\n")
-        end
-    else
-        speedo = not speedo
-        if true == speedo then
-            sendMessage("Speedometer enabled.\n")
-        else
-            sendMessage("Speedometer disabled.\n")
-        end
-    end
-end
-
 local function viewFunds()
     TriggerServerEvent("races:funds")
 end
@@ -1708,14 +1685,6 @@ RegisterNUICallback("lvehicles", function(data)
         vclass = nil
     end
     lvehicles(vclass)
-end)
-
-RegisterNUICallback("speedo", function(data)
-    local unit = data.unit
-    if "" == unit then
-        unit = nil
-    end
-    setSpeedo(unit)
 end)
 
 RegisterNUICallback("funds", function()
@@ -2058,8 +2027,6 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races spawn (vehicle) - spawn a vehicle; (vehicle) defaults to 'adder'\n"
         msg = msg ..
         "/races lvehicles (class) - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\n"
-        msg = msg ..
-        "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
         msg = msg .. "/races funds - view available funds\n"
         msg = msg ..
         "/races panel (panel) - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified\n"
@@ -2132,8 +2099,6 @@ RegisterCommand("races", function(_, args)
         spawn(args[2])
     elseif "lvehicles" == args[1] then
         lvehicles(args[2])
-    elseif "speedo" == args[1] then
-        setSpeedo(args[2])
     elseif "funds" == args[1] then
         viewFunds()
     elseif "panel" == args[1] then
@@ -2327,7 +2292,6 @@ AddEventHandler("races:start", function(rIndex, delay)
                     drawLights = false
                     numRacers = -1
                     results = {}
-                    speedo = false
                     startCoord = GetEntityCoords(PlayerPedId())
                     camTransStarted = false
 
@@ -3018,17 +2982,6 @@ Citizen.CreateThread(function()
             end
         else
             enteringVehicle = false
-        end
-
-        if true == speedo then
-            local speed = GetEntitySpeed(player)
-            if "metric" == unitom then
-                drawMsg(leftSide, topSide + 0.25, "Speed(kph)", 0.7, 1)
-                drawMsg(rightSide, topSide + 0.25, ("%05.2f"):format(speed * 3.6), 0.7, 1)
-            else
-                drawMsg(leftSide, topSide + 0.25, "Speed(mph)", 0.7, 1)
-                drawMsg(rightSide, topSide + 0.25, ("%05.2f"):format(speed * 2.2369363), 0.7, 1)
-            end
         end
 
         if true == panelShown then
