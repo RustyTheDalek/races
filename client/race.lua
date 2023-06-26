@@ -139,8 +139,6 @@ local results = {}                        -- results[] = {source, playerName, fi
 
 local started = false                     -- flag indicating if race started
 
-local unitom = "imperial"                 -- current unit of measurement
-
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
 local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
 local allVehiclesHTML = ""                -- html option list of all vehicles
