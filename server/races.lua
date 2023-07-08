@@ -987,17 +987,17 @@ AddEventHandler('races:resetupgrade', function(vehiclemodint)
     local playerName = GetPlayerName(source)
 
     if vehiclemodint == 11 then
-        print("Engine reset for " .. playerName)
+        print("Engine reset for " ..  playerName)
     elseif vehiclemodint == 12 then
-        print("Brakes reset for "  .. playerName)
+        print("Brakes reset for "  ..  playerName)
     elseif vehiclemodint == 13 then
-        print("Gearbox reset for "  .. playerName)
+        print("Gearbox reset for "  ..  playerName)
     --elseif vehiclemodint == 17 then
         --print("Nitrous reset for "  .. playerName)
     --elseif vehiclemodint == 18 then
         --print("Turbo reset for "  .. playerName)
     else
-        print(vehiclemodint .. " Reset, unknown for"  .. playerName)
+        --print(vehiclemodint .. " Reset, unknown for"  .. playerName)
     end
 end)
 
