@@ -1259,6 +1259,15 @@ local function setupGrid()
     TriggerServerEvent("races:grid")
 end
 
+local function autojoin()
+    if 0 == roleBits & ROLE_REGISTER then
+        sendMessage("Permission required.\n")
+        return
+    end
+
+    TriggerServerEvent("races:autojoin")
+end
+
 local function startRace(delay)
     if 0 == roleBits & ROLE_REGISTER then
         sendMessage("Permission required.\n")
@@ -2780,6 +2789,7 @@ local function resetupgrades(vehicle)
 
 end
 
+---@diagnostic disable-next-line: missing-parameter
 RegisterCommand("races", function(_, args)
     if nil == args[1] then
         local msg = "Commands:\n"
@@ -2885,6 +2895,8 @@ RegisterCommand("races", function(_, args)
         unregister()
     elseif "grid" == args[1] then
         setupGrid()
+    elseif "autojoin" == args[1] then
+        autojoin()
     elseif "start" == args[1] then
         startRace(args[2])
     elseif "ai" == args[1] then
@@ -3687,6 +3699,8 @@ end)
 
 RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
+
+    print("Setup Grid called")
     local player = PlayerPedId()
     local vehicle = GetVehiclePedIsIn(player, false)
 

@@ -851,8 +851,8 @@ local function SetNextGridLineup(results)
     for i=1, #results do
         print(string.format("Index: %i", #results + 1 - i))
         local racer = results[#results + 1 - i]
-        print(racer.source)
-        print(racer.playerName)
+        print("Player " .. racer.playerName)
+        print("Source " .. racer.source)
         table.insert(gridLineup, racer.source)
     end
 
@@ -934,12 +934,20 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
     return gridPositions
 end
 
-local function placePlayers(gridPositions, players, totalPlayers, heading)
+local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
+
+    print("Spawning racers on grid")
+
+    print(gridLineup)
+    print(gridPositions)
+    print(players)
+    print(heading)
+    print(string.format("Total Players: %i", totalPlayers))
 
     local index = 1;
 
     print(string.format("Grid positions length %i", #gridPositions))
-    for _, player in ipairs(GetPlayers()) do
+    for _, player in pairs(gridLineup) do
 
         --Get assigned Grid
         print(string.format("Find position for Index %i", index))
@@ -955,19 +963,6 @@ local function placePlayers(gridPositions, players, totalPlayers, heading)
         index = index+1
     end
     print("finished placing playes")
-end
-
-local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
-
-    print("Spawning racers on grid")
-
-    print(gridLineup)
-    print(gridPositions)
-    print(players)
-    print(heading)
-    print(string.format("Total Players: %i", totalPlayers))
-
-    placePlayers(gridPositions, gridLineup, totalPlayers, heading)
 
 end
 
@@ -1600,19 +1595,38 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
+    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
+    
+    if(gridPositions ~= nil) then
+        PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players, races[source].waypointCoords[1].heading)
+    end
+
+end)
+
+RegisterNetEvent("races:autojoin")
+AddEventHandler("races:autojoin", function()
+    local source = source
+
+    --#region Validation
+    if 0 == getRoleBits(source) & ROLE_REGISTER then
+        sendMessage(source, "Permission required.\n")
+        return
+    end
+
+    if races[source] == nil then
+        sendMessage(source, "Cannot setup grid. Race does not exist.\n")
+    end
+
+    if STATE_REGISTERING ~= races[source].state then
+        sendMessage(source, "Cannot setup grid.  Race in progress.\n")
+    end
+
     for _, playerId in ipairs(GetPlayers()) do
         local name = GetPlayerName(playerId)
         print(('Player %s with id %i is in the server'):format(name, playerId))
         -- ('%s'):format('text') is same as string.format('%s', 'text)
         TriggerClientEvent("races:autojoin", playerId, source)
     end
-
-    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
-    
-    if(gridPositions ~= nil) then
-        PlaceRacersOnGrid(gridPositions, races[source].players, #GetPlayers(), races[source].waypointCoords[1].heading)
-    end
-
 end)
 
 RegisterNetEvent("races:start")
