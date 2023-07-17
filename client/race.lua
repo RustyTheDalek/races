@@ -2071,6 +2071,7 @@ local function respawn()
             SetEntityHeading(player, coord.heading)
         else
             print("Using previous vehicle found")
+            repairVehicle(vehicle)
             SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
             SetEntityHeading(vehicle, coord.heading)
             SetVehicleEngineOn(vehicle, true, true, false)
