@@ -319,6 +319,26 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
     return gridPositions
 end
 
+local function TeleportPlayer(position, heading)
+
+    local player = PlayerPedId()
+    local vehicle = GetVehiclePedIsIn(player, false)
+
+    print(vehicle)
+
+    local entityToMove
+    if vehicle ~= nil and vehicle ~= 0 then
+        print("moving vehicle")
+        entityToMove = vehicle
+    else
+        entityToMove = player
+        print("moving player")
+    end
+
+    SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
+    SetEntityHeading(entityToMove, heading)
+end
+
 local function getCheckpointColor(blipColor)
     if 0 == blipColor then
         return white
@@ -3179,7 +3199,8 @@ function(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowA
             svehicle = rdata.svehicle,
             vehicleList = rdata.vehicleList,
             blip = blip,
-            checkpoint = checkpoint
+            checkpoint = checkpoint,
+            registerPosition = coord
         }
     else
         notifyPlayer("Ignoring register event.  Invalid parameters.\n")
@@ -3688,13 +3709,20 @@ end)
 RegisterNetEvent("races:spawncheckpoint")
 AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
     print('spawncheckpoint event')
-    CreateGridCheckpoint(position, gridNumber)
+    table.insert(gridCheckpoints, CreateGridCheckpoint(position, gridNumber))
 end)
 
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
     removeRacerBlipGT()
     local player = PlayerPedId()
+
+    local registerPosition = starts[raceIndex].registerPosition
+
+    SetGhosting(true)
+    local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
+    TeleportPlayer(startPoint, registerPosition.heading)
+
     TriggerServerEvent("races:join", raceIndex, PedToNet(player), nil)
 end)
 
@@ -3702,20 +3730,9 @@ RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
 
     print("Setup Grid called")
-    local player = PlayerPedId()
-    local vehicle = GetVehiclePedIsIn(player, false)
+    TeleportPlayer(position, heading)
 
-    local entityToMove
-    if vehicle ~= nil then
-        entityToMove = vehicle
-    else
-        entityToMove = player
-    end
-
-    SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
-    SetEntityHeading(entityToMove, heading)
-
-    sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
+    -- sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
 end)
 
 --#endregion
@@ -3747,6 +3764,44 @@ Citizen.CreateThread(function()
         local player = PlayerPedId()
         local playerCoord = GetEntityCoords(player)
         local heading = GetEntityHeading(player)
+
+
+        local currentTime = GetGameTimer()
+
+
+        if true == ghosting then
+            local ghostingDifference = currentTime - ghostingTime
+            local deltaTime = GetFrameTime()
+
+            if ghostState == GHOSTING_UP then
+                if (ghostingInterval >= ghostingInternalMaxTime) then
+                    SetGhostedEntityAlpha(128)
+                    TriggerServerEvent('setplayeralpha', player, 150)
+                    ghostState = GHOSTING_DOWN
+                    ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
+                    ghostingInterval = ghostingInternalMaxTime
+                else
+                    ghostingInterval = ghostingInterval + deltaTime
+                end
+            elseif ghostState == GHOSTING_DOWN then
+                if (ghostingInterval <= 0) then
+                    SetGhostedEntityAlpha(50)
+                    TriggerServerEvent('setplayeralpha', player, 50)
+                    ghostState = GHOSTING_UP
+                    ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
+                    ghostingInterval = 0
+                else
+                    ghostingInterval = ghostingInterval - deltaTime
+                end
+            end
+
+            SetGhostedEntityAlpha(ghostingInterval * 254)
+            if ghostingDifference > ghostingMaxTime then
+                SetGhosting(false)
+            end
+        end
+
+
         if STATE_EDITING == raceState then
             local closestIndex = 0
             local minDist = maxRadius
@@ -3836,7 +3891,6 @@ Citizen.CreateThread(function()
                 end
             end
         elseif STATE_RACING == raceState then
-            local currentTime = GetGameTimer()
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
             if elapsedTime < 0 then
                 drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
@@ -3906,38 +3960,6 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
-                end
-
-                if true == ghosting then
-                    local ghostingDifference = currentTime - ghostingTime
-                    local deltaTime = GetFrameTime()
-
-                    if ghostState == GHOSTING_UP then
-                        if (ghostingInterval >= ghostingInternalMaxTime) then
-                            SetGhostedEntityAlpha(128)
-                            TriggerServerEvent('setplayeralpha', player, 150)
-                            ghostState = GHOSTING_DOWN
-                            ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
-                            ghostingInterval = ghostingInternalMaxTime
-                        else
-                            ghostingInterval = ghostingInterval + deltaTime
-                        end
-                    elseif ghostState == GHOSTING_DOWN then
-                        if (ghostingInterval <= 0) then
-                            SetGhostedEntityAlpha(50)
-                            TriggerServerEvent('setplayeralpha', player, 50)
-                            ghostState = GHOSTING_UP
-                            ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
-                            ghostingInterval = 0
-                        else
-                            ghostingInterval = ghostingInterval - deltaTime
-                        end
-                    end
-
-                    SetGhostedEntityAlpha(ghostingInterval * 254)
-                    if ghostingDifference > ghostingMaxTime then
-                        SetGhosting(false)
-                    end
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
@@ -4241,25 +4263,25 @@ Citizen.CreateThread(function()
             end
         end
 
-        if IsPedInAnyVehicle(player, true) == false then
-            local vehicle = GetVehiclePedIsTryingToEnter(player)
-            if DoesEntityExist(vehicle) == 1 then
-                if false == enteringVehicle then
-                    enteringVehicle = true
-                    local numSeats = GetVehicleModelNumberOfSeats(GetEntityModel(vehicle))
-                    if numSeats > 0 then
-                        for seat = -1, numSeats - 2 do
-                            if IsVehicleSeatFree(vehicle, seat) == 1 then
-                                TaskEnterVehicle(player, vehicle, 10.0, seat, 1.0, 1, 0)
-                                break
-                            end
-                        end
-                    end
-                end
-            end
-        else
-            enteringVehicle = false
-        end
+        -- if IsPedInAnyVehicle(player, true) == false then
+        --     local vehicle = GetVehiclePedIsTryingToEnter(player)
+        --     if DoesEntityExist(vehicle) == 1 then
+        --         if false == enteringVehicle then
+        --             enteringVehicle = true
+        --             local numSeats = GetVehicleModelNumberOfSeats(GetEntityModel(vehicle))
+        --             if numSeats > 0 then
+        --                 for seat = -1, numSeats - 2 do
+        --                     if IsVehicleSeatFree(vehicle, seat) == 1 then
+        --                         TaskEnterVehicle(player, vehicle, 10.0, seat, 1.0, 1, 0)
+        --                         break
+        --                     end
+        --                 end
+        --             end
+        --         end
+        --     end
+        -- else
+        --     enteringVehicle = false
+        -- end
 
         if true == speedo then
             local speed = GetEntitySpeed(player)
