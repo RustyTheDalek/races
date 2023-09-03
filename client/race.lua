@@ -2777,19 +2777,20 @@ local function resetupgrades(vehicle)
     -- print("Nitrous Upgrade: " .. tostring(nUpgrade)) --Nitrous
     -- print("Turbo Upgrade: " .. tostring(tUpgrade)) --Turbo
 
+
     if eUpgrade ~= -1 then
         SetVehicleMod(vehicle, 11, -1) --Engine upgrade
-        TriggerServerEvent("races:resetupgrade", 11)
+        TriggerServerEvent("races:resetupgrade", 11, savedTrackName)
     end
 
     if bUpgrade ~= -1 then
         SetVehicleMod(vehicle, 12, -1) --Brakes upgrade
-        TriggerServerEvent("races:resetupgrade", 12)
+        TriggerServerEvent("races:resetupgrade", 12, savedTrackName)
     end
 
     if gUpgrade ~= -1 then 
         SetVehicleMod(vehicle, 13, -1) --Gearbox upgrade
-        TriggerServerEvent("races:resetupgrade", 13)
+        TriggerServerEvent("races:resetupgrade", 13, savedTrackName)
     end
     
     if nUpgrade ~= -1 then

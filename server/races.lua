@@ -842,22 +842,23 @@ local function SetNextGridLineup(results)
     UseRaceResults = true
     for k in next, gridLineup do rawset(gridLineup, k, nil) end
 
-    print(gridLineup)
-    print(gridLineup[1])
-    print(#gridLineup)
+   -- print(gridLineup)
+   -- print(gridLineup[1])
+   -- print(#gridLineup)
 
-    print("Grid lineup setup")
-    print(string.format("Total results: %i", #results))
+   -- print("Grid lineup setup")
+   -- print(string.format("Total results: %i", #results)) 
     for i=1, #results do
-        print(string.format("Index: %i", #results + 1 - i))
+       -- print(string.format("Index: %i", #results + 1 - i))
         local racer = results[#results + 1 - i]
-        print("Player " .. racer.playerName)
-        print("Source " .. racer.source)
-        table.insert(gridLineup, racer.source)
+        --print("Player " .. racer.playerName)
+        --print("Source " .. racer.source)
+        --table.insert(gridLineup, racer.source)
     end
 
-    print(gridLineup)
-    print(#gridLineup)
+   -- print(gridLineup)
+   -- print(#gridLineup)
+    
 end
 
 local function round(f)
@@ -887,11 +888,11 @@ local gridSeparation <const> = 5
 
 local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 
-    print("Generating starting grid")
+   -- print("Generating starting grid")
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
-    print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
-    print(string.format("Starting Heading: %.2f", startWaypoint.heading))
+   -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
+   -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
 
     --TriggerClientEvent("races:spawncheckpoint", -1, startWaypoint, i)
 
@@ -907,8 +908,8 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
         0.0
     )
 
-    print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
-    print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
+   -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
+   -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
 
     local gridPositions = {}
 
@@ -916,19 +917,19 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 
         local gridPosition = startPoint - forwardVector * (i+1) * gridSeparation
 
-        print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
+       -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
 
         if math.fmod(i, 2) == 0 then
-            print("Right Grid")
+           -- print("Right Grid")
             gridPosition = gridPosition + -leftVector * 3
         else
-            print("Left Grid")
+           -- print("Left Grid")
             gridPosition = gridPosition + leftVector * 3
         end
 
         TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
 
-        table.insert(gridPositions, gridPosition)
+       -- table.insert(gridPositions, gridPosition)
     end
 
     return gridPositions
@@ -936,33 +937,33 @@ end
 
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
 
-    print("Spawning racers on grid")
+   -- print("Spawning racers on grid")
 
-    print(gridLineup)
-    print(gridPositions)
-    print(players)
-    print(heading)
-    print(string.format("Total Players: %i", totalPlayers))
+   -- print(gridLineup)
+   -- print(gridPositions)
+   -- print(players)
+   -- print(heading)
+   -- print(string.format("Total Players: %i", totalPlayers))
 
     local index = 1;
 
-    print(string.format("Grid positions length %i", #gridPositions))
+   -- print(string.format("Grid positions length %i", #gridPositions))
     for _, player in pairs(gridLineup) do
 
         --Get assigned Grid
-        print(string.format("Find position for Index %i", index))
+       -- print(string.format("Find position for Index %i", index))
         local gridPosition = gridPositions[index]
 
-        print(gridPositions[index])
-        print(player)
-        print(player)
-        print(gridPosition)
+       -- print(gridPositions[index])
+       -- print(player)
+       -- print(player)
+       -- print(gridPosition)
 
         TriggerClientEvent("races:setupgrid", player, gridPosition, heading, index)
 
         index = index+1
     end
-    print("finished placing playes")
+    --print("finished placing playes")
 
 end
 
@@ -976,10 +977,15 @@ AddEventHandler('setplayeralpha', function(alphaValue)
 end)
 
 RegisterNetEvent("races:resetupgrade")
-AddEventHandler('races:resetupgrade', function(vehiclemodint)
+AddEventHandler('races:resetupgrade', function(vehiclemodint, track)
 
     local source = source
     local playerName = GetPlayerName(source)
+
+    if vehiclemodint == 11 or vehiclemodint == 12 or vehiclemodint == 13 then
+        sendMessage(source, "*****")
+        print("Current Track:", track)
+    end
 
     if vehiclemodint == 11 then
         print("Engine reset for " ..  playerName)
@@ -1623,7 +1629,7 @@ AddEventHandler("races:autojoin", function()
 
     for _, playerId in ipairs(GetPlayers()) do
         local name = GetPlayerName(playerId)
-        print(('Player %s with id %i is in the server'):format(name, playerId))
+       -- print(('Player %s with id %i is in the server'):format(name, playerId))
         -- ('%s'):format('text') is same as string.format('%s', 'text)
         TriggerClientEvent("races:autojoin", playerId, source)
     end
@@ -2063,7 +2069,7 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
 
                     if UseRaceResults == false then
                         print("No race results, adding racer")
-                        table.insert(gridLineup, source)
+                       -- table.insert(gridLineup, source)
                     end
                     TriggerClientEvent("races:joinnotification", -1, playerName, races[rIndex].trackName)
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
