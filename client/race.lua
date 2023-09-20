@@ -3738,6 +3738,26 @@ end)
 
 --#endregion
 
+local boost_active = false
+
+Citizen.CreateThread(function()
+    while true do
+        if STATE_RACING ~= true then
+            Citizen.Wait(0)
+        end
+
+        boost_active = position == numRacers
+
+        if(boost_active) then
+            SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.8)
+        else
+            SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.0)
+        end
+
+        Citizen.Wait(0)
+    end
+end)
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)
@@ -4015,6 +4035,10 @@ Citizen.CreateThread(function()
                 else
                     minutes, seconds = minutesSeconds(bestLapTime)
                     drawMsg(rightSide, topSide + 0.19, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
+                end
+
+                if(boost_active == true) then
+                    drawMsg(leftSide, topSide + 0.22, "Boost Active", 0.3, 1)
                 end
 
                 if true == beginDNFTimeout then
