@@ -43,6 +43,7 @@ local ghostState = GHOSTING_IDLE
 local ghosting = false
 local ghostingTime = 0               --Timer for how long you've been ghosting
 local GHOSTING_DEFAULT = 3000
+local GHOSTING_RACE_START = 30000
 local ghostingMaxTime = GHOSTING_DEFAULT
 local ghostingInterval = 0.0         --Timer for the animation of ghosting
 local ghostingInternalMaxTime = 0.25 --How quickly alpha values animates (s)
@@ -3993,7 +3994,7 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
-                    SetGhostingOverride(true, 10000)
+                    SetGhostingOverride(true, GHOSTING_RACE_START)
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
