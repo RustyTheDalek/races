@@ -42,7 +42,8 @@ local GHOSTING_UP <const> = 2
 local ghostState = GHOSTING_IDLE
 local ghosting = false
 local ghostingTime = 0               --Timer for how long you've been ghosting
-local ghostingMaxTime = 3000
+local GHOSTING_DEFAULT = 3000
+local ghostingMaxTime = GHOSTING_DEFAULT
 local ghostingInterval = 0.0         --Timer for the animation of ghosting
 local ghostingInternalMaxTime = 0.25 --How quickly alpha values animates (s)
 
@@ -2036,10 +2037,16 @@ local function SetGhosting(_ghosting)
         ghostingTime = GetGameTimer()
         ghostingInternalMaxTime = .5
     else
+        ghostingMaxTime = GHOSTING_DEFAULT
         ghostState = GHOSTING_IDLE
         ghostingInterval = 0.0
         ghostingTime = 0
     end
+end
+
+local function SetGhostingOverride(_ghosting, ghostingTime)
+    ghostingMaxTime = ghostingTime
+    SetGhosting(_ghosting)
 end
 
 local function repairVehicle(vehicle)
@@ -3779,6 +3786,12 @@ Citizen.CreateThread(function()
     end
 end)
 
+function lerp(a,b,t) return a * (1-t) + b * t end
+
+function calculateGhostingInterval(ghostingDifference)
+    return lerp(0.5, 0.1, ghostingDifference / ghostingMaxTime)
+end
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
@@ -3789,7 +3802,6 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
-
         if true == ghosting then
             local ghostingDifference = currentTime - ghostingTime
             local deltaTime = GetFrameTime()
@@ -3799,7 +3811,7 @@ Citizen.CreateThread(function()
                     SetGhostedEntityAlpha(128)
                     TriggerServerEvent('setplayeralpha', player, 150)
                     ghostState = GHOSTING_DOWN
-                    ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
+                    ghostingInternalMaxTime = calculateGhostingInterval(ghostingInterval)
                     ghostingInterval = ghostingInternalMaxTime
                 else
                     ghostingInterval = ghostingInterval + deltaTime
@@ -3809,7 +3821,7 @@ Citizen.CreateThread(function()
                     SetGhostedEntityAlpha(50)
                     TriggerServerEvent('setplayeralpha', player, 50)
                     ghostState = GHOSTING_UP
-                    ghostingInternalMaxTime = ghostingInternalMaxTime / 1.1875
+                    ghostingInternalMaxTime = calculateGhostingInterval(ghostingInterval)
                     ghostingInterval = 0
                 else
                     ghostingInterval = ghostingInterval - deltaTime
@@ -3981,6 +3993,7 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
+                    SetGhostingOverride(true, 10000)
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
