@@ -853,7 +853,7 @@ local function SetNextGridLineup(results)
         local racer = results[#results + 1 - i]
         --print("Player " .. racer.playerName)
         --print("Source " .. racer.source)
-        --table.insert(gridLineup, racer.source)
+        table.insert(gridLineup, racer.source)
     end
 
    -- print(gridLineup)
@@ -929,7 +929,7 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 
         TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
 
-       -- table.insert(gridPositions, gridPosition)
+        table.insert(gridPositions, gridPosition)
     end
 
     return gridPositions
@@ -2069,7 +2069,7 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
 
                     if UseRaceResults == false then
                         print("No race results, adding racer")
-                       -- table.insert(gridLineup, source)
+                        table.insert(gridLineup, source)
                     end
                     TriggerClientEvent("races:joinnotification", -1, playerName, races[rIndex].trackName)
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
