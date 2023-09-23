@@ -150,7 +150,6 @@ local colorSec = -1                       -- secondary color of original vehicle
 
 local startVehicle = nil                  -- vehicle name hash of starting vehicle used in random races
 local currentVehicleHash = nil            -- hash of current vehicle being driven
-local currentVehicleID = nil
 local currentVehicleName = nil            -- name of current vehicle being driven
 local bestLapVehicleName = nil            -- name of vehicle in which player recorded best lap time
 
