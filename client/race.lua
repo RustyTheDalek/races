@@ -3766,7 +3766,7 @@ Citizen.CreateThread(function()
             Citizen.Wait(0)
         end
 
-        boost_active = position == numRacers
+        boost_active = position == numRacers and numRacers ~= 1
 
         if(boost_active) then
             SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.8)
