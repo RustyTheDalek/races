@@ -183,6 +183,8 @@ local camTransStarted = false             -- flag indicating if camera transitio
 local localPlayerPed = GetPlayerPed(-1)
 local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
+local ready = false
+
 exports.spawnmanager:setAutoSpawnCallback(function()
     if STATE_RACING == raceState then
         print("In race, spawning at race")
@@ -639,6 +641,7 @@ end
 local function finishRace(time)
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
+    resetReady()
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
@@ -2010,6 +2013,7 @@ local function leave()
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
+        resetReady()
         sendMessage("Left race.\n")
     elseif STATE_RACING == raceState then
         if IsPedInAnyVehicle(player, false) == 1 then
@@ -2019,6 +2023,7 @@ local function leave()
         DeleteCheckpoint(raceCheckpoint)
         finishRace(-1)
         removeRacerBlipGT()
+        resetReady()
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     else
@@ -3805,7 +3810,10 @@ function calculateGhostingInterval(ghostingDifference)
     return lerp(0.5, 0.1, ghostingDifference / ghostingMaxTime)
 end
 
-local ready = false
+function resetReady()
+    ready = false
+    TriggerServerEvent("races:readyState", raceIndex, ready)
+end
 
 function handleJoinState()
     if IsControlJustReleased(0,  173) then

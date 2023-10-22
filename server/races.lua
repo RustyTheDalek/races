@@ -1649,6 +1649,14 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
         races[raceIndex].numReady -= 1
     end
 
+    if races[raceIndex].numReady < 0 then
+        races[raceIndex].numReady = 0
+    end
+
+    if races[raceIndex].numReady > races[raceIndex].numRacing then
+        races[raceIndex].numReady = races[raceIndex].numRacing
+    end
+
     print(races[raceIndex].numReady)
     print(races[raceIndex].numRacing)
 end)
