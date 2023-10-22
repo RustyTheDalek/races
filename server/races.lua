@@ -1976,10 +1976,19 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
 
                     table.remove(gridLineup, races[rIndex].players[netID].source)
 
-                    TriggerClientEvent("races:leavenotification", -1, string.format("%s has left Race %s", races[rIndex].players[netID].playerName, races[rIndex].trackName))
+                    races[rIndex].numRacing = races[rIndex].numRacing - 1
+
+                    TriggerClientEvent("races:leavenotification", -1, 
+                    string.format("%s has left Race %s", 
+                        races[rIndex].players[netID].playerName, 
+                        races[rIndex].trackName),
+                        rIndex,
+                        races[rIndex].numRacing,
+                        races[rIndex].waypointCoords[1]
+                    )
 
                     races[rIndex].players[netID] = nil
-                    races[rIndex].numRacing = races[rIndex].numRacing - 1
+
                     if races[rIndex].buyin > 0 and nil == aiName then
                         Deposit(source, races[rIndex].buyin)
                         sendMessage(source, races[rIndex].buyin .. " was deposited in your funds.\n")
@@ -2071,7 +2080,7 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, races[rIndex].trackName)
+                    TriggerClientEvent("races:joinnotification", -1, playerName, rIndex, races[rIndex].trackName, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
                     notifyPlayer(source, "Cannot join.  Race in progress.\n")

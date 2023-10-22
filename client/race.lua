@@ -3425,12 +3425,20 @@ AddEventHandler("races:hide", function(rIndex)
 end)
 
 RegisterNetEvent("races:joinnotification")
-AddEventHandler("races:joinnotification", function(playerName, trackName)
+AddEventHandler("races:joinnotification", function(playerName, rIndex, trackName, numRacing, registrationCoords)
+    DeleteCheckpoint(starts[rIndex].checkpoint);
+    registrationCoords.r = defaultRadius
+    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
+    starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
 end)
 
 RegisterNetEvent("races:leavenotification")
-AddEventHandler("races:leavenotification", function(message)
+AddEventHandler("races:leavenotification", function(message, rIndex, numRacing, registrationCoords)
+    DeleteCheckpoint(starts[rIndex].checkpoint);
+    registrationCoords.r = defaultRadius
+    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
+    starts[rIndex].checkpoint = checkpoint
     sendMessage(message)
 end)
 
