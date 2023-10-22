@@ -1530,6 +1530,7 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                                 svehicle = rdata.svehicle,
                                 vehicleList = rdata.vehicleList,
                                 numRacing = 0,
+                                numReady = 0,
                                 players = {},
                                 results = {},
                                 gridPositions = {}
@@ -1635,6 +1636,23 @@ AddEventHandler("races:autojoin", function()
     end
 end)
 
+RegisterNetEvent("races:readyState")
+AddEventHandler("races:readyState", function(raceIndex, ready)
+    if races[raceIndex] == nil then
+        print("can't find race to ready")
+        return
+    end
+
+    if ready then
+        races[raceIndex].numReady += 1
+    else
+        races[raceIndex].numReady -= 1
+    end
+
+    print(races[raceIndex].numReady)
+    print(races[raceIndex].numRacing)
+end)
+
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay)
     local source = source
@@ -1648,6 +1666,12 @@ AddEventHandler("races:start", function(delay)
             if STATE_REGISTERING == races[source].state then
                 if delay >= 5 then
                     if races[source].numRacing > 0 then 
+
+                        if(races[source].numReady ~= races[source].numRacing) then
+                            sendMessage(source, "Cannot start. Not all Players ready.\n")
+                            return
+                        end
+
                         races[source].state = STATE_RACING
                         local aiStart = false
                         local sourceJoined = false

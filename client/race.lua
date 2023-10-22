@@ -33,7 +33,6 @@ local STATE_IDLE <const> = 0
 local STATE_EDITING <const> = 1
 local STATE_JOINING <const> = 2
 local STATE_RACING <const> = 3
-local STATE_GRID <const> = 3
 local raceState = STATE_IDLE -- race state
 
 local GHOSTING_IDLE <const> = 0
@@ -3800,6 +3799,28 @@ function calculateGhostingInterval(ghostingDifference)
     return lerp(0.5, 0.1, ghostingDifference / ghostingMaxTime)
 end
 
+local ready = false
+
+function handleJoinState()
+    if IsControlJustReleased(0,  173) then
+        ready = not ready
+        print("hit ready")
+        TriggerServerEvent("races:readyState", raceIndex, ready)
+        -- run code here
+    end
+
+    local msg = ''
+    if(ready) then
+        msg ="READY"
+    else
+        msg = "NOT-READY"
+    end
+
+    msg = msg .. ": press Down Arrow or D-PAD Down to toggle ready"
+
+    drawMsg(0.50, 0.50, msg, 0.7, 0)
+end
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
@@ -3840,6 +3861,8 @@ Citizen.CreateThread(function()
             if ghostingDifference > ghostingMaxTime then
                 SetGhosting(false)
             end
+        else 
+            SetGhosting(false)
         end
 
 
@@ -4178,6 +4201,8 @@ Citizen.CreateThread(function()
                     end
                 end
             end
+        elseif STATE_JOINING == raceState then
+            handleJoinState()
         elseif STATE_IDLE == raceState then
             local closestIndex = -1
             local minDist = defaultRadius
