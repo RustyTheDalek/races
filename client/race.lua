@@ -1288,7 +1288,13 @@ local function autojoin()
     TriggerServerEvent("races:autojoin")
 end
 
-local function startRace(delay)
+local function startRace(delay, override)
+
+    if override == nil then
+        override = false
+    end
+    
+    print(override)
     if 0 == roleBits & ROLE_REGISTER then
         sendMessage("Permission required.\n")
         return
@@ -1304,12 +1310,12 @@ local function startRace(delay)
                 end
             end
             if true == allSpawned then
-                TriggerServerEvent("races:start", delay)
+                TriggerServerEvent("races:start", delay, override)
             else
                 sendMessage("Cannot start.  Some AI drivers not spawned.\n")
             end
         else
-            TriggerServerEvent("races:start", delay)
+            TriggerServerEvent("races:start", delay, override)
         end
     else
         sendMessage("Cannot start.  Invalid delay.\n")
@@ -2362,7 +2368,7 @@ RegisterNUICallback("start", function(data)
     if "" == delay then
         delay = nil
     end
-    startRace(delay)
+    startRace(delay, true)
 end)
 
 RegisterNUICallback("add_ai", function(data)
@@ -2926,7 +2932,7 @@ RegisterCommand("races", function(_, args)
     elseif "autojoin" == args[1] then
         autojoin()
     elseif "start" == args[1] then
-        startRace(args[2])
+        startRace(args[2], args[3])
     elseif "ai" == args[1] then
         if "add" == args[2] then
             local player = PlayerPedId()

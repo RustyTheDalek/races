@@ -1654,7 +1654,7 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
 end)
 
 RegisterNetEvent("races:start")
-AddEventHandler("races:start", function(delay)
+AddEventHandler("races:start", function(delay, override)
     local source = source
     if 0 == getRoleBits(source) & ROLE_REGISTER then
         sendMessage(source, "Permission required.\n")
@@ -1667,7 +1667,7 @@ AddEventHandler("races:start", function(delay)
                 if delay >= 5 then
                     if races[source].numRacing > 0 then 
 
-                        if(races[source].numReady ~= races[source].numRacing) then
+                        if(races[source].numReady ~= races[source].numRacing and override == false) then
                             sendMessage(source, "Cannot start. Not all Players ready.\n")
                             return
                         end
