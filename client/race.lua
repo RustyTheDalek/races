@@ -3377,9 +3377,8 @@ AddEventHandler("races:start", function(rIndex, delay)
                     resetupgrades(vehicle)
                     DeleteGridCheckPoints()
                     print(sologridCheckpoint)
-                    DeleteCheckpoint(sologridCheckpoint)
-                    notifyPlayer("Vehicle fixed.\n")
                     SetReadyVisible(false)
+                    notifyPlayer("Vehicle fixed.\n")
 
                 elseif STATE_RACING == raceState then
                     notifyPlayer("Ignoring start event.  Already in a race.\n")
