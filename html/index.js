@@ -47,9 +47,38 @@ $(function() {
     $("#listPanel").hide();
     $("#replyPanel").hide();
 
+    function setVisible(target, visible) {
+        if(visible){
+            target.show();
+        } else {
+            target.hide();
+        }
+    }
+
+    function handleReady(data) {
+        switch(data.action) {
+            case 'set_visible':
+                setVisible($('#ready-view'), data.value);
+                break;
+            case 'set_racers':
+                $('#total-ready').html(data.numReady);
+                $('#total-racers').html(data.numRacers);
+                break;
+            case 'set_ready':
+                $('#total-ready').html(data.value);
+                break;
+            case 'set_total':
+                $('#total-racers').html(data.value);
+                break;
+        }
+    }
+
     window.addEventListener("message", function(event) {
         let data = event.data;
-        if ("main" == data.panel) {
+        if(data.type === 'ready') {
+            console.log(data);
+            handleReady(data);
+        } else if ("main" == data.panel) {
             document.getElementById("main_vehicle").innerHTML = data.allVehicles;
             $("#main_vehicle").val(data.defaultVehicle);
             $("#mainPanel").show();

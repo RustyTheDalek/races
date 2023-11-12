@@ -858,7 +858,7 @@ local function SetNextGridLineup(results)
 
    -- print(gridLineup)
    -- print(#gridLineup)
-    
+
 end
 
 local function round(f)
@@ -1074,6 +1074,7 @@ AddEventHandler("playerDropped", function()
                 if STATE_REGISTERING == race.state then
                     race.players[netID] = nil
                     race.numRacing = race.numRacing - 1
+                    --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
                 else
                     TriggerEvent("races:finish", i, netID, nil, 0, -1, -1, "", source)
                 end
@@ -1603,7 +1604,7 @@ AddEventHandler("races:grid", function()
     end
 
     local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
-    
+
     if(gridPositions ~= nil) then
         PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players, races[source].waypointCoords[1].heading)
     end
@@ -1643,22 +1644,30 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
         return
     end
 
+    local numReady = races[raceIndex].numReady
+    local numRacing = races[raceIndex].numRacing
+
     if ready then
-        races[raceIndex].numReady += 1
+        numReady += 1
     else
-        races[raceIndex].numReady -= 1
+        numReady -= 1
     end
 
-    if races[raceIndex].numReady < 0 then
-        races[raceIndex].numReady = 0
+    if numReady < 0 then
+        numReady = 0
     end
 
-    if races[raceIndex].numReady > races[raceIndex].numRacing then
-        races[raceIndex].numReady = races[raceIndex].numRacing
+    if numReady > numRacing then
+        numReady = numRacing
     end
 
-    print(races[raceIndex].numReady)
-    print(races[raceIndex].numRacing)
+    print(numReady)
+    print(numRacing)
+
+    races[raceIndex].numReady = numReady
+    races[raceIndex].numRacing = numRacing
+
+    TriggerClientEvent("races:sendReadyData", -1, numReady, numRacing)
 end)
 
 RegisterNetEvent("races:start")
@@ -1673,7 +1682,7 @@ AddEventHandler("races:start", function(delay, override)
         if races[source] ~= nil then
             if STATE_REGISTERING == races[source].state then
                 if delay >= 5 then
-                    if races[source].numRacing > 0 then 
+                    if races[source].numRacing > 0 then
 
                         if(races[source].numReady ~= races[source].numRacing and override == false) then
                             sendMessage(source, "Cannot start. Not all Players ready.\n")
@@ -1992,13 +2001,13 @@ AddEventHandler("races:listLsts", function(isPublic)
 end)
 
 RegisterNetEvent("races:leave")
-AddEventHandler("races:leave", function(rIndex, netID, aiName)
+AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
             if STATE_REGISTERING == races[rIndex].state then
                 if races[rIndex].players[netID] ~= nil then
-                    
+
                     for i = 1, #gridLineup do
                         if gridLineup[i] == races[rIndex].players[netID].source then
                             table.remove(gridLineup, i)
@@ -2006,17 +2015,27 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
                         end
                     end
 
+                    print(string.format("NetID: %s", netID))
+                    print(string.format("Player: %s", races[rIndex].players[netID]))
+                    print(string.format("Source: %s", races[rIndex].players[netID].source))
+
                     table.remove(gridLineup, races[rIndex].players[netID].source)
 
                     races[rIndex].numRacing = races[rIndex].numRacing - 1
 
-                    TriggerClientEvent("races:leavenotification", -1, 
-                    string.format("%s has left Race %s", 
-                        races[rIndex].players[netID].playerName, 
-                        races[rIndex].trackName),
-                        rIndex,
-                        races[rIndex].numRacing,
-                        races[rIndex].waypointCoords[1]
+                    if(ready) then
+                        races[rIndex].numReady = races[rIndex].numReady - 1
+                    end
+
+                    TriggerClientEvent("races:onplayerleave", source)
+                    TriggerClientEvent("races:leavenotification", -1,
+                    string.format("%s has left Race %s",
+                    races[rIndex].players[netID].playerName,
+                    races[rIndex].trackName),
+                    rIndex,
+                    races[rIndex].numReady,
+                    races[rIndex].numRacing,
+                    races[rIndex].waypointCoords[1]
                     )
 
                     races[rIndex].players[netID] = nil
@@ -2112,7 +2131,7 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, rIndex, races[rIndex].trackName, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+                    TriggerClientEvent("races:joinnotification", -1, playerName, rIndex, races[rIndex].trackName, races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
                     notifyPlayer(source, "Cannot join.  Race in progress.\n")

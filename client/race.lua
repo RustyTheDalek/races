@@ -1296,7 +1296,7 @@ local function startRace(delay, override)
     if override == nil then
         override = false
     end
-    
+
     print(override)
     if 0 == roleBits & ROLE_REGISTER then
         sendMessage("Permission required.\n")
@@ -1410,7 +1410,7 @@ local function deleteAIDriver(aiName)
                     if driver ~= nil then
                         if STATE_JOINING == driver.raceState then
                             if driver.ped ~= nil or driver.vehicle ~= nil then
-                                TriggerServerEvent("races:leave", pIndex, driver.netID, aiName)
+                                TriggerServerEvent("races:leave", pIndex, driver.netID, aiName, false)
                             end
                             if driver.ped ~= nil then
                                 DeletePed(driver.ped)
@@ -1626,7 +1626,7 @@ local function deleteAllAIDrivers()
                 for aiName, driver in pairs(aiState.drivers) do
                     if STATE_JOINING == driver.raceState then
                         if driver.ped ~= nil or driver.vehicle ~= nil then
-                            TriggerServerEvent("races:leave", pIndex, driver.netID, aiName)
+                            TriggerServerEvent("races:leave", pIndex, driver.netID, aiName, false)
                         end
                         if driver.ped ~= nil then
                             DeletePed(driver.ped)
@@ -2010,10 +2010,10 @@ local function leave()
     local player = PlayerPedId()
     if STATE_JOINING == raceState then
         raceState = STATE_IDLE
-        TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
+        resetReady()
+        TriggerServerEvent("races:leave", raceIndex, PedToNet(player), ready, nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
-        resetReady()
         sendMessage("Left race.\n")
     elseif STATE_RACING == raceState then
         if IsPedInAnyVehicle(player, false) == 1 then
@@ -2087,7 +2087,7 @@ local function respawn()
 
         print(vehicle)
         print(currentVehicleHash)
-        
+
         --Spawn vehicle is there is none
         if vehicle == 0 and currentVehicleHash ~= nil then
             print("No vehicle found")
@@ -2782,7 +2782,7 @@ local function resetupgrades(vehicle)
         vehicle = GetVehiclePedIsIn(player, true)
     end
 
-    local eUpgrade = GetVehicleMod(vehicle, 11) 
+    local eUpgrade = GetVehicleMod(vehicle, 11)
     local bUpgrade = GetVehicleMod(vehicle, 12)
     local gUpgrade = GetVehicleMod(vehicle, 13)
     local nUpgrade = IsToggleModOn(vehicle, 17)
@@ -2805,11 +2805,11 @@ local function resetupgrades(vehicle)
         TriggerServerEvent("races:resetupgrade", 12, savedTrackName)
     end
 
-    if gUpgrade ~= -1 then 
+    if gUpgrade ~= -1 then
         SetVehicleMod(vehicle, 13, -1) --Gearbox upgrade
         TriggerServerEvent("races:resetupgrade", 13, savedTrackName)
     end
-    
+
     if nUpgrade ~= -1 then
         ToggleVehicleMod(vehicle, 17, 0) --Nitrous upgrade
         TriggerServerEvent("races:resetupgrade", 17)
@@ -3369,7 +3369,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     SetBlipRouteColour(waypointCoord, blipRouteColor)
 
                     raceState = STATE_RACING
-                    
+
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
 
@@ -3379,7 +3379,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     print(sologridCheckpoint)
                     DeleteCheckpoint(sologridCheckpoint)
                     notifyPlayer("Vehicle fixed.\n")
-
+                    SetReadyVisible(false)
 
                 elseif STATE_RACING == raceState then
                     notifyPlayer("Ignoring start event.  Already in a race.\n")
@@ -3435,20 +3435,29 @@ AddEventHandler("races:hide", function(rIndex)
 end)
 
 RegisterNetEvent("races:joinnotification")
-AddEventHandler("races:joinnotification", function(playerName, rIndex, trackName, numRacing, registrationCoords)
+AddEventHandler("races:joinnotification", function(playerName, rIndex, trackName, numReady, numRacing, registrationCoords)
     DeleteCheckpoint(starts[rIndex].checkpoint);
     registrationCoords.r = defaultRadius
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
+
+    SetReadyUI(numReady, numRacing)
+end)
+
+RegisterNetEvent("races:onplayerleave")
+AddEventHandler("races:onplayerleave", function()
+    SetReadyVisible(false)
 end)
 
 RegisterNetEvent("races:leavenotification")
-AddEventHandler("races:leavenotification", function(message, rIndex, numRacing, registrationCoords)
+AddEventHandler("races:leavenotification", function(message, rIndex, numReady, numRacing, registrationCoords)
     DeleteCheckpoint(starts[rIndex].checkpoint);
     registrationCoords.r = defaultRadius
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
+    print(string.format("NumberRacing: %i", numRacing))
+    SetReadyUI(numReady, numRacing)
     sendMessage(message)
 end)
 
@@ -3458,6 +3467,7 @@ AddEventHandler("races:join", function(rIndex, aiName, waypointCoords)
         if starts[rIndex] ~= nil then
             if nil == aiName then
                 if STATE_IDLE == raceState then
+                    SetReadyVisible(true)
                     raceState = STATE_JOINING
                     raceIndex = rIndex
                     numLaps = starts[rIndex].laps
@@ -3815,7 +3825,32 @@ function resetReady()
     TriggerServerEvent("races:readyState", raceIndex, ready)
 end
 
-function handleJoinState()
+function SetReadyVisible(visible)
+    SendNUIMessage({
+        type = 'ready',
+        action = 'set_visible',
+        value = visible
+    })
+end
+
+function SetReadyUI(numReady, numRacers)
+    SendNUIMessage({
+        type = 'ready',
+        action = 'set_racers',
+        numReady = numReady,
+        numRacers = numRacers
+    })
+end
+
+function SetReadyRacersUI(numReady)
+    SendNUIMessage({
+        type = 'ready',
+        action = 'set_ready',
+        value = numReady,
+    })
+end
+
+function HandleJoinState()
     if IsControlJustReleased(0,  173) then
         ready = not ready
         print("hit ready")
@@ -3834,6 +3869,14 @@ function handleJoinState()
 
     drawMsg(0.50, 0.50, msg, 0.7, 0)
 end
+
+RegisterNetEvent("races:sendReadyData")
+AddEventHandler("races:sendReadyData", function(numberReady)
+
+    print("Sending Ready Data")
+    SetReadyRacersUI(numberReady)
+
+end)
 
 Citizen.CreateThread(function()
     while true do
@@ -3875,7 +3918,7 @@ Citizen.CreateThread(function()
             if ghostingDifference > ghostingMaxTime then
                 SetGhosting(false)
             end
-        else 
+        else
             SetGhosting(false)
         end
 
@@ -4216,7 +4259,7 @@ Citizen.CreateThread(function()
                 end
             end
         elseif STATE_JOINING == raceState then
-            handleJoinState()
+            HandleJoinState()
         elseif STATE_IDLE == raceState then
             local closestIndex = -1
             local minDist = defaultRadius
