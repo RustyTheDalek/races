@@ -3434,13 +3434,13 @@ AddEventHandler("races:hide", function(rIndex)
 end)
 
 RegisterNetEvent("races:joinnotification")
-AddEventHandler("races:joinnotification", function(playerName, rIndex, trackName, numReady, numRacing, registrationCoords)
+AddEventHandler("races:joinnotification", function(playerName, source, rIndex, trackName, numReady, numRacing, registrationCoords)
     DeleteCheckpoint(starts[rIndex].checkpoint);
     registrationCoords.r = defaultRadius
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
-
+    SendRacerName(source, playerName)
     SetReadyUI(numReady, numRacing)
 end)
 
@@ -3466,7 +3466,7 @@ AddEventHandler("races:join", function(rIndex, aiName, waypointCoords)
         if starts[rIndex] ~= nil then
             if nil == aiName then
                 if STATE_IDLE == raceState then
-                    SetReadyVisible(true)
+                    InitialiseReady()
                     raceState = STATE_JOINING
                     raceIndex = rIndex
                     numLaps = starts[rIndex].laps
@@ -3853,7 +3853,7 @@ function HandleJoinState()
     if IsControlJustReleased(0,  173) then
         ready = not ready
         print("hit ready")
-        TriggerServerEvent("races:readyState", raceIndex, ready)
+        TriggerServerEvent("races:readyState", raceIndex, ready, localPlayerPed)
         -- run code here
     end
 
@@ -3869,11 +3869,25 @@ function HandleJoinState()
     drawMsg(0.50, 0.50, msg, 0.7, 0)
 end
 
+function SendRacerName(source, playerName)
+    SendNUIMessage({
+        type = 'ready',
+        action = 'send_racer_name',
+        name = playerName,
+        id = source
+    })
+end
+
+function InitialiseReady()
+    SetReadyVisible(true)
+end
+
 RegisterNetEvent("races:sendReadyData")
-AddEventHandler("races:sendReadyData", function(numberReady)
+AddEventHandler("races:sendReadyData", function(numberReady, source, playerName)
 
     print("Sending Ready Data")
     SetReadyRacersUI(numberReady)
+    SendRacerName(source, playerName)
 
 end)
 

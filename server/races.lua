@@ -1639,6 +1639,8 @@ end)
 
 RegisterNetEvent("races:readyState")
 AddEventHandler("races:readyState", function(raceIndex, ready)
+
+    local source = source
     if races[raceIndex] == nil then
         print("can't find race to ready")
         return
@@ -1667,7 +1669,7 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
     races[raceIndex].numReady = numReady
     races[raceIndex].numRacing = numRacing
 
-    TriggerClientEvent("races:sendReadyData", -1, numReady, numRacing)
+    TriggerClientEvent("races:sendReadyData", -1, numReady, source, GetPlayerName(source))
 end)
 
 RegisterNetEvent("races:start")
@@ -2131,7 +2133,7 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, rIndex, races[rIndex].trackName, races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+                    TriggerClientEvent("races:joinnotification", -1, playerName, source, rIndex, races[rIndex].trackName, races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
                     notifyPlayer(source, "Cannot join.  Race in progress.\n")

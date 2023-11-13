@@ -55,6 +55,26 @@ $(function() {
         }
     }
 
+    function AddRacerName(id, name) {
+        $("#unready-racers").append(`<li id="${id}">${name}</li>`);
+    }
+
+    function RemoveRacerName(id) {
+        $(`#${id}`).remove();
+    }
+
+    function HandleRacerName(id, name) {
+        let racerNameAlreadUnready = $(`#${id}`).length > 0;
+
+        console.log(racerNameAlreadUnready);
+
+        if(racerNameAlreadUnready) {
+            RemoveRacerName(id);
+        } else {
+            AddRacerName(id, name);
+        }
+    }
+
     function handleReady(data) {
         switch(data.action) {
             case 'set_visible':
@@ -69,6 +89,9 @@ $(function() {
                 break;
             case 'set_total':
                 $('#total-racers').html(data.value);
+                break;
+            case 'send_racer_name':
+                HandleRacerName(data.id, data.name);
                 break;
         }
     }
