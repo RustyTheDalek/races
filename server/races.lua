@@ -145,6 +145,14 @@ local function map(tbl, f)
     return t
 end
 
+local function mapToArray(tbl, f)
+    local t = {}
+    for k, v in pairs(tbl) do
+        table.insert(t, f(v))
+    end
+    return t
+end
+
 local function notifyPlayer(source, msg)
     TriggerClientEvent("chat:addMessage", source, {
         color = { 255, 0, 0 },
@@ -1697,7 +1705,7 @@ AddEventHandler("races:autojoin", function()
 end)
 
 RegisterNetEvent("races:readyState")
-AddEventHandler("races:readyState", function(raceIndex, ready)
+AddEventHandler("races:readyState", function(raceIndex, ready, netID)
     local source = source
     if races[raceIndex] == nil then
         print("can't find race to ready")
@@ -1721,13 +1729,11 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
         numReady = numRacing
     end
 
-    print(numReady)
-    print(numRacing)
-
+    races[raceIndex].players[netID].ready = ready
     races[raceIndex].numReady = numReady
     races[raceIndex].numRacing = numRacing
 
-    TriggerClientEvent("races:sendReadyData", -1, numReady, source, GetPlayerName(source))
+    TriggerClientEvent("races:sendReadyData", -1, numReady, ready, source, GetPlayerName(source))
 end)
 
 RegisterNetEvent("races:start")
@@ -2107,7 +2113,7 @@ AddEventHandler("races:listLsts", function(isPublic)
 end)
 
 RegisterNetEvent("races:leave")
-AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
+AddEventHandler("races:leave", function(rIndex, netID, aiName)
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
@@ -2120,15 +2126,11 @@ AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
                         end
                     end
 
-                    print(string.format("NetID: %s", netID))
-                    print(string.format("Player: %s", races[rIndex].players[netID]))
-                    print(string.format("Source: %s", races[rIndex].players[netID].source))
-
                     table.remove(gridLineup, races[rIndex].players[netID].source)
 
                     races[rIndex].numRacing = races[rIndex].numRacing - 1
 
-                    if (ready) then
+                    if (races[rIndex].players[netID].ready) then
                         races[rIndex].numReady = races[rIndex].numReady - 1
                     end
 
@@ -2231,13 +2233,21 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         aiName = aiName,
                         numWaypointsPassed = -1,
                         data = -1,
+                        ready = false,
                     }
+
+                    local racerDictionary = mapToArray(races[rIndex].players,
+                    function(racer) return {
+                        source = racer.source,
+                        playerName = racer.playerName,
+                        ready = racer.ready,
+                    } end)
 
                     if UseRaceResults == false then
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, source, rIndex, races[rIndex].trackName,
+                    TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex, races[rIndex].trackName,
                         races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
