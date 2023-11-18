@@ -31,389 +31,394 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
 <html>
-    <head>
-        <link rel = "stylesheet" href = "index.css" type = "text/css">
-        <link rel = "stylesheet" href = "reset.css" type = "text/css">
-        <script src = "nui://game/ui/jquery.js" type = "text/javascript"></script>
-    </head>
-    <body>
-        <div style="display:none;" id="ready-view">
-            <p>Racers ready<br>
-                <span id="total-ready"></span>/
-                <span id="total-racers"></span>
-            </p>
-            <ul id="unready-racers">Racers Not Ready:
-            </ul>
-        </div>
-        <div id = "mainPanel">
-            <div class = "row">
-                <button id = "request">Request Permission</button>
-                <label for = "role">Role:</label>
-                <select id = "role">
-                    <option value = "edit">Edit</option>
-                    <option value = "register">Register</option>
-                    <option value = "spawn">Spawn</option>
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "main_clear">Clear Waypoints</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "main_track_access">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                <label for = "main_name">Track Name:</label>
-                <select id = "main_name">
-                </select>
-            </div>
-            <div class = "row">
-                <button id = "main_load">Load</button>
-                <button id = "main_blt">Best Laps</button>
-                <button id = "main_list">List</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "leave">Leave Race</button>
-                <button id = "rivals">List Rivals</button>
-                <button id = "respawn">Respawn</button>
-                <button id = "results">View Results</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "spawn">Spawn Vehicle</button>
-                <select id = "main_vehicle">
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "lvehicles">List Vehicles</button>
-                <label for = "main_vclass">Vehicle Class:</label>
-                <select id = "main_vclass">
-                    <option value = -1>Any</option>
-                    <option value = 0>0:Compacts</option>
-                    <option value = 1>1:Sedans</option>
-                    <option value = 2>2:SUVs</option>
-                    <option value = 3>3:Coupes</option>
-                    <option value = 4>4:Muscle</option>
-                    <option value = 5>5:Sports Classics</option>
-                    <option value = 6>6:Sports</option>
-                    <option value = 7>7:Super</option>
-                    <option value = 8>8:Motorcycles</option>
-                    <option value = 9>9:Off-road</option>
-                    <option value = 10>10:Industrial</option>
-                    <option value = 11>11:Utility</option>
-                    <option value = 12>12:Vans</option>
-                    <option value = 13>13:Cycles</option>
-                    <option value = 14>14:Boats</option>
-                    <option value = 15>15:Helicopters</option>
-                    <option value = 16>16:Planes</option>
-                    <option value = 17>17:Service</option>
-                    <option value = 18>18:Emergency</option>
-                    <option value = 19>19:Military</option>
-                    <option value = 20>20:Commercial</option>
-                    <option value = 21>21:Trains</option>
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "speedo">Toggle Speedometer</button>
-                <button id = "change">Change Unit of Measurement</button>
-                <label for = "unit">Unit:</label>
-                <select id = "unit">
-                    <option value = "imperial">Imperial</option>
-                    <option value = "metric">Metric</option>
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "funds">View funds</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "main_edit">Edit Panel</button>
-                <button id = "main_register">Register Panel</button>
-                <button id = "main_ai">AI Panel</button>
-                <button id = "main_vlist">Vehicle List Panel</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "main_close">Close</button>
-            </div>
-        </div>
 
-        <div id = "editPanel">
-            <div class = "row">
-                <button id = "edit">Toggle Edit Waypoints</button>
-                <button id = "edit_clear">Clear Waypoints</button>
-                <button id = "edit_reverse">Reverse Waypoints</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "edit_track_access0">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
+<head>
+    <link rel="stylesheet" href="index.css" type="text/css">
+    <link rel="stylesheet" href="reset.css" type="text/css">
+    <link rel="stylesheet" href="css/leaderboard.css">
+    <script src="nui://game/ui/jquery.js" type="text/javascript"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha256-kmHvs0B+OpCW5GVHUNjv9rOmY0IvSIRcf7zGUDTDQM8=" crossorigin="anonymous"></script> -->
+</head>
+
+<body>
+    <div style="display:none;" id="ready-view">
+        <p>Racers ready<br>
+            <span id="total-ready"></span>/<span id="total-racers"></span>
+        </p>
+        <ul id="unready-racers">Racers Not Ready:
+        </ul>
+    </div>
+    <ul style="display:none;" id="leaderboard">
+    </ul>
+    <div style="display:none;" id="mainPanel">
+        <div class="row">
+            <button id="request">Request Permission</button>
+            <label for="role">Role:</label>
+            <select id="role">
+                <option value="edit">Edit</option>
+                <option value="register">Register</option>
+                <option value="spawn">Spawn</option>
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="main_clear">Clear Waypoints</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="main_track_access">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            <label for="main_name">Track Name:</label>
+            <select id="main_name">
+            </select>
+        </div>
+        <div class="row">
+            <button id="main_load">Load</button>
+            <button id="main_blt">Best Laps</button>
+            <button id="main_list">List</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="leave">Leave Race</button>
+            <button id="rivals">List Rivals</button>
+            <button id="respawn">Respawn</button>
+            <button id="results">View Results</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="spawn">Spawn Vehicle</button>
+            <select id="main_vehicle">
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="lvehicles">List Vehicles</button>
+            <label for="main_vclass">Vehicle Class:</label>
+            <select id="main_vclass">
+                <option value=-1>Any</option>
+                <option value=0>0:Compacts</option>
+                <option value=1>1:Sedans</option>
+                <option value=2>2:SUVs</option>
+                <option value=3>3:Coupes</option>
+                <option value=4>4:Muscle</option>
+                <option value=5>5:Sports Classics</option>
+                <option value=6>6:Sports</option>
+                <option value=7>7:Super</option>
+                <option value=8>8:Motorcycles</option>
+                <option value=9>9:Off-road</option>
+                <option value=10>10:Industrial</option>
+                <option value=11>11:Utility</option>
+                <option value=12>12:Vans</option>
+                <option value=13>13:Cycles</option>
+                <option value=14>14:Boats</option>
+                <option value=15>15:Helicopters</option>
+                <option value=16>16:Planes</option>
+                <option value=17>17:Service</option>
+                <option value=18>18:Emergency</option>
+                <option value=19>19:Military</option>
+                <option value=20>20:Commercial</option>
+                <option value=21>21:Trains</option>
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="speedo">Toggle Speedometer</button>
+            <button id="change">Change Unit of Measurement</button>
+            <label for="unit">Unit:</label>
+            <select id="unit">
+                <option value="imperial">Imperial</option>
+                <option value="metric">Metric</option>
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="funds">View funds</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="main_edit">Edit Panel</button>
+            <button id="main_register">Register Panel</button>
+            <button id="main_ai">AI Panel</button>
+            <button id="main_vlist">Vehicle List Panel</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="main_close">Close</button>
+        </div>
+    </div>
+
+    <div style="display:none;" id="editPanel">
+        <div class="row">
+            <button id="edit">Toggle Edit Waypoints</button>
+            <button id="edit_clear">Clear Waypoints</button>
+            <button id="edit_reverse">Reverse Waypoints</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="edit_track_access0">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            <label for="edit_name">Track Name:</label>
+            <select id="edit_name">
+            </select>
+        </div>
+        <div class="row">
+            <button id="edit_load">Load</button>
+            <button id="edit_overwrite">Overwrite</button>
+            <button id="edit_delete">Delete</button>
+            <button id="edit_blt">Best Laps</button>
+            <button id="edit_list">List</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="edit_track_access1">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            Track Name:<input id="edit_unsaved" placeholder="Unsaved Track Name">
+        </div>
+        <div class="row">
+            <button id="edit_save">Save</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="edit_main">Main Panel</button>
+            <button id="edit_register">Register Panel</button>
+            <button id="edit_ai">AI Panel</button>
+            <button id="edit_vlist">Vehicle List Panel</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="edit_close">Close</button>
+        </div>
+    </div>
+
+    <div style="display:none;" id="registerPanel">
+        <div class="row">
+            <select id="register_track_access">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            <label for="register_name">Track Name:</label>
+            <select id="register_name">
+            </select>
+        </div>
+        <div class="row">
+            <button id="register_load">Load</button>
+            <button id="register_blt">Best Laps</button>
+            <button id="register_list">List</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="register">Register Race</button>
+            Buy-in:<input id="buyin" placeholder="Buy-in">
+            Laps:<input id="laps" placeholder="Laps">
+            Timeout:<input id="timeout" placeholder="Timeout">
+            <label for="allowAI">Allow AI:</label>
+            <select id="allowAI">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+            <label for="rtype">Race Type:</label>
+            <select id="rtype">
+                <option value="norm">Normal</option>
+                <option value="rest">Restricted</option>
+                <option value="class">Class</option>
+                <option value="rand">Random</option>
+            </select>
+        </div>
+        <div class="row">
+            <div id="rest">
+                <label for="register_rest_vehicle">Restrict:</label>
+                <select id="register_rest_vehicle">
                 </select>
-                <label for = "edit_name">Track Name:</label>
-                <select id = "edit_name">
+            </div>
+            <div id="vclass">
+                <label for="register_vclass">Vehicle Class:</label>
+                <select id="register_vclass">
                 </select>
             </div>
-            <div class = "row">
-                <button id = "edit_load">Load</button>
-                <button id = "edit_overwrite">Overwrite</button>
-                <button id = "edit_delete">Delete</button>
-                <button id = "edit_blt">Best Laps</button>
-                <button id = "edit_list">List</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "edit_track_access1">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
+            <div id="sveh">
+                <label for="register_start_vehicle">Start Vehicle:</label>
+                <select id="register_start_vehicle">
                 </select>
-                Track Name:<input id = "edit_unsaved" placeholder = "Unsaved Track Name">
-            </div>
-            <div class = "row">
-                <button id = "edit_save">Save</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "edit_main">Main Panel</button>
-                <button id = "edit_register">Register Panel</button>
-                <button id = "edit_ai">AI Panel</button>
-                <button id = "edit_vlist">Vehicle List Panel</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "edit_close">Close</button>
             </div>
         </div>
-
-        <div id = "registerPanel">
-            <div class = "row">
-                <select id = "register_track_access">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                <label for = "register_name">Track Name:</label>
-                <select id = "register_name">
-                </select>
-            </div>
-            <div class = "row">
-                <button id = "register_load">Load</button>
-                <button id = "register_blt">Best Laps</button>
-                <button id = "register_list">List</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "register">Register Race</button>
-                Buy-in:<input id = "buyin" placeholder = "Buy-in">
-                Laps:<input id = "laps" placeholder = "Laps">
-                Timeout:<input id = "timeout" placeholder = "Timeout">
-                <label for = "allowAI">Allow AI:</label>
-                <select id = "allowAI">
-                    <option value = "no">No</option>
-                    <option value = "yes">Yes</option>
-                </select>
-                <label for = "rtype">Race Type:</label>
-                <select id = "rtype">
-                    <option value = "norm">Normal</option>
-                    <option value = "rest">Restricted</option>
-                    <option value = "class">Class</option>
-                    <option value = "rand">Random</option>
-                </select>
-            </div>
-            <div class = "row">
-                <div id = "rest">
-                    <label for = "register_rest_vehicle">Restrict:</label>
-                    <select id = "register_rest_vehicle">
-                    </select>
-                </div>
-                <div id = "vclass">
-                    <label for = "register_vclass">Vehicle Class:</label>
-                    <select id = "register_vclass">
-                    </select>
-                </div>
-                <div id = "sveh">
-                    <label for = "register_start_vehicle">Start Vehicle:</label>
-                    <select id = "register_start_vehicle">
-                    </select>
-                </div>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "unregister">Unregister Race</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "start">Start Race</button>
-                Delay:<input id = "delay" placeholder = "Delay">
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "register_main">Main Panel</button>
-                <button id = "register_edit">Edit Panel</button>
-                <button id = "register_ai">AI Panel</button>
-                <button id = "register_vlist">Vehicle List Panel</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "register_close">Close</button>
-            </div>
+        <br>
+        <div class="row">
+            <button id="unregister">Unregister Race</button>
         </div>
-
-        <div id = "aiPanel">
-            <div class = "row">
-                AI Name:<input id = "ai_name" placeholder = "AI Name">
-                <label for = "ai_vehicle">Vehicle Name:</label>
-                <select id = "ai_vehicle">
-                </select>
-            </div>
-            <div class = "row">
-                <button id = "add_ai">Add AI</button>
-                <button id = "delete_ai">Delete AI</button>
-                <button id = "spawn_ai">Spawn AI</button>
-                <button id = "list_ai">List AI</button>
-                <button id = "delete_all_ai">Delete All AI</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "grp_access0">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                <label for = "grp_name">AI Group Name:</label>
-                <select id = "grp_name">
-                </select>
-            </div>
-            <div class = "row">
-                <button id = "load_grp">Load AI Group</button>
-                <button id = "overwrite_grp">Overwrite AI Group</button>
-                <button id = "delete_grp">Delete AI Group</button>
-                <button id = "list_grps">List AI Groups</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "grp_access1">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                AI Group Name:<input id = "grp_unsaved" placeholder = "Unsaved AI Group Name">
-            </div>
-            <div class = "row">
-                <button id = "save_grp">Save AI Group</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "ai_main">Main Panel</button>
-                <button id = "ai_edit">Edit Panel</button>
-                <button id = "ai_register">Register Panel</button>
-                <button id = "ai_vlist">Vehicle List Panel</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "ai_close">Close</button>
-            </div>
+        <br>
+        <div class="row">
+            <button id="start">Start Race</button>
+            Delay:<input id="delay" placeholder="Delay">
         </div>
-
-        <div id = "listPanel">
-            <div class = "row">
-                <button id = "add_veh">Add Vehicle</button>
-                <select id = "list_vehicle">
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "delete_veh">Delete Vehicle</button>
-                <select id = "veh_list">
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "add_class">Add Vehicle Class</button>
-                <button id = "delete_class">Delete Vehicle Class</button>
-                <select id = "list_vclass">
-                    <option value = 0>0:Compacts</option>
-                    <option value = 1>1:Sedans</option>
-                    <option value = 2>2:SUVs</option>
-                    <option value = 3>3:Coupes</option>
-                    <option value = 4>4:Muscle</option>
-                    <option value = 5>5:Sports Classics</option>
-                    <option value = 6>6:Sports</option>
-                    <option value = 7>7:Super</option>
-                    <option value = 8>8:Motorcycles</option>
-                    <option value = 9>9:Off-road</option>
-                    <option value = 10>10:Industrial</option>
-                    <option value = 11>11:Utility</option>
-                    <option value = 12>12:Vans</option>
-                    <option value = 13>13:Cycles</option>
-                    <option value = 14>14:Boats</option>
-                    <option value = 15>15:Helicopters</option>
-                    <option value = 16>16:Planes</option>
-                    <option value = 17>17:Service</option>
-                    <option value = 18>18:Emergency</option>
-                    <option value = 19>19:Military</option>
-                    <option value = 20>20:Commercial</option>
-                    <option value = 21>21:Trains</option>
-                </select>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "add_all_veh">Add All Vehicles</button>
-                <button id = "delete_all_veh">Delete All Vehicles</button>
-                <button id = "list_veh">List Vehicles</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "list_access0">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                <label for = "list_name">Vehicle List Name:</label>
-                <select id = "list_name">
-                </select>
-            </div>
-            <div class = "row">
-                <button id = "load_list">Load Vehicle List</button>
-                <button id = "overwrite_list">Overwrite Vehicle List</button>
-                <button id = "delete_list">Delete Vehicle List</button>
-                <button id = "list_lists">List Vehicle Lists</button>
-            </div>
-            <br>
-            <div class = "row">
-                <select id = "list_access1">
-                    <option value = "pvt">Private</option>
-                    <option value = "pub">Public</option>
-                </select>
-                Vehicle List Name:<input id = "list_unsaved" placeholder = "Unsaved Vehicle List Name">
-            </div>
-            <div class = "row">
-                <button id = "save_list">Save Vehicle List</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "vlist_main">Main Panel</button>
-                <button id = "vlist_edit">Edit Panel</button>
-                <button id = "vlist_register">Register Panel</button>
-                <button id = "vlist_ai">AI Panel</button>
-            </div>
-            <br>
-            <div class = "row">
-                <button id = "list_close">Close</button>
-            </div>
+        <br>
+        <div class="row">
+            <button id="register_main">Main Panel</button>
+            <button id="register_edit">Edit Panel</button>
+            <button id="register_ai">AI Panel</button>
+            <button id="register_vlist">Vehicle List Panel</button>
         </div>
-
-        <div id = "replyPanel">
-            <div id = "scroll" class = "scrollable">
-                <p id = "message"></p>
-            </div>
-            <br>
-            <br>
-            <button id = "reply_close">Close</button>
+        <br>
+        <div class="row">
+            <button id="register_close">Close</button>
         </div>
+    </div>
 
-        <script src = "index.js" type = "text/javascript"></script>
-    </body>
+    <div style="display:none;" id="aiPanel">
+        <div class="row">
+            AI Name:<input id="ai_name" placeholder="AI Name">
+            <label for="ai_vehicle">Vehicle Name:</label>
+            <select id="ai_vehicle">
+            </select>
+        </div>
+        <div class="row">
+            <button id="add_ai">Add AI</button>
+            <button id="delete_ai">Delete AI</button>
+            <button id="spawn_ai">Spawn AI</button>
+            <button id="list_ai">List AI</button>
+            <button id="delete_all_ai">Delete All AI</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="grp_access0">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            <label for="grp_name">AI Group Name:</label>
+            <select id="grp_name">
+            </select>
+        </div>
+        <div class="row">
+            <button id="load_grp">Load AI Group</button>
+            <button id="overwrite_grp">Overwrite AI Group</button>
+            <button id="delete_grp">Delete AI Group</button>
+            <button id="list_grps">List AI Groups</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="grp_access1">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            AI Group Name:<input id="grp_unsaved" placeholder="Unsaved AI Group Name">
+        </div>
+        <div class="row">
+            <button id="save_grp">Save AI Group</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="ai_main">Main Panel</button>
+            <button id="ai_edit">Edit Panel</button>
+            <button id="ai_register">Register Panel</button>
+            <button id="ai_vlist">Vehicle List Panel</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="ai_close">Close</button>
+        </div>
+    </div>
+
+    <div style="display:none;" id="listPanel">
+        <div class="row">
+            <button id="add_veh">Add Vehicle</button>
+            <select id="list_vehicle">
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="delete_veh">Delete Vehicle</button>
+            <select id="veh_list">
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="add_class">Add Vehicle Class</button>
+            <button id="delete_class">Delete Vehicle Class</button>
+            <select id="list_vclass">
+                <option value=0>0:Compacts</option>
+                <option value=1>1:Sedans</option>
+                <option value=2>2:SUVs</option>
+                <option value=3>3:Coupes</option>
+                <option value=4>4:Muscle</option>
+                <option value=5>5:Sports Classics</option>
+                <option value=6>6:Sports</option>
+                <option value=7>7:Super</option>
+                <option value=8>8:Motorcycles</option>
+                <option value=9>9:Off-road</option>
+                <option value=10>10:Industrial</option>
+                <option value=11>11:Utility</option>
+                <option value=12>12:Vans</option>
+                <option value=13>13:Cycles</option>
+                <option value=14>14:Boats</option>
+                <option value=15>15:Helicopters</option>
+                <option value=16>16:Planes</option>
+                <option value=17>17:Service</option>
+                <option value=18>18:Emergency</option>
+                <option value=19>19:Military</option>
+                <option value=20>20:Commercial</option>
+                <option value=21>21:Trains</option>
+            </select>
+        </div>
+        <br>
+        <div class="row">
+            <button id="add_all_veh">Add All Vehicles</button>
+            <button id="delete_all_veh">Delete All Vehicles</button>
+            <button id="list_veh">List Vehicles</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="list_access0">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            <label for="list_name">Vehicle List Name:</label>
+            <select id="list_name">
+            </select>
+        </div>
+        <div class="row">
+            <button id="load_list">Load Vehicle List</button>
+            <button id="overwrite_list">Overwrite Vehicle List</button>
+            <button id="delete_list">Delete Vehicle List</button>
+            <button id="list_lists">List Vehicle Lists</button>
+        </div>
+        <br>
+        <div class="row">
+            <select id="list_access1">
+                <option value="pvt">Private</option>
+                <option value="pub">Public</option>
+            </select>
+            Vehicle List Name:<input id="list_unsaved" placeholder="Unsaved Vehicle List Name">
+        </div>
+        <div class="row">
+            <button id="save_list">Save Vehicle List</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="vlist_main">Main Panel</button>
+            <button id="vlist_edit">Edit Panel</button>
+            <button id="vlist_register">Register Panel</button>
+            <button id="vlist_ai">AI Panel</button>
+        </div>
+        <br>
+        <div class="row">
+            <button id="list_close">Close</button>
+        </div>
+    </div>
+
+    <div style="display:none;" id="replyPanel">
+        <div id="scroll" class="scrollable">
+            <p id="message"></p>
+        </div>
+        <br>
+        <br>
+        <button id="reply_close">Close</button>
+    </div>
+    <script src="js/leaderboard.js" type="text/javascript"></script>
+    <script src="index.js" type="text/javascript"></script>
+</body>
 </html>

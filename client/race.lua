@@ -641,6 +641,7 @@ end
 local function finishRace(time)
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
+    SetRaceLeaderboard(false)
     resetReady()
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
@@ -1164,7 +1165,7 @@ local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
                 if "yes" == allowAI or "no" == allowAI then
                     if STATE_IDLE == raceState then
                         if #waypoints > 1 then
-                            if laps < 2 or (laps >= 2 and true == startIsFinish) then
+                            if laps == 1 or (laps > 1 and true == startIsFinish) then
                                 if "." == arg7 then
                                     arg7 = nil
                                 end
@@ -2011,6 +2012,7 @@ local function leave()
     if STATE_JOINING == raceState then
         raceState = STATE_IDLE
         resetReady()
+        SetRaceLeaderboard(false)
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), ready, nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
@@ -2024,6 +2026,7 @@ local function leave()
         finishRace(-1)
         removeRacerBlipGT()
         resetReady()
+        SetRaceLeaderboard(false)
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     else
@@ -3378,6 +3381,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     DeleteGridCheckPoints()
                     print(sologridCheckpoint)
                     SetReadyVisible(false)
+                    SetRaceLeaderboard(true)
                     notifyPlayer("Vehicle fixed.\n")
 
                 elseif STATE_RACING == raceState then
@@ -3450,13 +3454,14 @@ AddEventHandler("races:onplayerleave", function()
 end)
 
 RegisterNetEvent("races:leavenotification")
-AddEventHandler("races:leavenotification", function(message, rIndex, numReady, numRacing, registrationCoords)
+AddEventHandler("races:leavenotification", function(message, source, rIndex, numReady, numRacing, registrationCoords)
     DeleteCheckpoint(starts[rIndex].checkpoint);
     registrationCoords.r = defaultRadius
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     print(string.format("NumberRacing: %i", numRacing))
     SetReadyUI(numReady, numRacing)
+    RemoveRacerFromLeaderboard(source)
     sendMessage(message)
 end)
 
@@ -3581,7 +3586,6 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                     aiState.beginDNFTimeout = true
                     aiState.timeoutStart = currentTime
                 end
-
                 local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
                 local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
@@ -3631,6 +3635,15 @@ AddEventHandler("races:position", function(rIndex, pos, numR)
     else
         notifyPlayer("Ignoring position event.  Invalid parameters.\n")
     end
+end)
+
+RegisterNetEvent("races:racerPositions")
+AddEventHandler("races:racerPositions", function(racePositions)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "update_positions",
+        racePositions = racePositions
+    })
 end)
 
 RegisterNetEvent("races:addRacer")
@@ -3841,6 +3854,22 @@ function SetReadyUI(numReady, numRacers)
     })
 end
 
+function SetRaceLeaderboard(enabled)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'set_leaderboard',
+        value = enabled
+    })
+end
+
+function RemoveRacerFromLeaderboard(source)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'remove_racer',
+        source = source
+    })
+end
+
 function SetReadyRacersUI(numReady)
     SendNUIMessage({
         type = 'ready',
@@ -3852,7 +3881,6 @@ end
 function HandleJoinState()
     if IsControlJustReleased(0,  173) then
         ready = not ready
-        print("hit ready")
         TriggerServerEvent("races:readyState", raceIndex, ready, localPlayerPed)
         -- run code here
     end
@@ -3885,7 +3913,6 @@ end
 RegisterNetEvent("races:sendReadyData")
 AddEventHandler("races:sendReadyData", function(numberReady, source, playerName)
 
-    print("Sending Ready Data")
     SetReadyRacersUI(numberReady)
     SendRacerName(source, playerName)
 

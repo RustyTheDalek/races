@@ -57,6 +57,8 @@ $(function() {
 
     function AddRacerName(id, name) {
         $("#unready-racers").append(`<li id="${id}">${name}</li>`);
+
+        addPlayerToleaderboard(name, id);
     }
 
     function RemoveRacerName(id) {
@@ -99,7 +101,6 @@ $(function() {
     window.addEventListener("message", function(event) {
         let data = event.data;
         if(data.type === 'ready') {
-            console.log(data);
             handleReady(data);
         } else if ("main" == data.panel) {
             document.getElementById("main_vehicle").innerHTML = data.allVehicles;

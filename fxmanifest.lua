@@ -20,5 +20,7 @@ files {
     "html/index.css",
     "html/index.html",
     "html/index.js",
-    "html/reset.css"
+    "html/js/leaderboard.js",
+    "html/reset.css",
+    "html/css/leaderboard.css"
 }

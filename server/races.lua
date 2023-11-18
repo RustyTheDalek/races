@@ -55,20 +55,20 @@ local function writeData(path, data)
 end
 
 local STATE_REGISTERING <const> = 0 -- registering race status
-local STATE_RACING <const> = 1 -- racing race status
+local STATE_RACING <const> = 1      -- racing race status
 
-local ROLE_EDIT <const> = 1 -- edit tracks role
-local ROLE_REGISTER <const> = 2 -- register races role
-local ROLE_SPAWN <const> = 4 -- spawn vehicles role
+local ROLE_EDIT <const> = 1         -- edit tracks role
+local ROLE_REGISTER <const> = 2     -- register races role
+local ROLE_SPAWN <const> = 4        -- spawn vehicles role
 
 local gridLineup = {}
 UseRaceResults = false
 
-local requirePermissionToEdit <const> = false -- flag indicating if permission is required to edit tracks
+local requirePermissionToEdit <const> = false     -- flag indicating if permission is required to edit tracks
 local requirePermissionToRegister <const> = false -- flag indicating if permission is required to register races
-local requirePermissionToSpawn <const> = false -- flag indicating if permission is required to spawn vehicles
+local requirePermissionToSpawn <const> = false    -- flag indicating if permission is required to spawn vehicles
 
-local requirePermissionBits <const> = -- bit flag indicating if permission is required to edit tracks, register races or spawn vehicles
+local requirePermissionBits <const> =             -- bit flag indicating if permission is required to edit tracks, register races or spawn vehicles
     (true == requirePermissionToEdit and ROLE_EDIT or 0) |
     (true == requirePermissionToRegister and ROLE_REGISTER or 0) |
     (true == requirePermissionToSpawn and ROLE_SPAWN or 0)
@@ -93,19 +93,19 @@ if readData(vehicleListDataFilePath) == nil then
     writeData(vehicleListDataFilePath, {})
 end
 
-local saveLog <const> = false -- flag indicating if certain events should be logged
+local saveLog <const> = false                           -- flag indicating if certain events should be logged
 local logFilePath <const> = "./resources/races/log.txt" -- log file path
 
-local allVehicleFileName <const> = "vehicles.txt" -- list of all vehicles filename
+local allVehicleFileName <const> = "vehicles.txt"       -- list of all vehicles filename
 
-local defaultRadius <const> = 5.0 -- default waypoint radius
+local defaultRadius <const> = 5.0                       -- default waypoint radius
 
-local requests = {} -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
+local requests = {}                                     -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
-local races = {} -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
+local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
 
-local dist <const> = {60, 20, 10, 5, 3, 2} -- prize distribution
-local distValid = true -- flag indicating if prize distribution is valid
+local dist <const> = { 60, 20, 10, 5, 3, 2 }            -- prize distribution
+local distValid = true                                  -- flag indicating if prize distribution is valid
 if #dist > 0 and dist[1] > 0 then
     local sum = dist[1]
     for i = 2, #dist do
@@ -124,11 +124,32 @@ if false == distValid then
     print("^1Prize distribution table is invalid.")
 end
 
+function dump(o)
+    if type(o) == 'table' then
+        local s = '{ '
+        for k, v in pairs(o) do
+            if type(k) ~= 'number' then k = '"' .. k .. '"' end
+            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+        end
+        return s .. '} '
+    else
+        return tostring(o)
+    end
+end
+
+local function map(tbl, f)
+    local t = {}
+    for k, v in pairs(tbl) do
+        t[k] = f(v)
+    end
+    return t
+end
+
 local function notifyPlayer(source, msg)
     TriggerClientEvent("chat:addMessage", source, {
-        color = {255, 0, 0},
+        color = { 255, 0, 0 },
         multiline = true,
-        args = {"[races:server]", msg}
+        args = { "[races:server]", msg }
     })
 end
 
@@ -155,13 +176,15 @@ local function getTrack(trackName)
             if #track.waypointCoords > 1 then
                 for _, waypointCoord in ipairs(track.waypointCoords) do
                     if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" or type(waypointCoord.r) ~= "number" then
-                        print("getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
+                        print(
+                        "getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
                         return nil
                     end
                 end
                 for _, bestLap in ipairs(track.bestLaps) do
                     if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
-                        print("getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
+                        print(
+                        "getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
                         return nil
                     end
                 end
@@ -200,7 +223,8 @@ local function export(trackName, withBLT)
                         end
                     else
                         file:close()
-                        print("export: '" .. trackFilePath .. "' exists.  Remove or rename the existing file, then export again.")
+                        print("export: '" ..
+                        trackFilePath .. "' exists.  Remove or rename the existing file, then export again.")
                     end
                 else
                     print("export: No public track named '" .. trackName .. "'.")
@@ -240,7 +264,9 @@ local function import(trackName, withBLT)
                     print("import: Could not import '" .. trackName .. "'.")
                 end
             else
-                print("import: '" .. trackName .. "' already exists in the public tracks list.  Rename the file, then import with the new name.")
+                print("import: '" ..
+                trackName ..
+                "' already exists in the public tracks list.  Rename the file, then import with the new name.")
             end
         else
             print("import: Could not load race data.")
@@ -280,7 +306,7 @@ local function approve(playerID)
                         if rolesData[license] ~= nil then
                             rolesData[license].roleBits = rolesData[license].roleBits | requests[playerID].roleBit
                         else
-                            rolesData[license] = {name = name, roleBits = requests[playerID].roleBit}
+                            rolesData[license] = { name = name, roleBits = requests[playerID].roleBit }
                         end
                         if true == writeData(rolesDataFilePath, rolesData) then
                             local roleType = "SPAWN"
@@ -420,7 +446,8 @@ local function removeRole(playerName, roleName)
                                         for _, player in pairs(races[rIndex].players) do
                                             if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE races[rIndex].buyin > 0
                                                 Deposit(player.source, races[rIndex].buyin)
-                                                notifyPlayer(player.source, races[rIndex].buyin .. " was deposited in your funds.\n")
+                                                notifyPlayer(player.source,
+                                                    races[rIndex].buyin .. " was deposited in your funds.\n")
                                             end
                                         end
                                     end
@@ -477,7 +504,7 @@ local function updateRaceData()
                     newWaypointCoords[i] = coordRad
                 end
                 if true == update then
-                    newTracks[trackName] = {waypointCoords = newWaypointCoords, bestLaps = track.bestLaps}
+                    newTracks[trackName] = { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }
                 end
             end
             if true == update then
@@ -487,7 +514,8 @@ local function updateRaceData()
         if true == update then
             local updatedRaceDataFilePath = "./resources/races/raceData_updated.json"
             if true == writeData(updatedRaceDataFilePath, newRaceData) then
-                local msg = "updateRaceData: raceData.json updated to current format in '" .. updatedRaceDataFilePath .. "'."
+                local msg = "updateRaceData: raceData.json updated to current format in '" ..
+                updatedRaceDataFilePath .. "'."
                 print(msg)
                 logMessage(msg)
             else
@@ -511,7 +539,8 @@ local function updateTrack(trackName)
                     local newWaypointCoords = {}
                     for i, waypointCoord in ipairs(track.waypointCoords) do
                         if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" then
-                            print("updateTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z not a number.")
+                            print(
+                            "updateTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z not a number.")
                             return
                         end
                         local coordRad = waypointCoord
@@ -528,14 +557,16 @@ local function updateTrack(trackName)
                     if true == update then
                         for _, bestLap in ipairs(track.bestLaps) do
                             if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
-                                print("updateTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
+                                print(
+                                "updateTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
                                 return
                             end
                         end
 
                         local trackFilePath = "./resources/races/" .. trackName .. "_updated.json"
-                        if true == writeData(trackFilePath, {waypointCoords = newWaypointCoords, bestLaps = track.bestLaps}) then
-                            local msg = "updateTrack: '" .. trackName .. ".json' updated to current format in '" .. trackFilePath .. "'."
+                        if true == writeData(trackFilePath, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                            local msg = "updateTrack: '" ..
+                            trackName .. ".json' updated to current format in '" .. trackFilePath .. "'."
                             print(msg)
                             logMessage(msg)
                         else
@@ -754,7 +785,8 @@ local function updateBestLapTimes(rIndex)
         local bestLaps = track.bestLaps
         for _, result in pairs(races[rIndex].results) do
             if result.bestLapTime ~= -1 and nil == result.aiName then
-                bestLaps[#bestLaps + 1] = {playerName = result.playerName, bestLapTime = result.bestLapTime, vehicleName = result.vehicleName}
+                bestLaps[#bestLaps + 1] = { playerName = result.playerName, bestLapTime = result.bestLapTime, vehicleName =
+                result.vehicleName }
             end
         end
         table.sort(bestLaps, function(p0, p1)
@@ -821,7 +853,9 @@ local function saveResults(race)
             else
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
                 local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
-                msg = msg .. ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds, result.playerName, lMinutes, lSeconds, result.vehicleName)
+                msg = msg ..
+                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
+                    result.playerName, lMinutes, lSeconds, result.vehicleName)
             end
         end
     else
@@ -838,27 +872,25 @@ local function saveResults(race)
 end
 
 local function SetNextGridLineup(results)
-
     UseRaceResults = true
     for k in next, gridLineup do rawset(gridLineup, k, nil) end
 
-   -- print(gridLineup)
-   -- print(gridLineup[1])
-   -- print(#gridLineup)
+    -- print(gridLineup)
+    -- print(gridLineup[1])
+    -- print(#gridLineup)
 
-   -- print("Grid lineup setup")
-   -- print(string.format("Total results: %i", #results)) 
-    for i=1, #results do
-       -- print(string.format("Index: %i", #results + 1 - i))
+    -- print("Grid lineup setup")
+    -- print(string.format("Total results: %i", #results))
+    for i = 1, #results do
+        -- print(string.format("Index: %i", #results + 1 - i))
         local racer = results[#results + 1 - i]
         --print("Player " .. racer.playerName)
         --print("Source " .. racer.source)
         table.insert(gridLineup, racer.source)
     end
 
-   -- print(gridLineup)
-   -- print(#gridLineup)
-
+    -- print(gridLineup)
+    -- print(#gridLineup)
 end
 
 local function round(f)
@@ -887,12 +919,11 @@ end
 local gridSeparation <const> = 5
 
 local function GenerateStartingGrid(startWaypoint, totalGridPositions)
-
-   -- print("Generating starting grid")
+    -- print("Generating starting grid")
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
-   -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
-   -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
+    -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
+    -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
 
     --TriggerClientEvent("races:spawncheckpoint", -1, startWaypoint, i)
 
@@ -908,22 +939,21 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
         0.0
     )
 
-   -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
-   -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
+    -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
+    -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
 
     local gridPositions = {}
 
-    for i=1, totalGridPositions do
+    for i = 1, totalGridPositions do
+        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
 
-        local gridPosition = startPoint - forwardVector * (i+1) * gridSeparation
-
-       -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
+        -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
 
         if math.fmod(i, 2) == 0 then
-           -- print("Right Grid")
+            -- print("Right Grid")
             gridPosition = gridPosition + -leftVector * 3
         else
-           -- print("Left Grid")
+            -- print("Left Grid")
             gridPosition = gridPosition + leftVector * 3
         end
 
@@ -936,35 +966,32 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 end
 
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
+    -- print("Spawning racers on grid")
 
-   -- print("Spawning racers on grid")
-
-   -- print(gridLineup)
-   -- print(gridPositions)
-   -- print(players)
-   -- print(heading)
-   -- print(string.format("Total Players: %i", totalPlayers))
+    -- print(gridLineup)
+    -- print(gridPositions)
+    -- print(players)
+    -- print(heading)
+    -- print(string.format("Total Players: %i", totalPlayers))
 
     local index = 1;
 
-   -- print(string.format("Grid positions length %i", #gridPositions))
+    -- print(string.format("Grid positions length %i", #gridPositions))
     for _, player in pairs(gridLineup) do
-
         --Get assigned Grid
-       -- print(string.format("Find position for Index %i", index))
+        -- print(string.format("Find position for Index %i", index))
         local gridPosition = gridPositions[index]
 
-       -- print(gridPositions[index])
-       -- print(player)
-       -- print(player)
-       -- print(gridPosition)
+        -- print(gridPositions[index])
+        -- print(player)
+        -- print(player)
+        -- print(gridPosition)
 
         TriggerClientEvent("races:setupgrid", player, gridPosition, heading, index)
 
-        index = index+1
+        index = index + 1
     end
     --print("finished placing playes")
-
 end
 
 AddEventHandler("respawnPlayerPedEvent", function(player, content)
@@ -978,7 +1005,6 @@ end)
 
 RegisterNetEvent("races:resetupgrade")
 AddEventHandler('races:resetupgrade', function(vehiclemodint, track)
-
     local source = source
     local playerName = GetPlayerName(source)
 
@@ -988,14 +1014,14 @@ AddEventHandler('races:resetupgrade', function(vehiclemodint, track)
     end
 
     if vehiclemodint == 11 then
-        print("Engine reset for " ..  playerName)
+        print("Engine reset for " .. playerName)
     elseif vehiclemodint == 12 then
-        print("Brakes reset for "  ..  playerName)
+        print("Brakes reset for " .. playerName)
     elseif vehiclemodint == 13 then
-        print("Gearbox reset for "  ..  playerName)
-    --elseif vehiclemodint == 17 then
+        print("Gearbox reset for " .. playerName)
+        --elseif vehiclemodint == 17 then
         --print("Nitrous reset for "  .. playerName)
-    --elseif vehiclemodint == 18 then
+        --elseif vehiclemodint == 18 then
         --print("Turbo reset for "  .. playerName)
     else
         --print(vehiclemodint .. " Reset, unknown for"  .. playerName)
@@ -1007,15 +1033,22 @@ RegisterCommand("races", function(_, args)
     if nil == args[1] then
         local msg = "Commands:\n"
         msg = msg .. "races - display list of available races commands\n"
-        msg = msg .. "races export [name] - export public track saved as [name] without best lap times to file named '[name].json'\n"
-        msg = msg .. "races import [name] - import track file named '[name].json' into public tracks without best lap times\n"
-        msg = msg .. "races exportwblt [name] - export public track saved as [name] with best lap times to file named '[name].json'\n"
-        msg = msg .. "races importwblt [name] - import track file named '[name].json' into public tracks with best lap times\n"
+        msg = msg ..
+        "races export [name] - export public track saved as [name] without best lap times to file named '[name].json'\n"
+        msg = msg ..
+        "races import [name] - import track file named '[name].json' into public tracks without best lap times\n"
+        msg = msg ..
+        "races exportwblt [name] - export public track saved as [name] with best lap times to file named '[name].json'\n"
+        msg = msg ..
+        "races importwblt [name] - import track file named '[name].json' into public tracks with best lap times\n"
         msg = msg .. "races listReqs - list requests to edit tracks, register races and spawn vehicles\n"
-        msg = msg .. "races approve [playerID] - approve request of [playerID] to edit tracks, register races or spawn vehicles\n"
-        msg = msg .. "races deny [playerID] - deny request of [playerID] to edit tracks, register races or spawn vehicles\n"
+        msg = msg ..
+        "races approve [playerID] - approve request of [playerID] to edit tracks, register races or spawn vehicles\n"
+        msg = msg ..
+        "races deny [playerID] - deny request of [playerID] to edit tracks, register races or spawn vehicles\n"
         msg = msg .. "races listRoles - list approved players' roles\n"
-        msg = msg .. "races removeRole [name] (role) - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified\n"
+        msg = msg ..
+        "races removeRole [name] (role) - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified\n"
         msg = msg .. "races updateRaceData - update 'raceData.json' to new format\n"
         msg = msg .. "races updateTrack [name] - update exported track '[name].json' to new format\n"
         print(msg)
@@ -1214,8 +1247,10 @@ AddEventHandler("races:init", function()
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
         if STATE_REGISTERING == race.state then
-            local rdata = {rtype = race.rtype, restrict = race.restrict, vclass = race.vclass, svehicle = race.svehicle, vehicleList = race.vehicleList}
-            TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName, race.owner, race.buyin, race.laps, race.timeout, race.allowAI, rdata)
+            local rdata = { rtype = race.rtype, restrict = race.restrict, vclass = race.vclass, svehicle = race.svehicle, vehicleList =
+            race.vehicleList }
+            TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
+                race.owner, race.buyin, race.laps, race.timeout, race.allowAI, rdata)
         end
     end
 
@@ -1269,11 +1304,11 @@ AddEventHandler("races:request", function(roleBit)
                             end
                             license = string.sub(license, 9)
                             if nil == rolesData[license] then
-                                requests[source] = {name = GetPlayerName(source), roleBit = roleBit}
+                                requests[source] = { name = GetPlayerName(source), roleBit = roleBit }
                                 sendMessage(source, "Request for " .. roleType .. " role submitted.")
                             else
                                 if 0 == rolesData[license].roleBits & roleBit then
-                                    requests[source] = {name = GetPlayerName(source), roleBit = roleBit}
+                                    requests[source] = { name = GetPlayerName(source), roleBit = roleBit }
                                     sendMessage(source, "Request for " .. roleType .. " role submitted.")
                                 else
                                     sendMessage(source, "Request for " .. roleType .. " role already approved.\n")
@@ -1307,7 +1342,9 @@ AddEventHandler("races:load", function(isPublic, trackName)
         if track ~= nil then
             TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords)
         else
-            sendMessage(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
+            sendMessage(source,
+                "Cannot load.   " ..
+                (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring load track event.  Invalid parameters.\n")
@@ -1324,16 +1361,21 @@ AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if nil == track then
-            track = {waypointCoords = waypointCoords, bestLaps = {}}
+            track = { waypointCoords = waypointCoords, bestLaps = {} }
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:save", source, isPublic, trackName)
                 TriggerEvent("races:trackNames", isPublic, source)
-                logMessage("'" .. GetPlayerName(source) .. "' saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
-                sendMessage(source, "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+                sendMessage(source,
+                    "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' exists.  Use 'overwrite' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " track '" .. trackName .. "' exists.  Use 'overwrite' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring save track event.  Invalid parameters.\n")
@@ -1350,15 +1392,21 @@ AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
-            track = {waypointCoords = waypointCoords, bestLaps = {}}
+            track = { waypointCoords = waypointCoords, bestLaps = {} }
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:overwrite", source, isPublic, trackName)
-                logMessage("'" .. GetPlayerName(source) .. "' overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
-                sendMessage(source, "Error overwriting " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+                sendMessage(source,
+                    "Error overwriting " ..
+                    (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' does not exist.  Use 'save' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " track '" .. trackName .. "' does not exist.  Use 'save' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring overwrite track event.  Invalid parameters.\n")
@@ -1377,13 +1425,20 @@ AddEventHandler("races:delete", function(isPublic, trackName)
         if track ~= nil then
             if true == saveTrack(isPublic, source, trackName, nil) then
                 TriggerEvent("races:trackNames", isPublic, source)
-                sendMessage(source, "Deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                sendMessage(source,
+                    "Deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
-                sendMessage(source, "Error deleting " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+                sendMessage(source,
+                    "Error deleting " ..
+                    (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
             end
         else
-            sendMessage(source, "Cannot delete.  " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
+            sendMessage(source,
+                "Cannot delete.  " ..
+                (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring delete track event.  Invalid parameters.\n")
@@ -1398,7 +1453,9 @@ AddEventHandler("races:blt", function(isPublic, trackName)
         if track ~= nil then
             TriggerClientEvent("races:blt", source, isPublic, trackName, track.bestLaps)
         else
-            sendMessage(source, "Cannot list best lap times.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
+            sendMessage(source,
+                "Cannot list best lap times.   " ..
+                (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring best lap times event.  Invalid parameters.\n")
@@ -1443,7 +1500,7 @@ AddEventHandler("races:list", function(isPublic)
         end
     else
         sendMessage(source, "Ignoring list event.  Invalid parameters.\n")
-   end
+    end
 end)
 
 RegisterNetEvent("races:register")
@@ -1504,7 +1561,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                             if nil == trackName then
                                 msg = msg .. "unsaved track "
                             else
-                                msg = msg .. (true == isPublic and "publicly" or "privately") .. " saved track '" .. trackName .. "' "
+                                msg = msg ..
+                                (true == isPublic and "publicly" or "privately") .. " saved track '" .. trackName .. "' "
                             end
                             msg = msg .. ("by %s : %d buy-in : %d lap(s)"):format(owner, buyin, laps)
                             if "yes" == allowAI then
@@ -1536,7 +1594,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                                 results = {},
                                 gridPositions = {}
                             }
-                            TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
+                            TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
+                                owner, buyin, laps, timeout, allowAI, rdata)
                         else
                             if STATE_RACING == races[source].state then
                                 sendMessage(source, "Cannot register.  Previous race in progress.\n")
@@ -1605,10 +1664,10 @@ AddEventHandler("races:grid", function()
 
     local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
 
-    if(gridPositions ~= nil) then
-        PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players, races[source].waypointCoords[1].heading)
+    if (gridPositions ~= nil) then
+        PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players,
+            races[source].waypointCoords[1].heading)
     end
-
 end)
 
 RegisterNetEvent("races:autojoin")
@@ -1631,7 +1690,7 @@ AddEventHandler("races:autojoin", function()
 
     for _, playerId in ipairs(GetPlayers()) do
         local name = GetPlayerName(playerId)
-       -- print(('Player %s with id %i is in the server'):format(name, playerId))
+        -- print(('Player %s with id %i is in the server'):format(name, playerId))
         -- ('%s'):format('text') is same as string.format('%s', 'text)
         TriggerClientEvent("races:autojoin", playerId, source)
     end
@@ -1639,7 +1698,6 @@ end)
 
 RegisterNetEvent("races:readyState")
 AddEventHandler("races:readyState", function(raceIndex, ready)
-
     local source = source
     if races[raceIndex] == nil then
         print("can't find race to ready")
@@ -1685,8 +1743,7 @@ AddEventHandler("races:start", function(delay, override)
             if STATE_REGISTERING == races[source].state then
                 if delay >= 5 then
                     if races[source].numRacing > 0 then
-
-                        if(races[source].numReady ~= races[source].numRacing and override == false) then
+                        if (races[source].numReady ~= races[source].numRacing and override == false) then
                             sendMessage(source, "Cannot start. Not all Players ready.\n")
                             return
                         end
@@ -1740,7 +1797,9 @@ AddEventHandler("races:loadGrp", function(isPublic, name)
         if group ~= nil then
             TriggerClientEvent("races:loadGrp", source, isPublic, name, group)
         else
-            sendMessage(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' not found.\n")
+            sendMessage(source,
+                "Cannot load.   " ..
+                (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring load AI group event.  Invalid parameters.\n")
@@ -1758,13 +1817,19 @@ AddEventHandler("races:saveGrp", function(isPublic, name, group)
         if loadAIGroup(isPublic, source, name) == nil then
             if true == saveAIGroup(isPublic, source, name, group) then
                 TriggerEvent("races:aiGrpNames", isPublic, source)
-                sendMessage(source, "Saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                sendMessage(source,
+                    "Saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
-                sendMessage(source, "Error saving " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error saving " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' exists.  Use 'overwriteGrp' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " AI group '" .. name .. "' exists.  Use 'overwriteGrp' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring save AI group event.  Invalid parameters.\n")
@@ -1781,13 +1846,20 @@ AddEventHandler("races:overwriteGrp", function(isPublic, name, group)
     if isPublic ~= nil and name ~= nil and group ~= nil then
         if loadAIGroup(isPublic, source, name) ~= nil then
             if true == saveAIGroup(isPublic, source, name, group) then
-                sendMessage(source, "Overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                sendMessage(source,
+                    "Overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
-                sendMessage(source, "Error overwriting " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error overwriting " ..
+                    (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' does not exist.  Use 'saveGrp' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " AI group '" .. name .. "' does not exist.  Use 'saveGrp' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring overwrite AI group event.  Invalid parameters.\n")
@@ -1806,13 +1878,19 @@ AddEventHandler("races:deleteGrp", function(isPublic, name)
         if group ~= nil then
             if true == saveAIGroup(isPublic, source, name, nil) then
                 TriggerEvent("races:aiGrpNames", isPublic, source)
-                sendMessage(source, "Deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                sendMessage(source,
+                    "Deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
-                sendMessage(source, "Error deleting " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error deleting " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, "Cannot delete.  " .. (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' not found.\n")
+            sendMessage(source,
+                "Cannot delete.  " ..
+                (true == isPublic and "Public" or "Private") .. " AI group '" .. name .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring delete AI group event.  Invalid parameters.\n")
@@ -1848,7 +1926,8 @@ AddEventHandler("races:listGrps", function(isPublic)
                         end
                         sendMessage(source, msg)
                     else
-                        sendMessage(source, "No saved " .. (true == isPublic and "public" or "private") .. " AI groups.\n")
+                        sendMessage(source,
+                            "No saved " .. (true == isPublic and "public" or "private") .. " AI groups.\n")
                     end
                 else
                     sendMessage(source, "No saved " .. (true == isPublic and "public" or "private") .. " AI groups.\n")
@@ -1876,7 +1955,9 @@ AddEventHandler("races:loadLst", function(isPublic, name)
         if list ~= nil then
             TriggerClientEvent("races:loadLst", source, isPublic, name, list)
         else
-            sendMessage(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
+            sendMessage(source,
+                "Cannot load.   " ..
+                (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring load vehicle list event.  Invalid parameters.\n")
@@ -1894,13 +1975,20 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
         if loadVehicleList(isPublic, source, name) == nil then
             if true == saveVehicleList(isPublic, source, name, vehicleList) then
                 TriggerEvent("races:listNames", isPublic, source)
-                sendMessage(source, "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                sendMessage(source,
+                    "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
-                sendMessage(source, "Error saving " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error saving " ..
+                    (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' exists.  Use 'overwrite' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " vehicle list '" .. name .. "' exists.  Use 'overwrite' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring save vehicle list event.  Invalid parameters.\n")
@@ -1919,13 +2007,20 @@ AddEventHandler("races:overwriteLst", function(isPublic, name, vehicleList)
         if list ~= nil then
             if true == saveVehicleList(isPublic, source, name, vehicleList) then
                 --TriggerClientEvent("races:overwrite", source, isPublic, trackName)
-                sendMessage(source, "Overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                sendMessage(source,
+                    "Overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
-                sendMessage(source, "Error overwriting " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error overwriting " ..
+                    (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' does not exist.  Use 'save' command instead.\n")
+            sendMessage(source,
+                (true == isPublic and "Public" or "Private") ..
+                " vehicle list '" .. name .. "' does not exist.  Use 'save' command instead.\n")
         end
     else
         sendMessage(source, "Ignoring overwrite vehicle list event.  Invalid parameters.\n")
@@ -1944,13 +2039,20 @@ AddEventHandler("races:deleteLst", function(isPublic, name)
         if list ~= nil then
             if true == saveVehicleList(isPublic, source, name, nil) then
                 TriggerEvent("races:listNames", isPublic, source)
-                sendMessage(source, "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" .. GetPlayerName(source) .. "' deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                sendMessage(source,
+                    "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                logMessage("'" ..
+                GetPlayerName(source) ..
+                "' deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
-                sendMessage(source, "Error deleting " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+                sendMessage(source,
+                    "Error deleting " ..
+                    (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
             end
         else
-            sendMessage(source, "Cannot delete.  " .. (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
+            sendMessage(source,
+                "Cannot delete.  " ..
+                (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
         end
     else
         sendMessage(source, "Ignoring delete vehicle list event.  Invalid parameters.\n")
@@ -1986,10 +2088,12 @@ AddEventHandler("races:listLsts", function(isPublic)
                         end
                         sendMessage(source, msg)
                     else
-                        sendMessage(source, "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
+                        sendMessage(source,
+                            "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
                     end
                 else
-                    sendMessage(source, "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
+                    sendMessage(source,
+                        "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
                 end
             else
                 sendMessage(source, "Could not load vehicle list data.\n")
@@ -2009,7 +2113,6 @@ AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
         if races[rIndex] ~= nil then
             if STATE_REGISTERING == races[rIndex].state then
                 if races[rIndex].players[netID] ~= nil then
-
                     for i = 1, #gridLineup do
                         if gridLineup[i] == races[rIndex].players[netID].source then
                             table.remove(gridLineup, i)
@@ -2025,19 +2128,22 @@ AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
 
                     races[rIndex].numRacing = races[rIndex].numRacing - 1
 
-                    if(ready) then
+                    if (ready) then
                         races[rIndex].numReady = races[rIndex].numReady - 1
                     end
 
                     TriggerClientEvent("races:onplayerleave", source)
                     TriggerClientEvent("races:leavenotification", -1,
-                    string.format("%s has left Race %s",
-                    races[rIndex].players[netID].playerName,
-                    races[rIndex].trackName),
-                    rIndex,
-                    races[rIndex].numReady,
-                    races[rIndex].numRacing,
-                    races[rIndex].waypointCoords[1]
+                        string.format(
+                            "%s has left Race %s",
+                            races[rIndex].players[netID].playerName,
+                            races[rIndex].trackName
+                        ),
+                        races[rIndex].players[netID].source,
+                        rIndex,
+                        races[rIndex].numReady,
+                        races[rIndex].numRacing,
+                        races[rIndex].waypointCoords[1]
                     )
 
                     races[rIndex].players[netID] = nil
@@ -2052,8 +2158,6 @@ AddEventHandler("races:leave", function(rIndex, netID, ready, aiName)
                             TriggerClientEvent("races:delRacer", player.source, netID)
                         end
                     end
-
-
                 else
                     sendMessage(source, "Cannot leave.  Not a member of this race.\n")
                 end
@@ -2133,7 +2237,8 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, source, rIndex, races[rIndex].trackName, races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+                    TriggerClientEvent("races:joinnotification", -1, playerName, source, rIndex, races[rIndex].trackName,
+                        races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
                     notifyPlayer(source, "Cannot join.  Race in progress.\n")
@@ -2150,136 +2255,139 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
 end)
 
 RegisterNetEvent("races:finish")
-AddEventHandler("races:finish", function(rIndex, netID, aiName, numWaypointsPassed, finishTime, bestLapTime, vehicleName, altSource)
-    local source = altSource or source
-    if rIndex ~= nil and netID ~= nil and numWaypointsPassed ~= nil and finishTime ~= nil and bestLapTime ~= nil and vehicleName ~= nil then
-        local race = races[rIndex]
-        if race ~= nil then
-            if STATE_RACING == race.state then
-                if race.players[netID] ~= nil then
-                    race.players[netID].numWaypointsPassed = numWaypointsPassed
-                    race.players[netID].data = finishTime
+AddEventHandler("races:finish",
+    function(rIndex, netID, aiName, numWaypointsPassed, finishTime, bestLapTime, vehicleName, altSource)
+        local source = altSource or source
+        if rIndex ~= nil and netID ~= nil and numWaypointsPassed ~= nil and finishTime ~= nil and bestLapTime ~= nil and vehicleName ~= nil then
+            local race = races[rIndex]
+            if race ~= nil then
+                if STATE_RACING == race.state then
+                    if race.players[netID] ~= nil then
+                        race.players[netID].numWaypointsPassed = numWaypointsPassed
+                        race.players[netID].data = finishTime
 
-                    for nID, player in pairs(race.players) do
-                        if nil == player.aiName then
-                            TriggerClientEvent("races:finish", player.source, rIndex, race.players[netID].playerName, finishTime, bestLapTime, vehicleName)
+                        for nID, player in pairs(race.players) do
+                            if nil == player.aiName then
+                                TriggerClientEvent("races:finish", player.source, rIndex, race.players[netID].playerName,
+                                    finishTime, bestLapTime, vehicleName)
+                            end
+                            if nID ~= netID then
+                                TriggerClientEvent("races:delRacer", player.source, netID)
+                            end
                         end
-                        if nID ~= netID then
-                            TriggerClientEvent("races:delRacer", player.source, netID)
-                        end
-                    end
 
-                    race.results[#race.results + 1] = {
-                        source = source,
-                        playerName = race.players[netID].playerName,
-                        aiName = aiName,
-                        finishTime = finishTime,
-                        bestLapTime = bestLapTime,
-                        vehicleName = vehicleName
-                    }
+                        race.results[#race.results + 1] = {
+                            source = source,
+                            playerName = race.players[netID].playerName,
+                            aiName = aiName,
+                            finishTime = finishTime,
+                            bestLapTime = bestLapTime,
+                            vehicleName = vehicleName
+                        }
 
-                    race.numRacing = race.numRacing - 1
-                    if 0 == race.numRacing then
-                        table.sort(race.results, function(p0, p1)
-                            return
-                                (p0.finishTime >= 0 and (-1 == p1.finishTime or p0.finishTime < p1.finishTime)) or
-                                (-1 == p0.finishTime and -1 == p1.finishTime and (p0.bestLapTime >= 0 and (-1 == p1.bestLapTime or p0.bestLapTime < p1.bestLapTime)))
-                        end)
+                        race.numRacing = race.numRacing - 1
+                        if 0 == race.numRacing then
+                            table.sort(race.results, function(p0, p1)
+                                return
+                                    (p0.finishTime >= 0 and (-1 == p1.finishTime or p0.finishTime < p1.finishTime)) or
+                                    (-1 == p0.finishTime and -1 == p1.finishTime and (p0.bestLapTime >= 0 and (-1 == p1.bestLapTime or p0.bestLapTime < p1.bestLapTime)))
+                            end)
 
-                        if true == distValid and race.rtype ~= "rand" and "no" == race.allowAI then
-                            local numRacers = #race.results
-                            local numFinished = 0
-                            local totalPool = numRacers * race.buyin
-                            local pool = totalPool
-                            local winnings = {}
+                            if true == distValid and race.rtype ~= "rand" and "no" == race.allowAI then
+                                local numRacers = #race.results
+                                local numFinished = 0
+                                local totalPool = numRacers * race.buyin
+                                local pool = totalPool
+                                local winnings = {}
 
-                            local winningsRL = {}
-                            for _, result in pairs(race.results) do
-                                winningsRL[result.source] = race.buyin
-                            end
-
-                            for i, result in ipairs(race.results) do
-                                winnings[i] = {payout = race.buyin, source = result.source}
-                                if result.finishTime ~= -1 then
-                                    numFinished = numFinished + 1
+                                local winningsRL = {}
+                                for _, result in pairs(race.results) do
+                                    winningsRL[result.source] = race.buyin
                                 end
-                            end
 
-                            if numFinished >= #dist then
-                                for i = numFinished + 1, numRacers do
-                                    winnings[i].payout = 0
+                                for i, result in ipairs(race.results) do
+                                    winnings[i] = { payout = race.buyin, source = result.source }
+                                    if result.finishTime ~= -1 then
+                                        numFinished = numFinished + 1
+                                    end
                                 end
-                                local payout = round(dist[#dist] / 100 * totalPool / (numFinished - #dist + 1))
-                                for i = #dist, numFinished do
-                                    winnings[i].payout = payout
-                                    pool = pool - payout
-                                end
-                                for i = 2, #dist - 1 do
-                                    payout = round(dist[i] / 100 * totalPool)
-                                    winnings[i].payout = payout
-                                    pool = pool - payout
-                                end
-                                winnings[1].payout = pool
-                            elseif numFinished > 0 then
-                                for i = numFinished + 1, numRacers do
-                                    winnings[i].payout = 0
-                                end
-                                local bonus = dist[numFinished + 1]
-                                for i = numFinished + 2, #dist do
-                                    bonus = bonus + dist[i]
-                                end
-                                bonus = bonus / numFinished
-                                for i = 2, numFinished do
-                                    local payout = round((dist[i] + bonus) / 100 * totalPool)
-                                    winnings[i].payout = payout
-                                    pool = pool - payout
-                                end
-                                winnings[1].payout = pool
-                            end
 
-                            for _, winning in pairs(winnings) do
-                                winningsRL[winning.source] = winning.payout
-                            end
+                                if numFinished >= #dist then
+                                    for i = numFinished + 1, numRacers do
+                                        winnings[i].payout = 0
+                                    end
+                                    local payout = round(dist[#dist] / 100 * totalPool / (numFinished - #dist + 1))
+                                    for i = #dist, numFinished do
+                                        winnings[i].payout = payout
+                                        pool = pool - payout
+                                    end
+                                    for i = 2, #dist - 1 do
+                                        payout = round(dist[i] / 100 * totalPool)
+                                        winnings[i].payout = payout
+                                        pool = pool - payout
+                                    end
+                                    winnings[1].payout = pool
+                                elseif numFinished > 0 then
+                                    for i = numFinished + 1, numRacers do
+                                        winnings[i].payout = 0
+                                    end
+                                    local bonus = dist[numFinished + 1]
+                                    for i = numFinished + 2, #dist do
+                                        bonus = bonus + dist[i]
+                                    end
+                                    bonus = bonus / numFinished
+                                    for i = 2, numFinished do
+                                        local payout = round((dist[i] + bonus) / 100 * totalPool)
+                                        winnings[i].payout = payout
+                                        pool = pool - payout
+                                    end
+                                    winnings[1].payout = pool
+                                end
 
-                            for _, player in pairs(race.players) do
-                                if winningsRL[player.source] > 0 then
-                                    if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE race.allowAI == "no"
-                                        Deposit(player.source, winningsRL[player.source])
-                                        notifyPlayer(player.source, winningsRL[player.source] .. " was deposited in your funds.\n")
+                                for _, winning in pairs(winnings) do
+                                    winningsRL[winning.source] = winning.payout
+                                end
+
+                                for _, player in pairs(race.players) do
+                                    if winningsRL[player.source] > 0 then
+                                        if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE race.allowAI == "no"
+                                            Deposit(player.source, winningsRL[player.source])
+                                            notifyPlayer(player.source,
+                                                winningsRL[player.source] .. " was deposited in your funds.\n")
+                                        end
                                     end
                                 end
                             end
-                        end
 
-                        for _, player in pairs(race.players) do
-                            if nil == player.aiName then
-                                TriggerClientEvent("races:results", player.source, rIndex, race.results)
+                            for _, player in pairs(race.players) do
+                                if nil == player.aiName then
+                                    TriggerClientEvent("races:results", player.source, rIndex, race.results)
+                                end
                             end
+
+                            saveResults(race)
+
+                            SetNextGridLineup(race.results)
+
+                            if race.trackName ~= nil then
+                                updateBestLapTimes(rIndex)
+                            end
+
+                            races[rIndex] = nil -- delete race after all players finish
                         end
-
-                        saveResults(race)
-
-                        SetNextGridLineup(race.results)
-
-                        if race.trackName ~= nil then
-                            updateBestLapTimes(rIndex)
-                        end
-
-                        races[rIndex] = nil -- delete race after all players finish
+                    else
+                        notifyPlayer(source, "Cannot finish.  Not a member of this race.\n")
                     end
                 else
-                    notifyPlayer(source, "Cannot finish.  Not a member of this race.\n")
+                    notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
                 end
             else
-                notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
+                notifyPlayer(source, "Cannot finish.  Race does not exist.\n")
             end
         else
-            notifyPlayer(source, "Cannot finish.  Race does not exist.\n")
+            notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
         end
-    else
-        notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
-    end
-end)
+    end)
 
 RegisterNetEvent("races:report")
 AddEventHandler("races:report", function(rIndex, netID, aiName, numWaypointsPassed, distance)
@@ -2329,7 +2437,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
         TriggerClientEvent("races:trackNames", source, isPublic, trackNames)
     else
         sendMessage(source, "Ignoring list event.  Invalid parameters.\n")
-   end
+    end
 end)
 
 RegisterNetEvent("races:aiGrpNames")
@@ -2427,8 +2535,14 @@ Citizen.CreateThread(function()
 
                 if true == complete then -- all player clients have updated numWaypointsPassed and data
                     table.sort(sortedPlayers, function(p0, p1)
-                        return (p0.numWaypointsPassed > p1.numWaypointsPassed) or (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
+                        return (p0.numWaypointsPassed > p1.numWaypointsPassed) or
+                        (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
                     end)
+
+                    local racePositions = map(sortedPlayers, function(item) return item.source end)
+
+                    TriggerClientEvent("races:racerPositions", -1, racePositions)
+
                     -- players sorted into sortedPlayers table
                     for position, sortedPlayer in pairs(sortedPlayers) do
                         if nil == sortedPlayer.aiName then
