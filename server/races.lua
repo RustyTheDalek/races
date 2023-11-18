@@ -2365,6 +2365,8 @@ AddEventHandler("races:finish",
                                 end
                             end
 
+                            TriggerClientEvent("races:clearLeaderboard", -1)
+
                             saveResults(race)
 
                             SetNextGridLineup(race.results)

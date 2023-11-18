@@ -641,7 +641,6 @@ end
 local function finishRace(time)
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
-    SetRaceLeaderboard(false)
     resetReady()
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
@@ -2012,7 +2011,6 @@ local function leave()
     if STATE_JOINING == raceState then
         raceState = STATE_IDLE
         resetReady()
-        SetRaceLeaderboard(false)
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), ready, nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
@@ -2026,6 +2024,7 @@ local function leave()
         finishRace(-1)
         removeRacerBlipGT()
         resetReady()
+        ClearLeaderboard()
         SetRaceLeaderboard(false)
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
@@ -3444,6 +3443,7 @@ AddEventHandler("races:joinnotification", function(playerName, source, rIndex, t
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
+    AddRacerToLeaderboard(source, playerName)
     SendRacerName(source, playerName)
     SetReadyUI(numReady, numRacing)
 end)
@@ -3870,6 +3870,13 @@ function RemoveRacerFromLeaderboard(source)
     })
 end
 
+function ClearLeaderboard()
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'clear_leaderboard'
+    })
+end
+
 function SetReadyRacersUI(numReady)
     SendNUIMessage({
         type = 'ready',
@@ -3906,9 +3913,24 @@ function SendRacerName(source, playerName)
     })
 end
 
+function AddRacerToLeaderboard(source, playerName)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'add_racer',
+        name = playerName,
+        id = source
+    })
+end
+
 function InitialiseReady()
     SetReadyVisible(true)
 end
+
+
+RegisterNetEvent("races:clearLeaderboard")
+AddEventHandler("races:clearLeaderboard", function()
+    ClearLeaderboard()
+end)
 
 RegisterNetEvent("races:sendReadyData")
 AddEventHandler("races:sendReadyData", function(numberReady, source, playerName)

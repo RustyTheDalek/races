@@ -10,6 +10,9 @@ function readLeaderBoardEvents(event) {
     if(data.type !== 'leaderboard') return;
 
     switch(data.action) {
+        case "add_racer":
+            addPlayerToleaderboard(data.name, data.id);
+            break;
         case "remove_racer":
             removePlayerFromleaderboard(data.source);
             break;
@@ -19,7 +22,15 @@ function readLeaderBoardEvents(event) {
         case "update_positions":
             UpdatePositions(data.racePositions);
             break;
+        case "clear_leaderboard":
+            ClearLeaderboard();
+            break;
     }
+}
+
+function ClearLeaderboard(){
+    leaderboard.hide();
+    leaderboard.empty();
 }
 
 function UpdatePositions(racePositions) {
