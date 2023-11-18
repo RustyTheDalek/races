@@ -47,6 +47,8 @@ $(function() {
     $("#listPanel").hide();
     $("#replyPanel").hide();
 
+    let unready_racers = $("ul#unready-racers");
+
     function setVisible(target, visible) {
         if(visible){
             target.show();
@@ -56,19 +58,15 @@ $(function() {
     }
 
     function AddRacerName(id, name) {
-        $("#unready-racers").append(`<li id="${id}">${name}</li>`);
-
-        addPlayerToleaderboard(name, id);
+        unready_racers.append(`<li id="${id}">${name}</li>`);
     }
 
     function RemoveRacerName(id) {
-        $(`#${id}`).remove();
+        unready_racers.find(`#${id}`).remove();
     }
 
     function HandleRacerName(id, name) {
         let racerNameAlreadUnready = $(`#${id}`).length > 0;
-
-        console.log(racerNameAlreadUnready);
 
         if(racerNameAlreadUnready) {
             RemoveRacerName(id);
