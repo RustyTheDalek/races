@@ -61,8 +61,6 @@ $(function() {
     function AddRacerName(racer) {
         let unready_racer = unready_racers.append(`<li id="${racer.source}">${racer.playerName}</li>`);
 
-        console.log(unready_racer);
-
         SetVisible(unready_racer, !racer.ready)
     }
 
@@ -75,8 +73,6 @@ $(function() {
     }
 
     function AddRacerNames(racers) {
-
-        console.log(racers);
 
         racers.forEach(racer => {
             let racer_exists = unready_racers.find(`#${racer.source}`).length > 0;

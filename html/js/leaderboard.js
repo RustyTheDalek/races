@@ -79,7 +79,6 @@ function AddRacerToleaderboard(racers) {
 }
 
 function RemovePlayerFromleaderboard(id) {
-  console.log(`removing ${id}`);
   leaderboard.find(`#${id}`).remove();
   SortLeaderboard();
 }
