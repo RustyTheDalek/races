@@ -299,8 +299,9 @@ body {
     width: 15%;
 }
 
-#buyin {
-    width: 10%;
+#tier {
+    width: 60px;
+    height: 44px;
 }
 
 #laps {

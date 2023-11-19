@@ -20,11 +20,11 @@ For the following **`/races`** commands, [access] = {'pvt', 'pub'} where 'pvt' o
 **`/races blt [access] [name]`** - list 10 best lap times of private or public track saved as [name]\
 **`/races list [access]`** - list saved private or public tracks
 
-For the following **`/races register`** commands, (buy-in) defaults to 500, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI)`** - register your race with no vehicle restrictions\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle]`** - register your race restricted to [vehicle]\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class]`** - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`** - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any
+For the following **`/races register`** commands, (tier) defaults to none, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\
+**`/races register (tier) (laps) (DNF timeout) (allow AI)`** - register your race with no vehicle restrictions\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) rest [vehicle]`** - register your race restricted to [vehicle]\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) class [class]`** - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`** - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any
 
 **`/races unregister`** - unregister your race\
 **`/races start (delay)`** - start your registered race; (delay) defaults to 30 seconds
@@ -115,15 +115,15 @@ There are backups of the sample tracks in the **`sampletracks/`** folder with th
 
 QUICK GUIDE FOR RACE CREATORS
 -----------------------------
-If permission to edit tracks and register races is given or is not required, all the following **`/races`** commands are permitted.  Type **`/races edit`** until you see the message **`Editing started`**.  Add at least 2 waypoints on the waypoint map or in the world by pressing 'Enter' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller.  Type **`/races edit`** again until you see the message **`Editing stopped`**.  Save the track if you want by typing **`/races save pvt mytrack`**.  Register your race by typing **`/races register`**.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This is the registration waypoint which all players will see.  Players who want to join, maybe including yourself, need to have enough funds to pay for the buy-in and move towards the registration waypoint until prompted to join.  Once prompted to join, type 'E' or press right DPAD to join.  Once other people have joined, you can start the race by typing **`/races start`**.
+If permission to edit tracks and register races is given or is not required, all the following **`/races`** commands are permitted.  Type **`/races edit`** until you see the message **`Editing started`**.  Add at least 2 waypoints on the waypoint map or in the world by pressing 'Enter' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller.  Type **`/races edit`** again until you see the message **`Editing stopped`**.  Save the track if you want by typing **`/races save pvt mytrack`**.  Register your race by typing **`/races register`**.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This is the registration waypoint which all players will see.  Players who want to join, maybe including yourself, need to move towards the registration waypoint until prompted to join.  Once prompted to join, type 'E' or press right DPAD to join.  Once other people have joined, you can start the race by typing **`/races start`**.
 
 QUICK GUIDE FOR RACING
 ----------------------
-There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.  For race types 4, 5, 6 and 7, buy-in amounts will be set to 0 and there will be no payouts.
+There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.
 
-Look for purple circled star blips on the waypoint map.  There will be corresponding purple cylinder checkpoints in the world.  The label for the blip in the waypoint map will indicate the player who registered the race, the buy-in amount, if AI drivers are allowed and the type of race.
+Look for purple circled star blips on the waypoint map.  There will be corresponding purple cylinder checkpoints in the world.  The label for the blip in the waypoint map will indicate the player who registered the race, the car tier, if AI drivers are allowed and the type of race.
 
-If the race allows AI drivers to be added, the label will include **'AI allowed'**.  The person who registered the race can add as many AI drivers as they like.  Buy-in amounts will be set to 0 and there will be no payouts.
+If the race allows AI drivers to be added, the label will include **'AI allowed'**.  The person who registered the race can add as many AI drivers as they like.
 
 If the race is restricted to a specific vehicle, the label will include **'using [vehicle]'** where [vehicle] is the name of the restricted vehicle.  You must be in that vehicle when prompted to join the race.  If permission to spawn vehicles is given or not required, you can spawn the restricted vehicle by typing **`/races spawn [vehicle]`** where [vehicle] is the restricted vehicle.  For example, if the label shows **using 'adder'**, you can spawn the vehicle by typing **`/races spawn adder`**.
 
@@ -132,8 +132,6 @@ If the race is restricted to a specific vehicle class, the label will include **
 If the race changes vehicles randomly every lap, the label will include **'using random vehicles'**.  If a vehicle is specified after the **'using random vehicles'** message, racers will be placed in the specified vehicle when the race starts.
 
 If the race changes vehicles randomly every lap to one of a specific class, the label will include **'using random [class] vehicle class'** where [class] is the vehicle class.  The class number will be in parentheses.  If a vehicle is specified after the **'using random [class] vehicle class'** message, racers will be placed in the specified vehicle when the race starts.
-
-To join a race, you must have enough funds to pay for the buy-in amount.  You can check how much funds you have by typing **`/races funds`**.
 
 Move towards the registration waypoint until you are prompted to join.  Type 'E' or press right DPAD to join.  The player who registered the race will be the one who starts the race.  Once they start the race, your vehicle will be frozen until the start delay has expired and the race has officially begun.  Follow the checkpoints until the finish.  The results of the race will be broadcast to all racers who joined.  Prize money will be distributed to all finishers.  If you want to see the results again, type **`/races results`**.
 
@@ -153,10 +151,10 @@ If permission is required to edit tracks, the following commands will be restric
 
 If permission is required to register races, the following commands will be restricted to players who have permission:
 
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI)`**\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle]`**\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class]`**\
-**`/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`**\
+**`/races register (tier) (laps) (DNF timeout) (allow AI)`**\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) rest [vehicle]`**\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) class [class]`**\
+**`/races register (tier) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`**\
 **`/races unregister`**\
 **`/races start (delay)`**\
 **`/races ai add [name]`**\
@@ -234,9 +232,9 @@ You can clear all waypoints, except registration waypoints, by typing **`/races 
 
 After you have set your track waypoints, you can register your race using the track.  This will advertise your race to all players.  Your track must have two or more waypoints.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This will be the registration waypoint.  It will be visible to all players.
 
-The registration waypoint on the waypoint map will be labeled with some information about the race.  The player who registered the race, the buy-in amount and if AI drivers are allowed will be shown.  If **'AI allowed'** is shown, AI drivers may be added by the person who registered the race.  If **'using [vehicle]'** is shown, the race is restricted to that vehicle.  If **'using [class] vehicle class'** is shown, the race is restricted to vehicles of type [class].  If **'using random vehicles'** is shown, the race will change vehicles randomly every lap.  If **'using random vehicles : [vehicle]'** is shown, the race will change vehicles randomly every lap and racers will start in the specified [vehicle].  If **'using random [class] vehicle class'** is shown, the race will change vehicles randomly every lap to one from that [class].  If **'using random [class] vehicle class : [vehicle]'** is shown, the race will change vehicles randomly every lap to one from that [class] and start in the specified [vehicle].  This allows racers to determine whether or not they can join the race without having to drive all the way to the registration waypoint.
+The registration waypoint on the waypoint map will be labeled with some information about the race.  The player who registered the race, the car tier and if AI drivers are allowed will be shown.  If **'AI allowed'** is shown, AI drivers may be added by the person who registered the race.  If **'using [vehicle]'** is shown, the race is restricted to that vehicle.  If **'using [class] vehicle class'** is shown, the race is restricted to vehicles of type [class].  If **'using random vehicles'** is shown, the race will change vehicles randomly every lap.  If **'using random vehicles : [vehicle]'** is shown, the race will change vehicles randomly every lap and racers will start in the specified [vehicle].  If **'using random [class] vehicle class'** is shown, the race will change vehicles randomly every lap to one from that [class].  If **'using random [class] vehicle class : [vehicle]'** is shown, the race will change vehicles randomly every lap to one from that [class] and start in the specified [vehicle].  This allows racers to determine whether or not they can join the race without having to drive all the way to the registration waypoint.
 
-Type **`/races register 100 2 180 no`** to register your race with a buy-in amount of 100, 2 laps, a DNF timeout of 180 seconds, do not allow AI drivers in the race and no restrictions on the vehicle used.  If you do not indicate the buy-in amount, the default is 500.  If you do not indicate the number of laps, the default is 1 lap.  If you do not indicate the DNF timeout, the default is 120 seconds.  If you do not indicate if AI are allowed, the default is no.
+Type **`/races register A1 2 180 no`** to register your race with a car-iter of A1, 2 laps, a DNF timeout of 180 seconds, do not allow AI drivers in the race and no restrictions on the vehicle used. If you do not indicate a car tier, there will be none.  If you do not indicate the number of laps, the default is 1 lap.  If you do not indicate the DNF timeout, the default is 120 seconds.  If you do not indicate if AI are allowed, the default is no.
 
 If you want to restrict the vehicle used in a race, type **`/races register 100 2 180 no rest elegy2`** to restrict vehicles to **`elegy2`**.
 
@@ -272,7 +270,7 @@ Vehicle list data is saved in the file **`resources/races/vehicleListData.json`*
 
 If you want to create a race where only a custom list of vehicles are allowed, type **`/races register 100 2 180 no class -1`**.  The allowed vehicles will come from a vehicle list that you created or loaded.
 
-If you want to create a race where vehicles change randomly every lap, type **`/races register 100 2 180 no rand`**.  Buy-in amounts will be set to 0 and there will be no payouts.  The randomly selected vehicles will come from a vehicle list that you created or loaded.  If you want to increase the chances of a specific vehicle appearing, you can add that vehicle multiple times to your vehicle list.
+If you want to create a race where vehicles change randomly every lap, type **`/races register none 2 180 no rand`**. The randomly selected vehicles will come from a vehicle list that you created or loaded.  If you want to increase the chances of a specific vehicle appearing, you can add that vehicle multiple times to your vehicle list.
 
 If you want to create a race where vehicles change randomly every lap to one selected from your vehicle list that are of class Compacts (0), type **`/races register 100 2 180 no rand 0`**.
 
@@ -308,7 +306,7 @@ The different classes of vehicle you can specify are listed here:
 
 As a convenience, each class of vehicle has been separated into different files in the **`vehicles/`** folder.  Vehicles of class Compacts (0) have been placed in **`00.txt`**.  Vehicles of class Sedans (1) have been placed in **`01.txt`**.  Vehicles of other classes have been placed in similarly named files except for class Custom (-1).  Each of these files contain vehicles taken from **`vehicles.txt`**.  Vehicles that don't seem to be in my version of GTA 5 are in the **`uknown.txt`** file.
 
-If you want a race where AI drivers are allowed, type **`/races register 100 2 180 yes`**.  Only the person who registered the race can add AI drivers.  Buy-in amounts will be set to 0 and there will be no payouts.
+If you want a race where AI drivers are allowed, type **`/races register none 2 180 yes`**.  Only the person who registered the race can add AI drivers.
 
 To add an AI driver named **`adam`** at your current location and heading, type **`/races ai add adam`**.  This only sets the location and heading of the driver.  Move away from the location where you added the driver, then type **`/races ai spawn adam elegy2`** to spawn a driver in an **`elegy2`** vehicle at the location and heading you set.  If you do not specify a vehicle, an **`adder`** vehicle is spawned by default.  To delete an AI driver you added named **`adam`**, type **`/races ai delete adam`**.  You can delete the driver before or after you spawn the driver.  To delete all AI drivers, type **`/races ai deleteAll`**.  To list the names of the AI drivers you added, type **`/races ai list`**.  If you want to ride as a passenger in the AI's vehicle, move close to the vehicle and press 'F' on a keyboard, 'Y' button on an Xbox controller or 'Triangle' button on a DualShock controller.
 
@@ -324,17 +322,15 @@ To load a saved AI group named **`mygroup`**, type **`/races ai loadGrp pvt mygr
 
 AI group data is saved in the file **`resources/races/aiGroupData.json`**.
 
-If you want to use the default value for some arguments of the **`/races register`** command, you can type '.' to use the default value for that argument.  For example, if you type **`/races register . 4 . . rand 9`**, the race will be a random race using the default buy-in amount (500), 4 laps, the default DNF timeout (120 seconds), no AI drivers allowed and vehicles of class Off-road (9).  This is the equivalent of **`/races register 500 4 120 no rand 9`**.
+If you want to use the default value for some arguments of the **`/races register`** command, you can type '.' to use the default value for that argument.  For example, if you type **`/races register . 4 . . rand 9`**, the race will be a random race using the default car tier (none), 4 laps, the default DNF timeout (120 seconds), no AI drivers allowed and vehicles of class Off-road (9).  This is the equivalent of **`/races register 500 4 120 no rand 9`**.
 
 If you set the number of laps to 2 or more, the start and finish waypoints must be the same.  Instructions on how to do this are listed above.  You may only register one race at a time.  If you want to register a new race, but already registered one, you must unregister your current race first. You cannot register a race if you are currently editing waypoints.  Stop editing first.
 
 You can unregister your race by typing **`/races unregister`**.  This will remove your race advertisement from all players.  This can be done before or after you have started the race.  **IF YOU ALREADY STARTED THE RACE AND THEN UNREGISTER IT, THE RACE WILL BE CANCELED.**
 
-To join a race, players will need to be close enough to the registration waypoint to be prompted to join.  The registration waypoint will tell the player if it is an unsaved track or if it is a publicly or privately saved track along with its saved name, who registered the race, the buy-in amount, the number of laps, if AI drivers are allowed and the type of race.
+To join a race, players will need to be close enough to the registration waypoint to be prompted to join.  The registration waypoint will tell the player if it is an unsaved track or if it is a publicly or privately saved track along with its saved name, who registered the race, the cartier, the number of laps, if AI drivers are allowed and the type of race.
 
-There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.  For race types 4, 5, 6 and 7, buy-in amounts will be set to 0 and there will be no payouts.
-
-Players who want to join the race will need to have enough funds to pay for the buy-in amount.  All players begin with at least 5000 in their funds.
+There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.  For race types 4, 5, 6 and 7.
 
 If the race is restricted to specific vehicle, its name is shown at the registration waypoint.  Players will need to be in the restricted vehicle at the registration waypoint in order to join the race.  Players can spawn the restricted vehicle by typing **`/races spawn [vehicle]`** where [vehicle] is the restricted vehicle name.
 
@@ -360,10 +356,6 @@ As racers finish, their finishing time, best lap time and the vehicle name they 
 
 After all racers finish or DNF, the race results will be broadcast to players who joined the race.  Their position, name, finishing time, best lap time and name of the vehicle used for their best lap time will be displayed.  Best lap times will be recorded if the track was a saved track and waypoints were not modified.  Race results are saved to **`resources/races/results_[owner].txt`** where [owner] is the owner of the race.
 
-Racers are given prize money after all racers finish or DNF.  At the start of every game session, players start with at least 5000 in their funds.  If you are using the existing **`port.lua`** file, race earnings are not saved between different game sessions.  If you win prize money in one game session, it will not carry over to the next game session.  **`port.lua`** may be ported to a framework that does save funds between different game sessions.  The ESX framework may save race earnings from one game session to the next game session.  A port of the **`port.lua`** file to ESX is in the **`esx/`** folder.  Total race prize money is the sum of all buy-in amounts that all racers paid.  The prize distribution is as follows: 1st 60%, 2nd 20%, 3rd 10%, 4th 5%, 5th 3% and lastly, 2% is spread evenly among racers who finished 6th and later.  Racers who DNF will not receive a payout unless all racers DNF.  If all racers DNF, all racers are refunded their buy-in amounts.  If fewer racers finish the race than there are places in the prize distribution, all racers who finished will receive any left over place percentages split evenly among the finishers.  If you wish to distribute the prize money differently, you will need to modify the values of the table named **`dist`** in **`races_server.lua`**.  The declaration and initialization of **`dist`** is\
-**`local dist <const> = {60, 20, 10, 5, 3, 2}`**\
-You can change the total number of values in the table.  For the distribution to be valid, the following conditions must be met:  All values in the table **`dist`** must add up to 100.  All values in the table must be 1 or greater.  First place distribution must be greater than or equal to second place distribution.  Second place distribution must be greater than or equal to 3rd place distribution and so on.  If these conditions are not met, a message will be displayed in the server console in red saying that the distribution is invalid.  If the distribution is invalid, players can still race.  Their buy-in amounts will be refunded after all racers finish or DNF.
-
 If you want to look at the race results again, type **`/races results`**.  If you cannot see all the results, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
 
 To spawn a vehicle, type **`/races spawn elegy2`** to spawn an **`elegy2`** vehicle.  If you do not indicate a vehicle name, the default is **`adder`**.  A list of vehicles you can spawn are listed in **`vehicles.txt`**.  This list has not been verified to work for all vehicles listed and there may be some missing.
@@ -371,8 +363,6 @@ To spawn a vehicle, type **`/races spawn elegy2`** to spawn an **`elegy2`** vehi
 To list vehicles that can be used for any race, type **`/races lvehicles`**.  To list vehicles of a specific class, type **`/races lvehicles 0`** to list class Compacts (0) vehicles.  The vehicles displayed come from the **`vehicles.txt`** file which should contain every vehicle.
 
 To toggle the display of the speedometer at any time, type **`/races speedo`**.  The speedometer automatically displays when you are in a race and disappears when you finish or leave the race.  The default unit of measurement is imperial.  If you wish to change the unit of measurement type **`/races speedo (unit)`** where (unit) is either **`imperial`** for imperial or **`metric`** for metric.
-
-To view your available funds for race buy-ins, type **`/races funds`**.
 
 Type **`/races panel`** to show the main panel.  Type **`/races panel edit`** to show the edit tracks panel.  Type **`/races panel register`** to show the register races panel.  Type **`/races panel ai`** to show the AI panel.  Type **`/races panel list`** to show the vehicle list panel.  All **`/races`** commands have a corresponding button and argument field(s) if needed.  Replies to the commands will show up in another panel as well as in chat.  There are buttons near the bottom that will let you switch to another panel if you click them.  To close the panel, type 'Escape' or click the 'Close' button at the bottom.
 

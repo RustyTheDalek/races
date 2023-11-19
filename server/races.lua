@@ -102,7 +102,7 @@ local defaultRadius <const> = 5.0                       -- default waypoint radi
 
 local requests = {}                                     -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
-local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
+local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
 
 local dist <const> = { 60, 20, 10, 5, 3, 2 }            -- prize distribution
 local distValid = true                                  -- flag indicating if prize distribution is valid
@@ -450,15 +450,6 @@ local function removeRole(playerName, roleName)
                             if string.sub(license, 9) == lic then
                                 rIndex = tonumber(rIndex)
                                 if races[rIndex] ~= nil and STATE_REGISTERING == races[rIndex].state then
-                                    if races[rIndex].buyin > 0 then
-                                        for _, player in pairs(races[rIndex].players) do
-                                            if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE races[rIndex].buyin > 0
-                                                Deposit(player.source, races[rIndex].buyin)
-                                                notifyPlayer(player.source,
-                                                    races[rIndex].buyin .. " was deposited in your funds.\n")
-                                            end
-                                        end
-                                    end
                                     races[rIndex] = nil
                                     TriggerClientEvent("races:unregister", -1, rIndex)
                                 end
@@ -824,14 +815,14 @@ local function minutesSeconds(milliseconds)
 end
 
 local function saveResults(race)
-    -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
+    -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName, aiName, numWaypointsPassed, data, coord}, results[] = {source, playerName, aiName, finishTime, bestLapTime, vehicleName}}
     local msg = "Race using "
     if nil == race.trackName then
         msg = msg .. "unsaved track "
     else
         msg = msg .. (true == race.isPublic and "publicly" or "privately") .. " saved track '" .. race.trackName .. "' "
     end
-    msg = msg .. ("registered by %s : %d buy-in : %d lap(s)"):format(race.owner, race.buyin, race.laps)
+    msg = msg .. ("registered by %s : tier %s : %d lap(s)"):format(race.owner, race.tier, race.laps)
     if "yes" == race.allowAI then
         msg = msg .. " : AI allowed"
     end
@@ -1124,15 +1115,6 @@ AddEventHandler("playerDropped", function()
 
     -- unregister race registered by dropped player that has not started
     if races[source] ~= nil and STATE_REGISTERING == races[source].state then
-        if races[source].buyin > 0 then
-            for _, player in pairs(races[source].players) do
-                if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE races[source].buyin > 0
-                    
-                    Deposit(player.source, races[source].buyin)
-                    notifyPlayer(player.source, races[source].buyin .. " was deposited in your funds.\n")
-                end
-            end
-        end
         races[source] = nil
         TriggerClientEvent("races:unregister", -1, source)
     end
@@ -1305,7 +1287,7 @@ AddEventHandler("races:init", function()
                     race.vehicleList
             }
             TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
-                race.owner, race.buyin, race.laps, race.timeout, race.allowAI, rdata)
+                race.owner, race.tier, race.laps, race.timeout, race.allowAI, rdata)
         end
     end
 
@@ -1559,117 +1541,112 @@ AddEventHandler("races:list", function(isPublic)
 end)
 
 RegisterNetEvent("races:register")
-AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, buyin, laps, timeout, allowAI, rdata)
+AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, tier, laps, timeout, allowAI, rdata)
     local source = source
     if 0 == getRoleBits(source) & ROLE_REGISTER then
         sendMessage(source, "Permission required.\n")
         return
     end
-    if waypointCoords ~= nil and isPublic ~= nil and buyin ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
-        if buyin >= 0 then
-            if laps > 0 then
-                if timeout >= 0 then
-                    if "yes" == allowAI or "no" == allowAI then
-                        if nil == races[source] then
-                            local umsg = ""
-                            if "rest" == rdata.rtype then
-                                if nil == rdata.restrict then
-                                    sendMessage(source, "Cannot register.  Invalid restricted vehicle.\n")
-                                    return
-                                end
-                                umsg = " : using '" .. rdata.restrict .. "' vehicle"
-                            elseif "class" == rdata.rtype then
-                                if nil == rdata.vclass or rdata.vclass < -1 or rdata.vclass > 21 then
+    if waypointCoords ~= nil and isPublic ~= nil and tier ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
+        if laps > 0 then
+            if timeout >= 0 then
+                if "yes" == allowAI or "no" == allowAI then
+                    if nil == races[source] then
+                        local umsg = ""
+                        if "rest" == rdata.rtype then
+                            if nil == rdata.restrict then
+                                sendMessage(source, "Cannot register.  Invalid restricted vehicle.\n")
+                                return
+                            end
+                            umsg = " : using '" .. rdata.restrict .. "' vehicle"
+                        elseif "class" == rdata.rtype then
+                            if nil == rdata.vclass or rdata.vclass < -1 or rdata.vclass > 21 then
+                                sendMessage(source, "Cannot register.  Invalid vehicle class.\n")
+                                return
+                            end
+                            if -1 == rdata.vclass and #rdata.vehicleList == 0 then
+                                sendMessage(source, "Cannot register.  Vehicle list is empty.\n")
+                                return
+                            end
+                            umsg = " : using " .. getClassName(rdata.vclass) .. " vehicle class"
+                        elseif "rand" == rdata.rtype then
+                            if #rdata.vehicleList == 0 then
+                                sendMessage(source, "Cannot register.  Vehicle list is empty.\n")
+                                return
+                            end
+                            umsg = " : using random "
+                            if rdata.vclass ~= nil then
+                                if (rdata.vclass < 0 or rdata.vclass > 21) then
                                     sendMessage(source, "Cannot register.  Invalid vehicle class.\n")
                                     return
                                 end
-                                if -1 == rdata.vclass and #rdata.vehicleList == 0 then
-                                    sendMessage(source, "Cannot register.  Vehicle list is empty.\n")
-                                    return
-                                end
-                                umsg = " : using " .. getClassName(rdata.vclass) .. " vehicle class"
-                            elseif "rand" == rdata.rtype then
-                                if #rdata.vehicleList == 0 then
-                                    sendMessage(source, "Cannot register.  Vehicle list is empty.\n")
-                                    return
-                                end
-                                umsg = " : using random "
-                                if rdata.vclass ~= nil then
-                                    if (rdata.vclass < 0 or rdata.vclass > 21) then
-                                        sendMessage(source, "Cannot register.  Invalid vehicle class.\n")
-                                        return
-                                    end
-                                    umsg = umsg .. getClassName(rdata.vclass) .. " vehicle class"
-                                else
-                                    umsg = umsg .. "vehicles"
-                                end
-                                if rdata.svehicle ~= nil then
-                                    umsg = umsg .. " : '" .. rdata.svehicle .. "'"
-                                end
-                                buyin = 0
-                            elseif rdata.rtype ~= nil then
-                                sendMessage(source, "Cannot register.  Unknown race type.\n")
-                                return
-                            end
-                            local owner = GetPlayerName(source)
-                            local msg = "Registered race using "
-                            if nil == trackName then
-                                msg = msg .. "unsaved track "
+                                umsg = umsg .. getClassName(rdata.vclass) .. " vehicle class"
                             else
-                                msg = msg ..
-                                    (true == isPublic and "publicly" or "privately") ..
-                                    " saved track '" .. trackName .. "' "
+                                umsg = umsg .. "vehicles"
                             end
-                            msg = msg .. ("by %s : %d buy-in : %d lap(s)"):format(owner, buyin, laps)
-                            if "yes" == allowAI then
-                                msg = msg .. " : AI allowed"
+                            if rdata.svehicle ~= nil then
+                                umsg = umsg .. " : '" .. rdata.svehicle .. "'"
                             end
-                            msg = msg .. umsg .. "\n"
-                            if false == distValid then
-                                msg = msg .. "Prize distribution table is invalid\n"
-                            end
-                            sendMessage(source, msg)
-                            races[source] = {
-                                state = STATE_REGISTERING,
-                                waypointCoords = waypointCoords,
-                                isPublic = isPublic,
-                                trackName = trackName,
-                                owner = owner,
-                                buyin = buyin,
-                                laps = laps,
-                                timeout = timeout,
-                                allowAI = allowAI,
-                                rtype = rdata.rtype,
-                                restrict = rdata.restrict,
-                                vclass = rdata.vclass,
-                                svehicle = rdata.svehicle,
-                                vehicleList = rdata.vehicleList,
-                                numRacing = 0,
-                                numReady = 0,
-                                players = {},
-                                results = {},
-                                gridPositions = {}
-                            }
-                            TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
-                                owner, buyin, laps, timeout, allowAI, rdata)
-                        else
-                            if STATE_RACING == races[source].state then
-                                sendMessage(source, "Cannot register.  Previous race in progress.\n")
-                            else
-                                sendMessage(source, "Cannot register.  Previous race registered.  Unregister first.\n")
-                            end
+                        elseif rdata.rtype ~= nil then
+                            sendMessage(source, "Cannot register.  Unknown race type.\n")
+                            return
                         end
+                        local owner = GetPlayerName(source)
+                        local msg = "Registered race using "
+                        if nil == trackName then
+                            msg = msg .. "unsaved track "
+                        else
+                            msg = msg ..
+                                (true == isPublic and "publicly" or "privately") ..
+                                " saved track '" .. trackName .. "' "
+                        end
+                        msg = msg .. ("by %s : tier %s : %d lap(s)"):format(owner, tier, laps)
+                        if "yes" == allowAI then
+                            msg = msg .. " : AI allowed"
+                        end
+                        msg = msg .. umsg .. "\n"
+                        if false == distValid then
+                            msg = msg .. "Prize distribution table is invalid\n"
+                        end
+                        sendMessage(source, msg)
+                        races[source] = {
+                            state = STATE_REGISTERING,
+                            waypointCoords = waypointCoords,
+                            isPublic = isPublic,
+                            trackName = trackName,
+                            owner = owner,
+                            tier = tier,
+                            laps = laps,
+                            timeout = timeout,
+                            allowAI = allowAI,
+                            rtype = rdata.rtype,
+                            restrict = rdata.restrict,
+                            vclass = rdata.vclass,
+                            svehicle = rdata.svehicle,
+                            vehicleList = rdata.vehicleList,
+                            numRacing = 0,
+                            numReady = 0,
+                            players = {},
+                            results = {},
+                            gridPositions = {}
+                        }
+                        TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
+                            owner, tier, laps, timeout, allowAI, rdata)
                     else
-                        sendMessage(source, "Invalid AI allowed value.\n")
+                        if STATE_RACING == races[source].state then
+                            sendMessage(source, "Cannot register.  Previous race in progress.\n")
+                        else
+                            sendMessage(source, "Cannot register.  Previous race registered.  Unregister first.\n")
+                        end
                     end
                 else
-                    sendMessage(source, "Invalid DNF timeout.\n")
+                    sendMessage(source, "Invalid AI allowed value.\n")
                 end
             else
-                sendMessage(source, "Invalid number of laps.\n")
+                sendMessage(source, "Invalid DNF timeout.\n")
             end
         else
-            sendMessage(source, "Invalid buy-in amount.\n")
+            sendMessage(source, "Invalid number of laps.\n")
         end
     else
         sendMessage(source, "Ignoring register event.  Invalid parameters.\n")
@@ -1684,14 +1661,6 @@ AddEventHandler("races:unregister", function()
         return
     end
     if races[source] ~= nil then
-        if races[source].buyin > 0 then
-            for _, player in pairs(races[source].players) do
-                if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE races[source].buyin > 0
-                    Deposit(player.source, races[source].buyin)
-                    notifyPlayer(player.source, races[source].buyin .. " was deposited in your funds.\n")
-                end
-            end
-        end
         races[source] = nil
         TriggerClientEvent("races:unregister", -1, source)
         sendMessage(source, "Race unregistered.\n")
@@ -2176,11 +2145,6 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
 
                     OnPlayerLeave(races[rIndex], rIndex, netID)
 
-                    if races[rIndex].buyin > 0 and nil == aiName then
-                        Deposit(source, races[rIndex].buyin)
-                        sendMessage(source, races[rIndex].buyin .. " was deposited in your funds.\n")
-                        TriggerClientEvent("races:addRacer", player.source, netID, playerName)
-                    end
                     for nID, player in pairs(races[rIndex].players) do
                         if player.aiName ~= nil then -- don't need to check nID == netID because player removed from table already
                             TriggerClientEvent("races:delRacer", player.source, netID)
@@ -2241,55 +2205,47 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
-            if (nil == aiName and GetFunds(source) >= races[rIndex].buyin) or aiName ~= nil then
-                if STATE_REGISTERING == races[rIndex].state then
-                    local playerName = aiName ~= nil and ("(AI) " .. aiName) or GetPlayerName(source)
-                    for nID, player in pairs(races[rIndex].players) do
-                        if nil == player.aiName then
-                            TriggerClientEvent("races:addRacer", player.source, netID, playerName)
-                        end
+            if STATE_REGISTERING == races[rIndex].state then
+                local playerName = aiName ~= nil and ("(AI) " .. aiName) or GetPlayerName(source)
+                for nID, player in pairs(races[rIndex].players) do
+                    if nil == player.aiName then
+                        TriggerClientEvent("races:addRacer", player.source, netID, playerName)
                     end
-                    if nil == aiName then
-                        for nID, player in pairs(races[rIndex].players) do
-                            TriggerClientEvent("races:addRacer", source, nID, player.playerName)
-                        end
-                        if races[rIndex].buyin > 0 then
-                            Withdraw(source, races[rIndex].buyin)
-                            notifyPlayer(source, races[rIndex].buyin .. " was withdrawn from your funds.\n")
-                        end
-                    end
-                    races[rIndex].numRacing = races[rIndex].numRacing + 1
-                    races[rIndex].players[netID] = {
-                        source = source,
-                        playerName = playerName,
-                        aiName = aiName,
-                        numWaypointsPassed = -1,
-                        data = -1,
-                        ready = false,
-                    }
-
-                    local racerDictionary = mapToArray(races[rIndex].players,
-                        function(racer)
-                            return {
-                                source = racer.source,
-                                playerName = racer.playerName,
-                                ready = racer.ready,
-                            }
-                        end)
-
-                    if UseRaceResults == false then
-                        print("No race results, adding racer")
-                        table.insert(gridLineup, source)
-                    end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
-                        races[rIndex].trackName,
-                        races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
-                    TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
-                else
-                    notifyPlayer(source, "Cannot join.  Race in progress.\n")
                 end
+                if nil == aiName then
+                    for nID, player in pairs(races[rIndex].players) do
+                        TriggerClientEvent("races:addRacer", source, nID, player.playerName)
+                    end
+                end
+                races[rIndex].numRacing = races[rIndex].numRacing + 1
+                races[rIndex].players[netID] = {
+                    source = source,
+                    playerName = playerName,
+                    aiName = aiName,
+                    numWaypointsPassed = -1,
+                    data = -1,
+                    ready = false,
+                }
+
+                local racerDictionary = mapToArray(races[rIndex].players,
+                    function(racer)
+                        return {
+                            source = racer.source,
+                            playerName = racer.playerName,
+                            ready = racer.ready,
+                        }
+                    end)
+
+                if UseRaceResults == false then
+                    print("No race results, adding racer")
+                    table.insert(gridLineup, source)
+                end
+                TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
+                    races[rIndex].trackName,
+                    races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+                TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, aiName, races[rIndex].waypointCoords)
             else
-                notifyPlayer(source, "Cannot join.  Insufficient funds.\n")
+                notifyPlayer(source, "Cannot join.  Race in progress.\n")
             end
         else
             notifyPlayer(source, "Cannot join.  Race does not exist.\n")
@@ -2341,17 +2297,8 @@ AddEventHandler("races:finish",
                             if true == distValid and race.rtype ~= "rand" and "no" == race.allowAI then
                                 local numRacers = #race.results
                                 local numFinished = 0
-                                local totalPool = numRacers * race.buyin
-                                local pool = totalPool
-                                local winnings = {}
-
-                                local winningsRL = {}
-                                for _, result in pairs(race.results) do
-                                    winningsRL[result.source] = race.buyin
-                                end
 
                                 for i, result in ipairs(race.results) do
-                                    winnings[i] = { payout = race.buyin, source = result.source }
                                     if result.finishTime ~= -1 then
                                         numFinished = numFinished + 1
                                     end

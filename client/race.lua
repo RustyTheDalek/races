@@ -84,7 +84,7 @@ local midCheckpoint <const> = 42          -- cylinder with number
 local plainCheckpoint <const> = 45        -- cylinder
 local arrow3Checkpoint <const> = 7        -- cylinder with 3 arrows
 
-local defaultBuyin <const> = 0            -- default race buy-in
+local defaultTier <const> = "none"            -- default race Tier
 local defaultLaps <const> = 3             -- default number of laps in a race
 local defaultTimeout <const> = 1200       -- default DNF timeout
 local defaultDelay <const> = 5            -- default race start delay
@@ -163,7 +163,7 @@ local results = {}                        -- results[] = {source, playerName, fi
 
 local started = false                     -- flag indicating if race started
 
-local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, buyin, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
+local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
 
 local speedo = false                      -- flag indicating if speedometer is displayed
 local unitom = "imperial"                 -- current unit of measurement
@@ -1149,119 +1149,115 @@ local function listTracks(access)
     end
 end
 
-local function register(buyin, laps, timeout, allowAI, rtype, arg7, arg8)
+local function register(tier, laps, timeout, allowAI, rtype, arg7, arg8)
     if 0 == roleBits & ROLE_REGISTER then
         sendMessage("Permission required.\n")
         return
     end
-    buyin = (nil == buyin or "." == buyin) and defaultBuyin or math.tointeger(tonumber(buyin))
-    if buyin ~= nil and buyin >= 0 then
-        laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
-        if laps ~= nil and laps > 0 then
-            timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
-            if timeout ~= nil and timeout >= 0 then
-                allowAI = (nil == allowAI or "." == allowAI) and "no" or allowAI
-                if "yes" == allowAI or "no" == allowAI then
-                    if STATE_IDLE == raceState then
-                        if #waypoints > 1 then
-                            if laps == 1 or (laps > 1 and true == startIsFinish) then
-                                if "." == arg7 then
-                                    arg7 = nil
+
+    tier = (nil == tier or "." == tier) and defaultTier or string.lower(tier)
+
+    laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
+    if laps ~= nil and laps > 0 then
+        timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
+        if timeout ~= nil and timeout >= 0 then
+            allowAI = (nil == allowAI or "." == allowAI) and "no" or allowAI
+            if "yes" == allowAI or "no" == allowAI then
+                if STATE_IDLE == raceState then
+                    if #waypoints > 1 then
+                        if laps == 1 or (laps > 1 and true == startIsFinish) then
+                            if "." == arg7 then
+                                arg7 = nil
+                            end
+                            if "." == arg8 then
+                                arg8 = nil
+                            end
+                            local restrict = nil
+                            local vclass = nil
+                            local svehicle = nil
+                            local vehList = nil
+                            if "rest" == rtype then
+                                restrict = arg7
+                                if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
+                                    sendMessage("Cannot register.  Invalid restricted vehicle.\n")
+                                    return
                                 end
-                                if "." == arg8 then
-                                    arg8 = nil
+                            elseif "class" == rtype then
+                                vclass = math.tointeger(tonumber(arg7))
+                                if nil == vclass or vclass < -1 or vclass > 21 then
+                                    sendMessage("Cannot register.  Invalid vehicle class.\n")
+                                    return
                                 end
-                                buyin = "yes" == allowAI and 0 or buyin
-                                local restrict = nil
-                                local vclass = nil
-                                local svehicle = nil
-                                local vehList = nil
-                                if "rest" == rtype then
-                                    restrict = arg7
-                                    if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
-                                        sendMessage("Cannot register.  Invalid restricted vehicle.\n")
-                                        return
-                                    end
-                                elseif "class" == rtype then
-                                    vclass = math.tointeger(tonumber(arg7))
-                                    if nil == vclass or vclass < -1 or vclass > 21 then
-                                        sendMessage("Cannot register.  Invalid vehicle class.\n")
-                                        return
-                                    end
-                                    if -1 == vclass then
-                                        if #vehicleList == 0 then
-                                            sendMessage("Cannot register.  Vehicle list is empty.\n")
-                                            return
-                                        end
-                                        vehList = vehicleList
-                                    end
-                                elseif "rand" == rtype then
+                                if -1 == vclass then
                                     if #vehicleList == 0 then
                                         sendMessage("Cannot register.  Vehicle list is empty.\n")
                                         return
                                     end
-                                    vclass = math.tointeger(tonumber(arg7))
-                                    if nil == vclass then
-                                        vehList = vehicleList
-                                    else
-                                        if vclass < 0 or vclass > 21 then
-                                            sendMessage("Cannot register.  Invalid vehicle class.\n")
-                                            return
-                                        end
-                                        vehList = {}
-                                        for _, vehicle in pairs(vehicleList) do
-                                            if GetVehicleClassFromName(vehicle) == vclass then
-                                                vehList[#vehList + 1] = vehicle
-                                            end
-                                        end
-                                        if #vehList == 0 then
-                                            sendMessage("Cannot register.  Vehicle list is empty.\n")
-                                            return
-                                        end
-                                    end
-                                    svehicle = arg8
-                                    if svehicle ~= nil then
-                                        if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
-                                            sendMessage("Cannot register.  Invalid start vehicle.\n")
-                                            return
-                                        elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
-                                            sendMessage(
-                                            "Cannot register.  Start vehicle not of restricted vehicle class.\n")
-                                            return
-                                        end
-                                    end
-                                    buyin = 0
-                                elseif rtype ~= nil then
-                                    sendMessage("Cannot register.  Unknown race type.\n")
+                                    vehList = vehicleList
+                                end
+                            elseif "rand" == rtype then
+                                if #vehicleList == 0 then
+                                    sendMessage("Cannot register.  Vehicle list is empty.\n")
                                     return
                                 end
-                                local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
-                                    vehicleList = vehList }
-                                TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
-                                buyin, laps, timeout, allowAI, rdata)
-                            else
-                                sendMessage(
-                                "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
+                                vclass = math.tointeger(tonumber(arg7))
+                                if nil == vclass then
+                                    vehList = vehicleList
+                                else
+                                    if vclass < 0 or vclass > 21 then
+                                        sendMessage("Cannot register.  Invalid vehicle class.\n")
+                                        return
+                                    end
+                                    vehList = {}
+                                    for _, vehicle in pairs(vehicleList) do
+                                        if GetVehicleClassFromName(vehicle) == vclass then
+                                            vehList[#vehList + 1] = vehicle
+                                        end
+                                    end
+                                    if #vehList == 0 then
+                                        sendMessage("Cannot register.  Vehicle list is empty.\n")
+                                        return
+                                    end
+                                end
+                                svehicle = arg8
+                                if svehicle ~= nil then
+                                    if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
+                                        sendMessage("Cannot register.  Invalid start vehicle.\n")
+                                        return
+                                    elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
+                                        sendMessage(
+                                        "Cannot register.  Start vehicle not of restricted vehicle class.\n")
+                                        return
+                                    end
+                                end
+                            elseif rtype ~= nil then
+                                sendMessage("Cannot register.  Unknown race type.\n")
+                                return
                             end
+                            local rdata = { rtype = rtype, restrict = restrict, vclass = vclass, svehicle = svehicle,
+                                vehicleList = vehList }
+                            TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
+                            tier, laps, timeout, allowAI, rdata)
                         else
-                            sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
+                            sendMessage(
+                            "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
                         end
-                    elseif STATE_EDITING == raceState then
-                        sendMessage("Cannot register.  Stop editing first.\n")
                     else
-                        sendMessage("Cannot register.  Leave race first.\n")
+                        sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
                     end
+                elseif STATE_EDITING == raceState then
+                    sendMessage("Cannot register.  Stop editing first.\n")
                 else
-                    sendMessage("Invalid AI allowed value.\n")
+                    sendMessage("Cannot register.  Leave race first.\n")
                 end
             else
-                sendMessage("Invalid DNF timeout.\n")
+                sendMessage("Invalid AI allowed value.\n")
             end
         else
-            sendMessage("Invalid number of laps.\n")
+            sendMessage("Invalid DNF timeout.\n")
         end
     else
-        sendMessage("Invalid buy-in amount.\n")
+        sendMessage("Invalid number of laps.\n")
     end
 end
 
@@ -2250,7 +2246,6 @@ local function showPanel(panel)
         TriggerServerEvent("races:trackNames", true, nil)
         SendNUIMessage({
             panel = "register",
-            defaultBuyin = defaultBuyin,
             defaultLaps = defaultLaps,
             defaultTimeout = defaultTimeout,
             defaultDelay = defaultDelay,
@@ -2278,6 +2273,16 @@ local function showPanel(panel)
         notifyPlayer("Invalid panel.\n")
         panelShown = false
     end
+end
+
+function SendToRaceTier(tier)
+    print("Sending message to car tier")
+    SendNUIMessage({
+        type = "cartierui",
+        action = "sendtier",
+        tier = tier,
+        openui = true
+    })
 end
 
 --#region NUI callbacks
@@ -2327,9 +2332,10 @@ RegisterNUICallback("list", function(data)
 end)
 
 RegisterNUICallback("register", function(data)
-    local buyin = data.buyin
-    if "" == buyin then
-        buyin = nil
+
+    local tier = data.tier
+    if "" == tier then
+        tier = nil
     end
     local laps = data.laps
     if "" == laps then
@@ -2357,13 +2363,13 @@ RegisterNUICallback("register", function(data)
         svehicle = nil
     end
     if nil == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, nil, nil)
+        register(tier, laps, timeout, allowAI, rtype, nil, nil)
     elseif "rest" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, restrict, nil)
+        register(tier, laps, timeout, allowAI, rtype, restrict, nil)
     elseif "class" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, vclass, nil)
+        register(tier, laps, timeout, allowAI, rtype, vclass, nil)
     elseif "rand" == rtype then
-        register(buyin, laps, timeout, allowAI, rtype, vclass, svehicle)
+        register(tier, laps, timeout, allowAI, rtype, vclass, svehicle)
     end
 end)
 
@@ -2852,15 +2858,15 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races list [access] - list saved private or public tracks\n"
         msg = msg .. "\n"
         msg = msg ..
-        "For the following '/races register' commands, (buy-in) defaults to 500, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\n"
+        "For the following '/races register' commands, (tier) defaults to none, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\n"
         msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) - register your race with no vehicle restrictions\n"
+        "/races register (tier) (laps) (DNF timeout) (allow AI) - register your race with no vehicle restrictions\n"
         msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rest [vehicle] - register your race restricted to [vehicle]\n"
+        "/races register (tier) (laps) (DNF timeout) (allow AI) rest [vehicle] - register your race restricted to [vehicle]\n"
         msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) class [class] - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\n"
+        "/races register (tier) (laps) (DNF timeout) (allow AI) class [class] - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\n"
         msg = msg ..
-        "/races register (buy-in) (laps) (DNF timeout) (allow AI) rand (class) (vehicle) - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any\n"
+        "/races register (tier) (laps) (DNF timeout) (allow AI) rand (class) (vehicle) - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any\n"
         msg = msg .. "\n"
         msg = msg .. "/races unregister - unregister your race\n"
         msg = msg .. "/races start (delay) - start your registered race; (delay) defaults to 30 seconds\n"
@@ -3174,13 +3180,13 @@ end)
 
 RegisterNetEvent("races:register")
 AddEventHandler("races:register",
-function(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowAI, rdata)
-    if rIndex ~= nil and coord ~= nil and isPublic ~= nil and owner ~= nil and buyin ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
+function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, allowAI, rdata)
+    if rIndex ~= nil and coord ~= nil and isPublic ~= nil and owner ~= nil and tier ~= nil and laps ~= nil and timeout ~= nil and allowAI ~= nil and rdata ~= nil then
         local blip = AddBlipForCoord(coord.x, coord.y, coord.z) -- registration blip
         SetBlipSprite(blip, registerSprite)
         SetBlipColour(blip, registerBlipColor)
         BeginTextCommandSetBlipName("STRING")
-        local msg = owner .. " (" .. buyin .. " buy-in"
+        local msg = owner .. " (" .. "tier" .. tier
         if "yes" == allowAI then
             msg = msg .. " : AI allowed"
         end
@@ -3210,7 +3216,7 @@ function(rIndex, coord, isPublic, trackName, owner, buyin, laps, timeout, allowA
             isPublic = isPublic,
             trackName = trackName,
             owner = owner,
-            buyin = buyin,
+            tier = tier,
             laps = laps,
             timeout = timeout,
             allowAI = allowAI,
@@ -3472,11 +3478,19 @@ AddEventHandler("races:removeFromLeaderboard", function(source)
 end)
 
 RegisterNetEvent("races:join")
-AddEventHandler("races:join", function(rIndex, aiName, waypointCoords)
+AddEventHandler("races:join", function(rIndex, tier, aiName, waypointCoords)
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
             if nil == aiName then
                 if STATE_IDLE == raceState then
+
+                    if(tier ~= "none") then
+                        print("Specific Tier")
+                        SendToRaceTier(tier)
+                    else
+                        print(string.format("Tier Is %s", tier))
+                    end
+
                     InitialiseReady()
                     raceState = STATE_JOINING
                     raceIndex = rIndex
@@ -3497,7 +3511,7 @@ AddEventHandler("races:join", function(rIndex, aiName, waypointCoords)
                         " saved track '" .. starts[rIndex].trackName .. "' "
                     end
                     msg = msg ..
-                    ("registered by %s : %d buy-in : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].buyin,
+                    ("registered by %s : tier %s : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].tier,
                     starts[rIndex].laps)
                     if "yes" == starts[rIndex].allowAI then
                         msg = msg .. " : AI allowed"
@@ -4356,7 +4370,7 @@ Citizen.CreateThread(function()
                 end
                 msg = msg .. "registered by " .. starts[closestIndex].owner
                 drawMsg(0.50, 0.50, msg, 0.7, 0)
-                msg = ("%d buy-in : %d lap(s)"):format(starts[closestIndex].buyin, starts[closestIndex].laps)
+                msg = ("tier %s : %d lap(s)"):format(starts[closestIndex].tier, starts[closestIndex].laps)
                 if "yes" == starts[closestIndex].allowAI then
                     msg = msg .. " : AI allowed"
                 end
