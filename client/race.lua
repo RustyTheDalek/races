@@ -3962,6 +3962,7 @@ end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
+
         local player = PlayerPedId()
         local playerCoord = GetEntityCoords(player)
         local heading = GetEntityHeading(player)
@@ -4180,14 +4181,7 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide - 0.01, 0.17, 0.3, 0, 0, 0, 127)
-
-                drawMsg(leftSide, topSide, "Position", 0.5, 1)
-                if -1 == position then
-                    drawMsg(rightSide, topSide, "-- of --", 0.5, 1)
-                else
-                    drawMsg(rightSide, topSide, ("%d of %d"):format(position, numRacers), 0.5, 1)
-                end
+                drawRect(leftSide - 0.01, topSide + 0.01, 0.15, 0.25, 0, 0, 0, 127)
 
                 drawMsg(leftSide, topSide + 0.03, "Lap", 0.5, 1)
                 drawMsg(rightSide, topSide + 0.03, ("%d of %d"):format(currentLap, numLaps), 0.5, 1)
@@ -4227,8 +4221,8 @@ Citizen.CreateThread(function()
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
                     if milliseconds > 0 then
                         minutes, seconds = minutesSeconds(milliseconds)
-                        drawMsg(leftSide, topSide + 0.22, "DNF time", 0.3, 1)
-                        drawMsg(rightSide, topSide + 0.22, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
+                        drawMsg(leftSide, topSide + 0.24, "DNF time", 0.3, 1)
+                        drawMsg(rightSide, topSide + 0.24, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
                     else -- DNF
                         DeleteCheckpoint(raceCheckpoint)
                         finishRace(-1)
