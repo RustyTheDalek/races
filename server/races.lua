@@ -185,14 +185,14 @@ local function getTrack(trackName)
                 for _, waypointCoord in ipairs(track.waypointCoords) do
                     if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" or type(waypointCoord.r) ~= "number" then
                         print(
-                        "getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
+                            "getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
                         return nil
                     end
                 end
                 for _, bestLap in ipairs(track.bestLaps) do
                     if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
                         print(
-                        "getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
+                            "getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
                         return nil
                     end
                 end
@@ -232,7 +232,7 @@ local function export(trackName, withBLT)
                     else
                         file:close()
                         print("export: '" ..
-                        trackFilePath .. "' exists.  Remove or rename the existing file, then export again.")
+                            trackFilePath .. "' exists.  Remove or rename the existing file, then export again.")
                     end
                 else
                     print("export: No public track named '" .. trackName .. "'.")
@@ -273,8 +273,8 @@ local function import(trackName, withBLT)
                 end
             else
                 print("import: '" ..
-                trackName ..
-                "' already exists in the public tracks list.  Rename the file, then import with the new name.")
+                    trackName ..
+                    "' already exists in the public tracks list.  Rename the file, then import with the new name.")
             end
         else
             print("import: Could not load race data.")
@@ -523,7 +523,7 @@ local function updateRaceData()
             local updatedRaceDataFilePath = "./resources/races/raceData_updated.json"
             if true == writeData(updatedRaceDataFilePath, newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in '" ..
-                updatedRaceDataFilePath .. "'."
+                    updatedRaceDataFilePath .. "'."
                 print(msg)
                 logMessage(msg)
             else
@@ -548,7 +548,7 @@ local function updateTrack(trackName)
                     for i, waypointCoord in ipairs(track.waypointCoords) do
                         if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" then
                             print(
-                            "updateTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z not a number.")
+                                "updateTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z not a number.")
                             return
                         end
                         local coordRad = waypointCoord
@@ -566,7 +566,7 @@ local function updateTrack(trackName)
                         for _, bestLap in ipairs(track.bestLaps) do
                             if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
                                 print(
-                                "updateTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
+                                    "updateTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
                                 return
                             end
                         end
@@ -574,7 +574,7 @@ local function updateTrack(trackName)
                         local trackFilePath = "./resources/races/" .. trackName .. "_updated.json"
                         if true == writeData(trackFilePath, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
-                            trackName .. ".json' updated to current format in '" .. trackFilePath .. "'."
+                                trackName .. ".json' updated to current format in '" .. trackFilePath .. "'."
                             print(msg)
                             logMessage(msg)
                         else
@@ -793,8 +793,12 @@ local function updateBestLapTimes(rIndex)
         local bestLaps = track.bestLaps
         for _, result in pairs(races[rIndex].results) do
             if result.bestLapTime ~= -1 and nil == result.aiName then
-                bestLaps[#bestLaps + 1] = { playerName = result.playerName, bestLapTime = result.bestLapTime, vehicleName =
-                result.vehicleName }
+                bestLaps[#bestLaps + 1] = {
+                    playerName = result.playerName,
+                    bestLapTime = result.bestLapTime,
+                    vehicleName =
+                        result.vehicleName
+                }
             end
         end
         table.sort(bestLaps, function(p0, p1)
@@ -862,8 +866,8 @@ local function saveResults(race)
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
                 local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
                 msg = msg ..
-                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                    result.playerName, lMinutes, lSeconds, result.vehicleName)
+                    ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
+                        result.playerName, lMinutes, lSeconds, result.vehicleName)
             end
         end
     else
@@ -973,6 +977,30 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
     return gridPositions
 end
 
+local function OnPlayerLeave(race, rIndex, netID)
+    race.numRacing = race.numRacing - 1
+
+    if (race.players[netID].ready) then
+        race.numReady = race.numReady - 1
+    end
+
+    TriggerClientEvent("races:onplayerleave", source)
+    TriggerClientEvent("races:leavenotification", -1,
+        string.format(
+            "%s has left Race %s",
+            race.players[netID].playerName,
+            race.trackName
+        ),
+        race.players[netID].source,
+        rIndex,
+        race.numReady,
+        race.numRacing,
+        race.waypointCoords[1]
+    )
+
+    races[rIndex].players[netID] = nil
+end
+
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
     -- print("Spawning racers on grid")
 
@@ -1042,21 +1070,21 @@ RegisterCommand("races", function(_, args)
         local msg = "Commands:\n"
         msg = msg .. "races - display list of available races commands\n"
         msg = msg ..
-        "races export [name] - export public track saved as [name] without best lap times to file named '[name].json'\n"
+            "races export [name] - export public track saved as [name] without best lap times to file named '[name].json'\n"
         msg = msg ..
-        "races import [name] - import track file named '[name].json' into public tracks without best lap times\n"
+            "races import [name] - import track file named '[name].json' into public tracks without best lap times\n"
         msg = msg ..
-        "races exportwblt [name] - export public track saved as [name] with best lap times to file named '[name].json'\n"
+            "races exportwblt [name] - export public track saved as [name] with best lap times to file named '[name].json'\n"
         msg = msg ..
-        "races importwblt [name] - import track file named '[name].json' into public tracks with best lap times\n"
+            "races importwblt [name] - import track file named '[name].json' into public tracks with best lap times\n"
         msg = msg .. "races listReqs - list requests to edit tracks, register races and spawn vehicles\n"
         msg = msg ..
-        "races approve [playerID] - approve request of [playerID] to edit tracks, register races or spawn vehicles\n"
+            "races approve [playerID] - approve request of [playerID] to edit tracks, register races or spawn vehicles\n"
         msg = msg ..
-        "races deny [playerID] - deny request of [playerID] to edit tracks, register races or spawn vehicles\n"
+            "races deny [playerID] - deny request of [playerID] to edit tracks, register races or spawn vehicles\n"
         msg = msg .. "races listRoles - list approved players' roles\n"
         msg = msg ..
-        "races removeRole [name] (role) - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified\n"
+            "races removeRole [name] (role) - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified\n"
         msg = msg .. "races updateRaceData - update 'raceData.json' to new format\n"
         msg = msg .. "races updateTrack [name] - update exported track '[name].json' to new format\n"
         print(msg)
@@ -1088,6 +1116,7 @@ RegisterCommand("races", function(_, args)
 end, true)
 
 AddEventHandler("playerDropped", function()
+    print("playerDropped")
     local source = source
 
     -- remove dropped player's bank account
@@ -1098,6 +1127,7 @@ AddEventHandler("playerDropped", function()
         if races[source].buyin > 0 then
             for _, player in pairs(races[source].players) do
                 if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE races[source].buyin > 0
+                    
                     Deposit(player.source, races[source].buyin)
                     notifyPlayer(player.source, races[source].buyin .. " was deposited in your funds.\n")
                 end
@@ -1113,8 +1143,9 @@ AddEventHandler("playerDropped", function()
         for netID, player in pairs(race.players) do
             if player.source == source then
                 if STATE_REGISTERING == race.state then
-                    race.players[netID] = nil
-                    race.numRacing = race.numRacing - 1
+                    print("removing racer from race")
+
+                    OnPlayerLeave(race, i, netID)
                     --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
                 else
                     TriggerEvent("races:finish", i, netID, nil, 0, -1, -1, "", source)
@@ -1255,8 +1286,14 @@ AddEventHandler("races:init", function()
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
         if STATE_REGISTERING == race.state then
-            local rdata = { rtype = race.rtype, restrict = race.restrict, vclass = race.vclass, svehicle = race.svehicle, vehicleList =
-            race.vehicleList }
+            local rdata = {
+                rtype = race.rtype,
+                restrict = race.restrict,
+                vclass = race.vclass,
+                svehicle = race.svehicle,
+                vehicleList =
+                    race.vehicleList
+            }
             TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
                 race.owner, race.buyin, race.laps, race.timeout, race.allowAI, rdata)
         end
@@ -1374,8 +1411,8 @@ AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
                 TriggerClientEvent("races:save", source, isPublic, trackName)
                 TriggerEvent("races:trackNames", isPublic, source)
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                    GetPlayerName(source) ..
+                    "' saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
@@ -1404,8 +1441,8 @@ AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords)
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:overwrite", source, isPublic, trackName)
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                    GetPlayerName(source) ..
+                    "' overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error overwriting " ..
@@ -1436,8 +1473,8 @@ AddEventHandler("races:delete", function(isPublic, trackName)
                 sendMessage(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
+                    GetPlayerName(source) ..
+                    "' deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error deleting " ..
@@ -1570,7 +1607,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                                 msg = msg .. "unsaved track "
                             else
                                 msg = msg ..
-                                (true == isPublic and "publicly" or "privately") .. " saved track '" .. trackName .. "' "
+                                    (true == isPublic and "publicly" or "privately") ..
+                                    " saved track '" .. trackName .. "' "
                             end
                             msg = msg .. ("by %s : %d buy-in : %d lap(s)"):format(owner, buyin, laps)
                             if "yes" == allowAI then
@@ -1826,8 +1864,8 @@ AddEventHandler("races:saveGrp", function(isPublic, name, group)
                 sendMessage(source,
                     "Saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' saved " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error saving " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
@@ -1855,8 +1893,8 @@ AddEventHandler("races:overwriteGrp", function(isPublic, name, group)
                 sendMessage(source,
                     "Overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' overwrote " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error overwriting " ..
@@ -1887,8 +1925,8 @@ AddEventHandler("races:deleteGrp", function(isPublic, name)
                 sendMessage(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' deleted " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error deleting " .. (true == isPublic and "public" or "private") .. " AI group '" .. name .. "'.\n")
@@ -1984,8 +2022,8 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
                 sendMessage(source,
                     "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error saving " ..
@@ -2016,8 +2054,8 @@ AddEventHandler("races:overwriteLst", function(isPublic, name, vehicleList)
                 sendMessage(source,
                     "Overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error overwriting " ..
@@ -2048,8 +2086,8 @@ AddEventHandler("races:deleteLst", function(isPublic, name)
                 sendMessage(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
                 logMessage("'" ..
-                GetPlayerName(source) ..
-                "' deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
+                    GetPlayerName(source) ..
+                    "' deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error deleting " ..
@@ -2126,28 +2164,7 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
                         end
                     end
 
-
-                    races[rIndex].numRacing = races[rIndex].numRacing - 1
-
-                    if (races[rIndex].players[netID].ready) then
-                        races[rIndex].numReady = races[rIndex].numReady - 1
-                    end
-
-                    TriggerClientEvent("races:onplayerleave", source)
-                    TriggerClientEvent("races:leavenotification", -1,
-                        string.format(
-                            "%s has left Race %s",
-                            races[rIndex].players[netID].playerName,
-                            races[rIndex].trackName
-                        ),
-                        races[rIndex].players[netID].source,
-                        rIndex,
-                        races[rIndex].numReady,
-                        races[rIndex].numRacing,
-                        races[rIndex].waypointCoords[1]
-                    )
-
-                    races[rIndex].players[netID] = nil
+                    OnPlayerLeave(races[rIndex], rIndex, netID)
 
                     if races[rIndex].buyin > 0 and nil == aiName then
                         Deposit(source, races[rIndex].buyin)
@@ -2242,17 +2259,20 @@ AddEventHandler("races:join", function(rIndex, netID, aiName)
                     }
 
                     local racerDictionary = mapToArray(races[rIndex].players,
-                    function(racer) return {
-                        source = racer.source,
-                        playerName = racer.playerName,
-                        ready = racer.ready,
-                    } end)
+                        function(racer)
+                            return {
+                                source = racer.source,
+                                playerName = racer.playerName,
+                                ready = racer.ready,
+                            }
+                        end)
 
                     if UseRaceResults == false then
                         print("No race results, adding racer")
                         table.insert(gridLineup, source)
                     end
-                    TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex, races[rIndex].trackName,
+                    TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
+                        races[rIndex].trackName,
                         races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
                     TriggerClientEvent("races:join", source, rIndex, aiName, races[rIndex].waypointCoords)
                 else
@@ -2553,7 +2573,7 @@ Citizen.CreateThread(function()
                 if true == complete then -- all player clients have updated numWaypointsPassed and data
                     table.sort(sortedPlayers, function(p0, p1)
                         return (p0.numWaypointsPassed > p1.numWaypointsPassed) or
-                        (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
+                            (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
                     end)
 
                     local racePositions = map(sortedPlayers, function(item) return item.source end)
