@@ -977,7 +977,7 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
     return gridPositions
 end
 
-local function OnPlayerLeave(race, rIndex, netID)
+local function OnPlayerLeave(race, rIndex, netID, source)
     race.numRacing = race.numRacing - 1
 
     if (race.players[netID].ready) then
@@ -1145,9 +1145,10 @@ AddEventHandler("playerDropped", function()
                 if STATE_REGISTERING == race.state then
                     print("removing racer from race")
 
-                    OnPlayerLeave(race, i, netID)
+                    OnPlayerLeave(race, i, netID, source)
                     --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
                 else
+                    TriggerEvent("races:removeFromLeaderboard", i, netID)
                     TriggerEvent("races:finish", i, netID, nil, 0, -1, -1, "", source)
                 end
                 return
