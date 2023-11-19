@@ -2175,6 +2175,11 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
     end
 end)
 
+RegisterNetEvent("races:removeFromLeaderboard")
+AddEventHandler("races:removeFromLeaderboard", function(rIndex, netID)
+    TriggerClientEvent("races:removeFromLeaderboard", -1, races[rIndex].players[netID].source)
+end)
+
 RegisterNetEvent("races:rivals")
 AddEventHandler("races:rivals", function(rIndex)
     local source = source

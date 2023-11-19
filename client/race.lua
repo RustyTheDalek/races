@@ -2011,6 +2011,7 @@ local function leave()
     if STATE_JOINING == raceState then
         raceState = STATE_IDLE
         ResetReady(PedToNet(player))
+        ClearLeaderboard()
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
@@ -2025,7 +2026,7 @@ local function leave()
         removeRacerBlipGT()
         ResetReady(PedToNet(player))
         ClearLeaderboard()
-        SetRaceLeaderboard(false)
+        TriggerServerEvent("races:removeFromLeaderboard", raceIndex, PedToNet(player))
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     else
@@ -3443,7 +3444,7 @@ AddEventHandler("races:joinnotification", function(playerName, racerDictionary, 
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
-    AddRacerToLeaderboard(source, playerName)
+    AddRacersToLeaderboard(racerDictionary)
     SendRacerNames(racerDictionary)
     SetReadyUI(numReady, numRacing)
 end)
@@ -3463,6 +3464,11 @@ AddEventHandler("races:leavenotification", function(message, source, rIndex, num
     SetReadyUI(numReady, numRacing)
     RemoveRacerFromLeaderboard(source)
     sendMessage(message)
+end)
+
+RegisterNetEvent("races:removeFromLeaderboard")
+AddEventHandler("races:removeFromLeaderboard", function(source)
+    RemoveRacerFromLeaderboard(source)
 end)
 
 RegisterNetEvent("races:join")
@@ -3927,11 +3933,11 @@ function SendReadyData(racer)
     })
 end
 
+function AddRacersToLeaderboard(racerDictionary)
     SendNUIMessage({
         type = 'leaderboard',
-        action = 'add_racer',
-        name = playerName,
-        id = source
+        action = 'add_racers',
+        racers = racerDictionary,
     })
 end
 
