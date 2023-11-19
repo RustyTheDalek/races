@@ -1142,6 +1142,15 @@ AddEventHandler("playerDropped", function()
     for i, race in pairs(races) do
         for netID, player in pairs(race.players) do
             if player.source == source then
+
+                --Remove player from gridLineup
+                for j = 1, #gridLineup do
+                    if gridLineup[j] == race.players[netID].source then
+                        table.remove(gridLineup, j)
+                        break
+                    end
+                end
+
                 if STATE_REGISTERING == race.state then
                     print("removing racer from race")
 
