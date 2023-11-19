@@ -2126,7 +2126,6 @@ AddEventHandler("races:leave", function(rIndex, netID, aiName)
                         end
                     end
 
-                    table.remove(gridLineup, races[rIndex].players[netID].source)
 
                     races[rIndex].numRacing = races[rIndex].numRacing - 1
 
@@ -2211,6 +2210,7 @@ end)
 
 RegisterNetEvent("races:join")
 AddEventHandler("races:join", function(rIndex, netID, aiName)
+    print(string.format("NetID:%s Joined", netID))
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
