@@ -641,7 +641,7 @@ end
 local function finishRace(time)
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
-    ResetReady()
+    ResetReady(PedToNet(PlayerPedId()))
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
