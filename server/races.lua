@@ -2303,52 +2303,6 @@ AddEventHandler("races:finish",
                                         numFinished = numFinished + 1
                                     end
                                 end
-
-                                if numFinished >= #dist then
-                                    for i = numFinished + 1, numRacers do
-                                        winnings[i].payout = 0
-                                    end
-                                    local payout = round(dist[#dist] / 100 * totalPool / (numFinished - #dist + 1))
-                                    for i = #dist, numFinished do
-                                        winnings[i].payout = payout
-                                        pool = pool - payout
-                                    end
-                                    for i = 2, #dist - 1 do
-                                        payout = round(dist[i] / 100 * totalPool)
-                                        winnings[i].payout = payout
-                                        pool = pool - payout
-                                    end
-                                    winnings[1].payout = pool
-                                elseif numFinished > 0 then
-                                    for i = numFinished + 1, numRacers do
-                                        winnings[i].payout = 0
-                                    end
-                                    local bonus = dist[numFinished + 1]
-                                    for i = numFinished + 2, #dist do
-                                        bonus = bonus + dist[i]
-                                    end
-                                    bonus = bonus / numFinished
-                                    for i = 2, numFinished do
-                                        local payout = round((dist[i] + bonus) / 100 * totalPool)
-                                        winnings[i].payout = payout
-                                        pool = pool - payout
-                                    end
-                                    winnings[1].payout = pool
-                                end
-
-                                for _, winning in pairs(winnings) do
-                                    winningsRL[winning.source] = winning.payout
-                                end
-
-                                for _, player in pairs(race.players) do
-                                    if winningsRL[player.source] > 0 then
-                                        if player.aiName ~= nil then -- NO AI DRIVERS BECAUSE race.allowAI == "no"
-                                            Deposit(player.source, winningsRL[player.source])
-                                            notifyPlayer(player.source,
-                                                winningsRL[player.source] .. " was deposited in your funds.\n")
-                                        end
-                                    end
-                                end
                             end
 
                             for _, player in pairs(race.players) do
