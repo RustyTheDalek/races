@@ -638,7 +638,7 @@ local function vehicleInList(vehicle, list)
 end
 
 local function finishRace(time)
-    TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), nil, numWaypointsPassed, time, bestLapTime,
+    TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
     ResetReady(PedToNet(PlayerPedId()))
     restoreBlips()
@@ -3069,7 +3069,7 @@ Citizen.CreateThread(function()
         if STATE_RACING == raceState then
             local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
-            TriggerServerEvent("races:report", raceIndex, PedToNet(player), nil, numWaypointsPassed, distance)
+            TriggerServerEvent("races:report", raceIndex, PedToNet(player), numWaypointsPassed, distance)
         end
     end
 end)
