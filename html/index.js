@@ -136,7 +136,6 @@ $(function () {
     }
 
     function handleCarTier(data) {
-        console.log(data);
         switch (data.action) {
             case "sendCarData":
                 SendCarTier(data.tier, data.specialClass, data.openui);
@@ -147,7 +146,6 @@ $(function () {
     window.addEventListener("message", function (event) {
         let data = event.data;
         if (data.type === 'cartierui') {
-            console.log("car tier UI")
             handleCarTier(data);
         } else if (data.type === 'ready') {
             handleReady(data);

@@ -915,6 +915,8 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 end
 
 local function OnPlayerLeave(race, rIndex, netID, source)
+
+    print("On Player Leave called")
     race.numRacing = race.numRacing - 1
 
     if (race.players[netID].ready) then

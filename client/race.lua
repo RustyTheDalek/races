@@ -2757,6 +2757,7 @@ end)
 
 RegisterNetEvent("races:leavenotification")
 AddEventHandler("races:leavenotification", function(message, source, rIndex, numReady, numRacing, registrationCoords)
+    print("Leave race notification")
     DeleteCheckpoint(starts[rIndex].checkpoint);
     registrationCoords.r = defaultRadius
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
@@ -2777,13 +2778,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
             if STATE_IDLE == raceState then
-
-                if(tier ~= "none" or specialClass ~= "none") then
-                    print("Specific Tier or Class")
-                else
-                    print(string.format("Tier Is %s", tier))
-                    print(string.format("SpecialClass Is %s", specialClass))
-                end
 
                 SendToRaceTier(tier, specialClass)
 
