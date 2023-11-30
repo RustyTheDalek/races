@@ -1906,7 +1906,7 @@ AddEventHandler("races:leave", function(rIndex, netID)
                         end
                     end
 
-                    OnPlayerLeave(races[rIndex], rIndex, netID)
+                    OnPlayerLeave(races[rIndex], rIndex, netID, source)
                 else
                     sendMessage(source, "Cannot leave.  Not a member of this race.\n")
                 end
