@@ -20,27 +20,14 @@ For the following **`/races`** commands, [access] = {'pvt', 'pub'} where 'pvt' o
 **`/races blt [access] [name]`** - list 10 best lap times of private or public track saved as [name]\
 **`/races list [access]`** - list saved private or public tracks
 
-For the following **`/races register`** commands, (tier) defaults to none, (laps) defaults to 1 lap, (DNF timeout) defaults to 120 seconds and (allow AI) = {yes, no} defaults to no\
-**`/races register (tier) (laps) (DNF timeout) (allow AI)`** - register your race with no vehicle restrictions\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) rest [vehicle]`** - register your race restricted to [vehicle]\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) class [class]`** - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`** - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any
+For the following **`/races register`** commands, (tier) defaults to none, (specialClass) defaults to none, (laps) defaults to 1 lap and (DNF timeout) defaults to 120 seconds\
+**`/races register (tier) (specialClass) (laps) (DNF timeout)`** - register your race with no vehicle restrictions\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) rest [vehicle]`** - register your race restricted to [vehicle]\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) class [class]`** - register your race restricted to vehicles of type [class]; if [class] is '-1' then use custom vehicle list\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) rand (class) (vehicle)`** - register your race changing vehicles randomly every lap; (class) defaults to any; (vehicle) defaults to any
 
 **`/races unregister`** - unregister your race\
 **`/races start (delay)`** - start your registered race; (delay) defaults to 30 seconds
-
-**`/races ai add [name]`** - add an AI driver named [name]\
-**`/races ai delete [name]`** - delete an AI driver named [name]\
-**`/races ai spawn [name] (vehicle)`** - spawn AI driver named [name] in (vehicle); (vehicle) defaults to 'adder'\
-**`/races ai list`** - list AI driver names\
-**`/races ai deleteAll`** - delete all AI drivers
-
-For the following **`/races ai`** commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private AI group and 'pub' operates on a public AI group\
-**`/races ai loadGrp [access] [name]`** - load private or public AI group saved as [name]\
-**`/races ai saveGrp [access] [name]`** - save new private or public AI group as [name]\
-**`/races ai overwriteGrp [access] [name]`** - overwrite existing private or public AI group saved as [name]\
-**`/races ai deleteGrp [access] [name]`** - delete private or public AI group saved as [name]\
-**`/races ai listGrps [access]`** - list saved private or public AI groups
 
 **`/races vl add [vehicle]`** - add [vehicle] to vehicle list\
 **`/races vl delete [vehicle]`** - delete [vehicle] from vehicle list\
@@ -64,10 +51,9 @@ For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt
 **`/races spawn (vehicle)`** - spawn a vehicle; (vehicle) defaults to 'adder'\
 **`/races lvehicles (class)`** - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\
 **`/races speedo (unit)`** - change unit of speed measurement to (unit) = {imperial, metric}; otherwise toggle display of speedometer if (unit) is not specified\
-**`/races funds`** - view available funds\
-**`/races panel (panel)`** - display (panel) = {edit, register, ai, list} panel; otherwise display main panel if (panel) is not specified
+**`/races panel (panel)`** - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified
 
-**IF YOU DO NOT WANT TO TYPE CHAT COMMANDS, YOU CAN BRING UP A CLICKABLE INTERFACE BY TYPING `'/races panel'`, `'/races panel edit'`, `'/races panel register'`, `'/races panel ai'` OR `'/races panel list'`.**
+**IF YOU DO NOT WANT TO TYPE CHAT COMMANDS, YOU CAN BRING UP A CLICKABLE INTERFACE BY TYPING `'/races panel'`, `'/races panel edit'`, `'/races panel register'`, OR `'/races panel list'`.**
 
 SERVER COMMANDS
 ---------------
@@ -121,9 +107,7 @@ QUICK GUIDE FOR RACING
 ----------------------
 There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.
 
-Look for purple circled star blips on the waypoint map.  There will be corresponding purple cylinder checkpoints in the world.  The label for the blip in the waypoint map will indicate the player who registered the race, the car tier, if AI drivers are allowed and the type of race.
-
-If the race allows AI drivers to be added, the label will include **'AI allowed'**.  The person who registered the race can add as many AI drivers as they like.
+Look for purple circled star blips on the waypoint map.  There will be corresponding purple cylinder checkpoints in the world.  The label for the blip in the waypoint map will indicate the player who registered the race, the car tier and the type of race.
 
 If the race is restricted to a specific vehicle, the label will include **'using [vehicle]'** where [vehicle] is the name of the restricted vehicle.  You must be in that vehicle when prompted to join the race.  If permission to spawn vehicles is given or not required, you can spawn the restricted vehicle by typing **`/races spawn [vehicle]`** where [vehicle] is the restricted vehicle.  For example, if the label shows **using 'adder'**, you can spawn the vehicle by typing **`/races spawn adder`**.
 
@@ -151,22 +135,12 @@ If permission is required to edit tracks, the following commands will be restric
 
 If permission is required to register races, the following commands will be restricted to players who have permission:
 
-**`/races register (tier) (laps) (DNF timeout) (allow AI)`**\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) rest [vehicle]`**\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) class [class]`**\
-**`/races register (tier) (laps) (DNF timeout) (allow AI) rand (class) (vehicle)`**\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) `**\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) rest [vehicle]`**\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) class [class]`**\
+**`/races register (tier) (specialClass) (laps) (DNF timeout) rand (class) (vehicle)`**\
 **`/races unregister`**\
 **`/races start (delay)`**\
-**`/races ai add [name]`**\
-**`/races ai delete [name]`**\
-**`/races ai spawn [name] (vehicle)`**\
-**`/races ai list`**\
-**`/races ai deleteAll`**\
-**`/races ai loadGrp [access] [name]`**\
-**`/races ai saveGrp [access] [name]`**\
-**`/races ai overwriteGrp [access] [name]`**\
-**`/races ai deleteGrp [access] [name]`**\
-**`/races ai listGrps [access]`**\
 **`/races vl add [vehicle]`**\
 **`/races vl delete [vehicle]`**\
 **`/races vl addClass [class]`**\
@@ -232,9 +206,9 @@ You can clear all waypoints, except registration waypoints, by typing **`/races 
 
 After you have set your track waypoints, you can register your race using the track.  This will advertise your race to all players.  Your track must have two or more waypoints.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This will be the registration waypoint.  It will be visible to all players.
 
-The registration waypoint on the waypoint map will be labeled with some information about the race.  The player who registered the race, the car tier and if AI drivers are allowed will be shown.  If **'AI allowed'** is shown, AI drivers may be added by the person who registered the race.  If **'using [vehicle]'** is shown, the race is restricted to that vehicle.  If **'using [class] vehicle class'** is shown, the race is restricted to vehicles of type [class].  If **'using random vehicles'** is shown, the race will change vehicles randomly every lap.  If **'using random vehicles : [vehicle]'** is shown, the race will change vehicles randomly every lap and racers will start in the specified [vehicle].  If **'using random [class] vehicle class'** is shown, the race will change vehicles randomly every lap to one from that [class].  If **'using random [class] vehicle class : [vehicle]'** is shown, the race will change vehicles randomly every lap to one from that [class] and start in the specified [vehicle].  This allows racers to determine whether or not they can join the race without having to drive all the way to the registration waypoint.
+The registration waypoint on the waypoint map will be labeled with some information about the race.  The player who registered the race, the car tier and special classs.  If **'using [vehicle]'** is shown, the race is restricted to that vehicle.  If **'using [class] vehicle class'** is shown, the race is restricted to vehicles of type [class].  If **'using random vehicles'** is shown, the race will change vehicles randomly every lap.  If **'using random vehicles : [vehicle]'** is shown, the race will change vehicles randomly every lap and racers will start in the specified [vehicle].  If **'using random [class] vehicle class'** is shown, the race will change vehicles randomly every lap to one from that [class].  If **'using random [class] vehicle class : [vehicle]'** is shown, the race will change vehicles randomly every lap to one from that [class] and start in the specified [vehicle].  This allows racers to determine whether or not they can join the race without having to drive all the way to the registration waypoint.
 
-Type **`/races register A1 2 180 no`** to register your race with a car-iter of A1, 2 laps, a DNF timeout of 180 seconds, do not allow AI drivers in the race and no restrictions on the vehicle used. If you do not indicate a car tier, there will be none.  If you do not indicate the number of laps, the default is 1 lap.  If you do not indicate the DNF timeout, the default is 120 seconds.  If you do not indicate if AI are allowed, the default is no.
+Type **`/races register A1 2 180 no`** to register your race with a car-iter of A1, 2 laps, a DNF timeout of 180 seconds and no restrictions on the vehicle used. If you do not indicate a car tier, there will be none.  If you do not indicate the number of laps, the default is 1 lap.  If you do not indicate the DNF timeout, the default is 120 seconds.
 
 If you want to restrict the vehicle used in a race, type **`/races register 100 2 180 no rest elegy2`** to restrict vehicles to **`elegy2`**.
 
@@ -306,29 +280,11 @@ The different classes of vehicle you can specify are listed here:
 
 As a convenience, each class of vehicle has been separated into different files in the **`vehicles/`** folder.  Vehicles of class Compacts (0) have been placed in **`00.txt`**.  Vehicles of class Sedans (1) have been placed in **`01.txt`**.  Vehicles of other classes have been placed in similarly named files except for class Custom (-1).  Each of these files contain vehicles taken from **`vehicles.txt`**.  Vehicles that don't seem to be in my version of GTA 5 are in the **`uknown.txt`** file.
 
-If you want a race where AI drivers are allowed, type **`/races register none 2 180 yes`**.  Only the person who registered the race can add AI drivers.
-
-To add an AI driver named **`adam`** at your current location and heading, type **`/races ai add adam`**.  This only sets the location and heading of the driver.  Move away from the location where you added the driver, then type **`/races ai spawn adam elegy2`** to spawn a driver in an **`elegy2`** vehicle at the location and heading you set.  If you do not specify a vehicle, an **`adder`** vehicle is spawned by default.  To delete an AI driver you added named **`adam`**, type **`/races ai delete adam`**.  You can delete the driver before or after you spawn the driver.  To delete all AI drivers, type **`/races ai deleteAll`**.  To list the names of the AI drivers you added, type **`/races ai list`**.  If you want to ride as a passenger in the AI's vehicle, move close to the vehicle and press 'F' on a keyboard, 'Y' button on an Xbox controller or 'Triangle' button on a DualShock controller.
-
-An AI group is a group of AI drivers that have been added and spawned for a race that allows AI drivers.  The commands **`/races ai saveGrp`**, **`/races ai overwriteGrp`**, **`/races ai listGrp`**, **`/races ai deleteGrp`** and **`/races ai loadGrp`** operate on your private list of AI groups if you specify **`pvt`** after the command or on the public list of AI groups if you specify **`pub`** after the command.  Only you have access to your private list of AI groups and can view and modify them.  All players have access to the public list of AI groups and can view and modify them.
-
-To save an AI group named **`mygroup`**, type **`/races ai saveGrp pvt mygroup`**.  **`mygroup`** must not exist.  You cannot save unless all AI drivers that were added are also spawned.  If you want to overwrite an existing AI group named **`mygroup`**, type **`/races ai overwriteGrp pvt mygroup`**.
-
-To list the AI groups you have saved, type **`/races ai listGrp pvt`**.  If you cannot see all the AI group names, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
-
-If you want to delete a saved AI group named **`mygroup`**, type **`/races ai deleteGrp pvt mygroup`**.
-
-To load a saved AI group named **`mygroup`**, type **`/races ai loadGrp pvt mygroup`**.  This will clear any current AI drivers and load the AI drivers from the saved group.  If the race type is restricted to a specific vehicle or a vehicle class, loading will fail if any AI vehicle does not match the specific vehicle or vehicle class.
-
-AI group data is saved in the file **`resources/races/aiGroupData.json`**.
-
-If you want to use the default value for some arguments of the **`/races register`** command, you can type '.' to use the default value for that argument.  For example, if you type **`/races register . 4 . . rand 9`**, the race will be a random race using the default car tier (none), 4 laps, the default DNF timeout (120 seconds), no AI drivers allowed and vehicles of class Off-road (9).  This is the equivalent of **`/races register 500 4 120 no rand 9`**.
-
 If you set the number of laps to 2 or more, the start and finish waypoints must be the same.  Instructions on how to do this are listed above.  You may only register one race at a time.  If you want to register a new race, but already registered one, you must unregister your current race first. You cannot register a race if you are currently editing waypoints.  Stop editing first.
 
 You can unregister your race by typing **`/races unregister`**.  This will remove your race advertisement from all players.  This can be done before or after you have started the race.  **IF YOU ALREADY STARTED THE RACE AND THEN UNREGISTER IT, THE RACE WILL BE CANCELED.**
 
-To join a race, players will need to be close enough to the registration waypoint to be prompted to join.  The registration waypoint will tell the player if it is an unsaved track or if it is a publicly or privately saved track along with its saved name, who registered the race, the cartier, the number of laps, if AI drivers are allowed and the type of race.
+To join a race, players will need to be close enough to the registration waypoint to be prompted to join.  The registration waypoint will tell the player if it is an unsaved track or if it is a publicly or privately saved track along with its saved name, who registered the race, the cartier and the number of laps.
 
 There are seven possible types of race you can join:  1. Any vehicle can be used, 2. Restricted to a specific vehicle, 3. Restricted to a specific vehicle class, 4. Vehicles change randomly every lap, 5. Vehicles change randomly every lap and racers start in a specified vehicle, 6. Vehicles change randomly every lap to one in a specific class, 7. Vehicles change randomly every lap to one in a specific class and racers start in a specified vehicle.  For race types 4, 5, 6 and 7.
 
@@ -342,7 +298,7 @@ To list all competitors in the race that you joined, type **`/races rivals`**.  
 
 To respawn at the last waypoint the player has passed in a race type **`/races respawn`**.  You can also press 'X' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller for one second to respawn.  You can only respawn if you are currently in a race.
 
-Once everyone who wants to join your registered race have joined, you can start the race.  Type **`/races start 10`** to start the race with a delay of 10 seconds before the actual start.  If you do not indicate a delay, the default is 30 seconds.  The minimum delay allowed is 5 seconds.  Any vehicles the players are in will be frozen until after the delay expires.  After the race has started, your race advertisement will be removed from all players.  The position of all human players and AI drivers will show up as green blips on the minimap and waypoint map.
+Once everyone who wants to join your registered race have joined, you can start the race.  Type **`/races start 10`** to start the race with a delay of 10 seconds before the actual start.  If you do not indicate a delay, the default is 30 seconds.  The minimum delay allowed is 5 seconds.  Any vehicles the players are in will be frozen until after the delay expires.  After the race has started, your race advertisement will be removed from all players.  The position of all human players will show up as green blips on the minimap and waypoint map.
 
 The current race waypoint will have a yellow cylinder checkpoint appear in the world.  It will have an arrow indicating the direction of the next waypoint.  If a restricted vehicle or vehicle class was specified at the race registration waypoint, you will need to be in the restricted vehicle or a vehicle of the specified class when passing the waypoint to make the next waypoint appear.  If a restricted vehicle or vehicle class was not specified, you can pass the waypoint in any vehicle or on foot to make the next waypoint appear.  Once you pass the waypoint, it will disappear, a sound will play and the next waypoint will appear in the world.  Only the next three waypoints will be shown on the minimap at a time.  A blue route will be shown in your minimap to the current race waypoint.  Once you pass the current waypoint, it will disappear on the minimap and the next third waypoint along the route will appear on the minimap.  Once you leave or finish the race, all the race waypoints will reappear on the minimap.
 
@@ -364,7 +320,7 @@ To list vehicles that can be used for any race, type **`/races lvehicles`**.  To
 
 To toggle the display of the speedometer at any time, type **`/races speedo`**.  The speedometer automatically displays when you are in a race and disappears when you finish or leave the race.  The default unit of measurement is imperial.  If you wish to change the unit of measurement type **`/races speedo (unit)`** where (unit) is either **`imperial`** for imperial or **`metric`** for metric.
 
-Type **`/races panel`** to show the main panel.  Type **`/races panel edit`** to show the edit tracks panel.  Type **`/races panel register`** to show the register races panel.  Type **`/races panel ai`** to show the AI panel.  Type **`/races panel list`** to show the vehicle list panel.  All **`/races`** commands have a corresponding button and argument field(s) if needed.  Replies to the commands will show up in another panel as well as in chat.  There are buttons near the bottom that will let you switch to another panel if you click them.  To close the panel, type 'Escape' or click the 'Close' button at the bottom.
+Type **`/races panel`** to show the main panel.  Type **`/races panel edit`** to show the edit tracks panel.  Type **`/races panel register`** to show the register races panel. Type **`/races panel list`** to show the vehicle list panel.  All **`/races`** commands have a corresponding button and argument field(s) if needed.  Replies to the commands will show up in another panel as well as in chat.  There are buttons near the bottom that will let you switch to another panel if you click them.  To close the panel, type 'Escape' or click the 'Close' button at the bottom.
 
 Leaving a race or finishing it does not clear its track waypoints.  If you like the track, you can save it to your private list by typing **`/races save pvt nicetrack`**.
 
@@ -422,18 +378,9 @@ in **`races_server.lua`**.  The following events will be saved to **`resources/r
 8. Saving a track
 9. Overwriting a track
 10. Deleting a track
-11. Saving an AI group
-12. Overwriting an AI group
-13. Deleting an AI group
-14. Saving a vehicle list
-15. Overwriting a vehicle list
-16. Deleting a vehicle list
-
-PORTING
--------
-If you wish to port these scripts to a specific framework, such as ESX, you will need to modify the contents of the funds functions **`GetFunds`**, **`SetFunds`**, **`Withdraw`**, **`Deposit`** and **`Remove`** in **`port.lua`** to work for your framework.
-
-An attempt to port the funds functions to ESX is available in the **`esx/`** folder.  Copy **`esx/port.lua`** to your server's **`resources/races/`** folder replacing the existing **`port.lua`** file.
+11. Saving a vehicle list
+12. Overwriting a vehicle list
+13. Deleting a vehicle list
 
 SCREENSHOTS
 -----------
@@ -470,9 +417,6 @@ Edit tracks command button panel\
 Register races command button panel\
 <img src="screenshots/Screenshot%20(11).png" width="800">
 
-AI command button panel\
-<img src="screenshots/Screenshot%20(12).png" width="800">
-
 Vehicle list command button panel\
 <img src="screenshots/Screenshot%20(13).png" width="800">
 
@@ -483,8 +427,6 @@ VIDEOS
 [Multi-lap race](https://www.youtube.com/watch?v=TKibGh_11FA)
 
 [Multi-lap random vehicle race](https://www.youtube.com/watch?v=Cwtz6t8Q82E)
-
-[Multi-lap race with AI drivers](https://www.youtube.com/watch?v=ADkaNMvSFeM)
 
 LICENSE
 -------

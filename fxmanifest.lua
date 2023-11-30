@@ -11,8 +11,7 @@ client_script {
 }
 
 server_scripts {
-    "server/races.lua",
-    "port.lua"
+    "server/races.lua"
 }
 
 ui_page "html/index.html"

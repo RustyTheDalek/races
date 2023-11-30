@@ -134,13 +134,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         </div>
         <br>
         <div class="row">
-            <button id="funds">View funds</button>
-        </div>
-        <br>
-        <div class="row">
             <button id="main_edit">Edit Panel</button>
             <button id="main_register">Register Panel</button>
-            <button id="main_ai">AI Panel</button>
             <button id="main_vlist">Vehicle List Panel</button>
         </div>
         <br>
@@ -187,7 +182,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <div class="row">
             <button id="edit_main">Main Panel</button>
             <button id="edit_register">Register Panel</button>
-            <button id="edit_ai">AI Panel</button>
             <button id="edit_vlist">Vehicle List Panel</button>
         </div>
         <br>
@@ -237,13 +231,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 <option value="rally">Rally</option>
                 <option value="motorcycle">Motorcycle</option>
             </select>
+            <label for="specialClass">Special Class:</label>
+            <select id="specialClass">
+                <option value="">none</option>
+                <option value="Motorcycle">Motorcycle</option>
+                <option value="Rally">Rally</option>
+                <option value="Formula Classic">Formula Classic</option>
+                <option value="Kart">Kart</option>
+                <option value="Drag">Drag</option>
+                <option value="Meme">Meme</option>
+            </select>
             Laps:<input id="laps" placeholder="Laps">
             Timeout:<input id="timeout" placeholder="Timeout">
-            <label for="allowAI">Allow AI:</label>
-            <select id="allowAI">
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-            </select>
             <label for="rtype">Race Type:</label>
             <select id="rtype">
                 <option value="norm">Normal</option>
@@ -282,66 +281,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <div class="row">
             <button id="register_main">Main Panel</button>
             <button id="register_edit">Edit Panel</button>
-            <button id="register_ai">AI Panel</button>
             <button id="register_vlist">Vehicle List Panel</button>
         </div>
         <br>
         <div class="row">
             <button id="register_close">Close</button>
-        </div>
-    </div>
-
-    <div style="display:none;" id="aiPanel">
-        <div class="row">
-            AI Name:<input id="ai_name" placeholder="AI Name">
-            <label for="ai_vehicle">Vehicle Name:</label>
-            <select id="ai_vehicle">
-            </select>
-        </div>
-        <div class="row">
-            <button id="add_ai">Add AI</button>
-            <button id="delete_ai">Delete AI</button>
-            <button id="spawn_ai">Spawn AI</button>
-            <button id="list_ai">List AI</button>
-            <button id="delete_all_ai">Delete All AI</button>
-        </div>
-        <br>
-        <div class="row">
-            <select id="grp_access0">
-                <option value="pvt">Private</option>
-                <option value="pub">Public</option>
-            </select>
-            <label for="grp_name">AI Group Name:</label>
-            <select id="grp_name">
-            </select>
-        </div>
-        <div class="row">
-            <button id="load_grp">Load AI Group</button>
-            <button id="overwrite_grp">Overwrite AI Group</button>
-            <button id="delete_grp">Delete AI Group</button>
-            <button id="list_grps">List AI Groups</button>
-        </div>
-        <br>
-        <div class="row">
-            <select id="grp_access1">
-                <option value="pvt">Private</option>
-                <option value="pub">Public</option>
-            </select>
-            AI Group Name:<input id="grp_unsaved" placeholder="Unsaved AI Group Name">
-        </div>
-        <div class="row">
-            <button id="save_grp">Save AI Group</button>
-        </div>
-        <br>
-        <div class="row">
-            <button id="ai_main">Main Panel</button>
-            <button id="ai_edit">Edit Panel</button>
-            <button id="ai_register">Register Panel</button>
-            <button id="ai_vlist">Vehicle List Panel</button>
-        </div>
-        <br>
-        <div class="row">
-            <button id="ai_close">Close</button>
         </div>
     </div>
 
@@ -424,7 +368,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <button id="vlist_main">Main Panel</button>
             <button id="vlist_edit">Edit Panel</button>
             <button id="vlist_register">Register Panel</button>
-            <button id="vlist_ai">AI Panel</button>
         </div>
         <br>
         <div class="row">

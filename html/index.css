@@ -157,19 +157,11 @@ body {
     height: 44px;
 }
 
-#funds {
-    width: 25%;
-}
-
 #main_edit {
     width: 25%;
 }
 
 #main_register {
-    width: 25%;
-}
-
-#main_ai {
     width: 25%;
 }
 
@@ -252,10 +244,6 @@ body {
     width: 25%;
 }
 
-#edit_ai {
-    width: 25%;
-}
-
 #edit_vlist {
     width: 25%;
 }
@@ -304,16 +292,17 @@ body {
     height: 44px;
 }
 
+#specialClass {
+    width: 60px;
+    height: 44px;
+}
+
 #laps {
     width: 10%;
 }
 
 #timeout {
     width: 10%;
-}
-
-#allowAI {
-    height: 44px;
 }
 
 #rtype {
@@ -352,55 +341,9 @@ body {
     width: 25%;
 }
 
-#register_ai {
-    width: 25%;
-}
 
 #register_vlist {
     width: 25%;
-}
-
-#aiPanel {
-    text-align: center;
-    font-size: 25px;
-    padding: 25px;
-    color: rgb(191, 191, 191);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgb(255, 255, 255);
-    border-radius: 7px;
-}
-
-#ai_name {
-    width: 25%;
-}
-
-#ai_vehicle {
-    width: 25%;
-    height: 44px;
-}
-
-#add_ai {
-    width: 15%;
-}
-
-#delete_ai {
-    width: 15%;
-}
-
-#spawn_ai {
-    width: 15%;
-}
-
-#list_ai {
-    width: 15%;
-}
-
-#delete_all_ai {
-    width: 15%;
 }
 
 #grp_access0 {
@@ -438,22 +381,6 @@ body {
 
 #save_grp {
     width: 20%;
-}
-
-#ai_main {
-    width: 25%;
-}
-
-#ai_edit {
-    width: 25%;
-}
-
-#ai_register {
-    width: 25%;
-}
-
-#ai_vlist {
-    width: 25%;
 }
 
 #listPanel {
@@ -558,10 +485,6 @@ body {
 }
 
 #vlist_register {
-    width: 25%;
-}
-
-#vlist_ai {
     width: 25%;
 }
 
