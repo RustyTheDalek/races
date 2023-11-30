@@ -1,5 +1,7 @@
 let leaderboard = $("#leaderboard");
 
+let topOffset = 4;
+
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
 });
@@ -59,7 +61,7 @@ function AddRacerToleaderboard(racers) {
     let racers_in_leaderboard = leaderboard.children().length;
 
     //Decide on top offset based on position
-    let top = racers_in_leaderboard > 0 ? 1 + racers_in_leaderboard * 3.2 : 0;
+    let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * 3.2 : topOffset - 1;
     //Only add first-place class if it's first item to be added;
     let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
 
@@ -101,7 +103,7 @@ function SortLeaderboard() {
 
   racers.sort(byPollPosition);
   racers.each(function (index) {
-    offset = index > 0 ? 1 + index * 3.2 : 0;
+    offset = index > 0 ? topOffset + index * 3.2 : topOffset - 1;
 
     if (index == 0) {
       $(this).addClass("first-place");
