@@ -48,8 +48,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <ul id="unready-racers">Racers Not Ready:
         </ul>
     </div>
-    <ul style="display:none;" id="leaderboard">
-    </ul>
+    <div style="display:none;" id="leaderboard_container">
+        <div class="leaderboard_chunk" id="laps">
+            Laps:<span id="current_laps">0</span>/<span id="total_laps">0</span>
+        </div>
+        <ul id="leaderboard">
+        </ul>
+    </div>
     <div style="display:none;" id="mainPanel">
         <div class="row">
             <button id="request">Request Permission</button>

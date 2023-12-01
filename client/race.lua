@@ -1766,6 +1766,23 @@ function SendToRaceTier(tier, specialClass)
     })
 end
 
+function SendRaceData(raceData)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "sendRaceData",
+        current_lap = 1,
+        total_laps = raceData.laps
+    })
+end
+
+function UpdateCurrentLap()
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "updatecurrentlap",
+        current_lap = currentLap
+    })
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2778,9 +2795,9 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
             if STATE_IDLE == raceState then
-
                 SendToRaceTier(tier, specialClass)
-
+                local raceData = { laps = starts[rIndex].laps}
+                SendRaceData(raceData)
                 InitialiseReady()
                 raceState = STATE_JOINING
                 raceIndex = rIndex
@@ -3209,7 +3226,6 @@ Citizen.CreateThread(function()
         local playerCoord = GetEntityCoords(player)
         local heading = GetEntityHeading(player)
 
-
         local currentTime = GetGameTimer()
 
         if true == ghosting then
@@ -3423,10 +3439,7 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide + 0.01, 0.15, 0.25, 0, 0, 0, 127)
-
-                drawMsg(leftSide, topSide + 0.03, "Lap", 0.5, 1)
-                drawMsg(rightSide, topSide + 0.03, ("%d of %d"):format(currentLap, numLaps), 0.5, 1)
+                drawRect(leftSide - 0.01, topSide + 0.05, 0.15, 0.23, 0, 0, 0, 127)
 
                 drawMsg(leftSide, topSide + 0.06, "Waypoint", 0.5, 1)
                 if true == startIsFinish then
@@ -3511,6 +3524,7 @@ Citizen.CreateThread(function()
                                 end
                                 if currentLap < numLaps then
                                     currentLap = currentLap + 1
+                                    UpdateCurrentLap()
                                     if #randVehicles > 0 then
                                         local randIndex = math.random(#randVehicles)
                                         sendMessage("Random Index: " .. randIndex)

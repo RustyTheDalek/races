@@ -1,6 +1,8 @@
+let leaderboard_container = $("#leaderboard_container");
 let leaderboard = $("#leaderboard");
 
-let topOffset = 4;
+
+let topOffset = 5;
 
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
@@ -27,11 +29,28 @@ function readLeaderBoardEvents(event) {
     case "clear_leaderboard":
       ClearLeaderboard();
       break;
+    case "sendRaceData":
+      SetRaceData(data.current_lap, data.total_laps);
+      break;
+    case "updatecurrentlap":
+      UpdateCurrentLap(data.current_lap);
+      break;
   }
 }
 
+function UpdateCurrentLap(current_lap) {
+  $('#current_laps').html(current_lap);
+}
+
+function SetRaceData(current_lap, total_laps) {
+  UpdateCurrentLap(current_lap);
+  $('#total_laps').html(total_laps);
+}
+
 function ClearLeaderboard() {
-  leaderboard.hide();
+  $('#current_laps').html(0);
+  $('#total_laps').html(0);
+  leaderboard_container.hide();
   leaderboard.empty();
 }
 
@@ -45,9 +64,9 @@ function UpdatePositions(racePositions) {
 
 function SetRaceLeaderboard(enabled) {
   if (enabled) {
-    leaderboard.show();
+    leaderboard_container.show();
   } else {
-    leaderboard.hide();
+    leaderboard_container.hide();
   }
 }
 
@@ -68,7 +87,7 @@ function AddRacerToleaderboard(racers) {
     let racer_element = $("<li/>", {
       id: racer.source,
       value: racers_in_leaderboard + 1,
-      class: first_place,
+      class: `leaderboard_chunk ${first_place}`,
       style: `top:${top}rem`,
       text: racer.playerName,
     });
