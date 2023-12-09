@@ -1771,7 +1771,16 @@ function SendRaceData(raceData)
         type = "leaderboard",
         action = "sendRaceData",
         current_lap = 1,
-        total_laps = raceData.laps
+        total_laps = raceData.laps,
+        total_checkpoints = raceData.totalCheckpoints
+    })
+end
+
+function UpdateCurrentCheckpoint()
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "updatecurrentcheckpoint",
+        current_checkpoint = startIsFinish == true and currentWaypoint or currentWaypoint - 1
     })
 end
 
@@ -2796,8 +2805,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
         if starts[rIndex] ~= nil then
             if STATE_IDLE == raceState then
                 SendToRaceTier(tier, specialClass)
-                local raceData = { laps = starts[rIndex].laps}
-                SendRaceData(raceData)
                 InitialiseReady()
                 raceState = STATE_JOINING
                 raceIndex = rIndex
@@ -2809,6 +2816,13 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
                 loadWaypointBlips(waypointCoords)
+
+                local raceData = {
+                    laps = starts[rIndex].laps,
+                    totalCheckpoints = startIsFinish == true and #waypoints or #waypoints - 1
+                }
+                SendRaceData(raceData)
+
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
                     msg = msg .. "unsaved track "
@@ -3439,9 +3453,8 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide + 0.05, 0.15, 0.23, 0, 0, 0, 127)
+                drawRect(leftSide - 0.01, topSide + 0.08, 0.15, 0.19, 0, 0, 0, 127)
 
-                drawMsg(leftSide, topSide + 0.06, "Waypoint", 0.5, 1)
                 if true == startIsFinish then
                     drawMsg(rightSide, topSide + 0.06, ("%d of %d"):format(currentWaypoint, #waypoints), 0.5, 1)
                 else
@@ -3539,6 +3552,8 @@ Citizen.CreateThread(function()
                                     finishRace(elapsedTime)
                                 end
                             end
+                            
+                            UpdateCurrentCheckpoint()
 
                             if STATE_RACING == raceState then
                                 local prev = currentWaypoint - 1

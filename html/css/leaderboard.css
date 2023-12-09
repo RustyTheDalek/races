@@ -21,6 +21,19 @@
     right: 0;
 }
 
+#checkpoints {
+    height: 1.35rem;
+    width: 5rem;
+
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0.5rem;
+    position: absolute;
+    top: 2rem;
+}
+
 #laps {
     height: 1.35rem;
     width: 6rem;
@@ -31,6 +44,8 @@
     padding-left: 0.5rem;
     position: absolute;
     top: 2rem;
+    right: 5.8rem;
+    clip-path: polygon(0 0, 95% 0%, 100% 100%, 5% 100%);
 }
 
 ul#leaderboard li {

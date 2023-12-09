@@ -30,12 +30,19 @@ function readLeaderBoardEvents(event) {
       ClearLeaderboard();
       break;
     case "sendRaceData":
-      SetRaceData(data.current_lap, data.total_laps);
+      SetRaceData(data.current_lap, data.total_laps, data.total_checkpoints);
       break;
     case "updatecurrentlap":
       UpdateCurrentLap(data.current_lap);
       break;
+    case "updatecurrentcheckpoint":
+      UpdateCurrentCheckpoint(data.current_checkpoint);
+      break;
   }
+}
+
+function UpdateCurrentCheckpoint(current_checkpoint) {
+  $('#current_checkpoint').html(current_checkpoint);
 }
 
 function UpdateCurrentLap(current_lap) {
@@ -44,7 +51,11 @@ function UpdateCurrentLap(current_lap) {
 
 function SetRaceData(current_lap, total_laps) {
   UpdateCurrentLap(current_lap);
-  $('#total_laps').html(total_laps);
+  if(total_laps > 1) {
+    $('#laps').show();
+    $('#total_laps').html(total_laps);
+  }
+  $('#total_checkpoints').html(total_checkpoints);
 }
 
 function ClearLeaderboard() {
