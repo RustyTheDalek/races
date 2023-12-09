@@ -1792,6 +1792,31 @@ function UpdateCurrentLap()
     })
 end
 
+function SendCurrentLapTime(minutes, seconds)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "updatecurrentlaptime",
+        source = GetPlayerServerId(PlayerId()),
+        minutes = minutes,
+        seconds = seconds
+    })
+end
+
+function SendBestLapTime(minutes, seconds)
+    TriggerServerEvent("races:update_best_lap_time", minutes, seconds)
+end
+
+RegisterNetEvent("races:update_best_lap_time")
+AddEventHandler("races:update_best_lap_time", function(source, minutes, seconds)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "updatebestlaptime",
+        source = source,
+        minutes = minutes,
+        seconds = seconds
+    })
+end)
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -3276,7 +3301,6 @@ Citizen.CreateThread(function()
             SetGhosting(false)
         end
 
-
         if STATE_EDITING == raceState then
             local closestIndex = 0
             local minDist = maxRadius
@@ -3453,38 +3477,25 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide + 0.08, 0.15, 0.19, 0, 0, 0, 127)
-
+                drawRect(leftSide - 0.01, topSide + 0.1, 0.15, 0.1, 0, 0, 0, 127)
                 local minutes, seconds = minutesSeconds(elapsedTime)
-                drawMsg(leftSide, topSide + 0.09, "Total time", 0.5, 1)
-                drawMsg(rightSide, topSide + 0.09, ("%02d:%05.2f"):format(minutes, seconds), 0.5, 1)
-
                 drawMsg(leftSide, topSide + 0.12, "Vehicle:", 0.5, 1)
                 drawMsg(rightSide, topSide + 0.12, currentVehicleName, 0.46, 1)
 
                 local lapTime = currentTime - lapTimeStart
                 minutes, seconds = minutesSeconds(lapTime)
-                drawMsg(leftSide, topSide + 0.16, "Lap time", 0.6, 1)
-                drawMsg(rightSide, topSide + 0.16, ("%02d:%05.2f"):format(minutes, seconds), 0.6, 1)
-
-                drawMsg(leftSide, topSide + 0.19, "Best lap", 0.5, 1)
-                if -1 == bestLapTime then
-                    drawMsg(rightSide, topSide + 0.19, "- - : - -", 0.5, 1)
-                else
-                    minutes, seconds = minutesSeconds(bestLapTime)
-                    drawMsg(rightSide, topSide + 0.19, ("%02d:%05.2f"):format(minutes, seconds), 0.7, 1)
-                end
+                SendCurrentLapTime(minutes, seconds)
 
                 if(boost_active == true) then
-                    drawMsg(leftSide, topSide + 0.22, "Boost Active", 0.3, 1)
+                    drawMsg(leftSide, topSide + 0.15, "Boost Active", 0.3, 1)
                 end
 
                 if true == beginDNFTimeout then
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
                     if milliseconds > 0 then
                         minutes, seconds = minutesSeconds(milliseconds)
-                        drawMsg(leftSide, topSide + 0.24, "DNF time", 0.3, 1)
-                        drawMsg(rightSide, topSide + 0.24, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
+                        drawMsg(leftSide, topSide + 0.17, "DNF time", 0.3, 1)
+                        drawMsg(rightSide, topSide + 0.17, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
                     else -- DNF
                         DeleteCheckpoint(raceCheckpoint)
                         finishRace(-1)
@@ -3527,6 +3538,7 @@ Citizen.CreateThread(function()
                                 lapTimeStart = currentTime
                                 if -1 == bestLapTime or lapTime < bestLapTime then
                                     bestLapTime = lapTime
+                                    SendBestLapTime(minutes, seconds)
                                     bestLapVehicleName = currentVehicleName
                                 end
                                 if currentLap < numLaps then

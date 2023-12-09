@@ -2161,6 +2161,13 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
     end
 end)
 
+RegisterNetEvent("races:update_best_lap_time")
+AddEventHandler("races:update_best_lap_time", function( minutes, seconds)
+    local source = source
+    TriggerClientEvent("races:update_best_lap_time", -1, source, minutes, seconds)
+end)
+
+
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)

@@ -53,8 +53,8 @@ ul#leaderboard li {
     display: flex;
     align-items: center;
     grid-gap: .5rem;
-    font-size: .75vw;
-    width: 9rem;
+    font-size: .8rem;
+    width: 18rem;
     height: 2.5rem;
     white-space: nowrap;
 
@@ -67,17 +67,41 @@ ul#leaderboard li {
 ul#leaderboard li.first-place{
     font-size: 1.25vw;
     clip-path: polygon(0 0, 100% 0%, 100% 100%, 10% 100%);
-    width: 13rem;
+    width: 22rem;
     height: 3.5rem;
 }
 
 #leaderboard_container li.first-place > span {
     font-size: 3.5rem;
-    padding-left: 1rem;
+    padding-left: 2rem;
 }
 
 ul#leaderboard li > span {
     font-size: 2rem;
     padding-left: 1rem;
+}
+
+/*Lap times */
+.lap_times {
+    flex-grow: 2;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    grid-gap : .1rem
+}
+
+.lap_times > .best, 
+.lap_times > .current {
+    font-size: 1.25rem;
+}
+
+.lap_times > .best::before {
+    content: "Best: ";
+}
+
+.lap_times > .current::before {
+    content: "Current: ";
 }
 

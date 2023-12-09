@@ -38,7 +38,27 @@ function readLeaderBoardEvents(event) {
     case "updatecurrentcheckpoint":
       UpdateCurrentCheckpoint(data.current_checkpoint);
       break;
+    case "updatecurrentlaptime":
+      UpdateCurrentLapTime(data.source, data.minutes, data.seconds);
+      break;
+    case "updatebestlaptime":
+      console.log(data);
+      UpdateBestLapTime(data.source, data.minutes, data.seconds);
+      break;
   }
+}
+
+function UpdateCurrentLapTime(source, minutes, seconds) {
+  UpdateLapTimes("current", source, minutes, seconds);
+}
+
+function UpdateBestLapTime(source, minutes, seconds) {
+  UpdateLapTimes("best", source, minutes, seconds);
+}
+
+function UpdateLapTimes(type, source, minutes, seconds) {
+  let seconds_formatted = seconds.toFixed(2).toString().padStart(5, '0');
+  $(`#${source} .${type}`).html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
 }
 
 function UpdateCurrentCheckpoint(current_checkpoint) {
@@ -49,9 +69,9 @@ function UpdateCurrentLap(current_lap) {
   $('#current_laps').html(current_lap);
 }
 
-function SetRaceData(current_lap, total_laps) {
+function SetRaceData(current_lap, total_laps, total_checkpoints) {
   UpdateCurrentLap(current_lap);
-  if(total_laps > 1) {
+  if (total_laps > 1) {
     $('#laps').show();
     $('#total_laps').html(total_laps);
   }
@@ -106,6 +126,25 @@ function AddRacerToleaderboard(racers) {
     let racer_position = $("<span/>", { text: `${racers_in_leaderboard + 1}` });
 
     racer_element.prepend(racer_position);
+
+    let lap_times = $("<div/>", {
+      class: 'lap_times'
+    });
+
+    let best_lap = $("<div/>", {
+      class: 'best',
+      text: '00:00.00'
+    });
+
+    let current_lap = $("<div/>", {
+      class: 'current',
+      text: '00:00.00'
+    });
+
+    lap_times.append(best_lap);
+    lap_times.append(current_lap);
+
+    racer_element.append(lap_times);
     leaderboard.append(racer_element);
   });
 }
@@ -146,4 +185,9 @@ function SortLeaderboard() {
       .html(index + 1);
     $(this).css("top", `${offset}rem`);
   });
+}
+
+function zeroPad(nr,base){
+  var  len = (String(base).length - String(nr).length)+1;
+  return len > 0? new Array(len).join('0')+nr : nr;
 }
