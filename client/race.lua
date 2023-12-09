@@ -3455,12 +3455,6 @@ Citizen.CreateThread(function()
 
                 drawRect(leftSide - 0.01, topSide + 0.08, 0.15, 0.19, 0, 0, 0, 127)
 
-                if true == startIsFinish then
-                    drawMsg(rightSide, topSide + 0.06, ("%d of %d"):format(currentWaypoint, #waypoints), 0.5, 1)
-                else
-                    drawMsg(rightSide, topSide + 0.06, ("%d of %d"):format(currentWaypoint - 1, #waypoints - 1), 0.5, 1)
-                end
-
                 local minutes, seconds = minutesSeconds(elapsedTime)
                 drawMsg(leftSide, topSide + 0.09, "Total time", 0.5, 1)
                 drawMsg(rightSide, topSide + 0.09, ("%02d:%05.2f"):format(minutes, seconds), 0.5, 1)
@@ -3552,7 +3546,7 @@ Citizen.CreateThread(function()
                                     finishRace(elapsedTime)
                                 end
                             end
-                            
+
                             UpdateCurrentCheckpoint()
 
                             if STATE_RACING == raceState then
