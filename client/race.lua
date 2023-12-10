@@ -2184,6 +2184,8 @@ RegisterCommand("races", function(_, args)
         showPanel(args[2])
     elseif "upgrade" == args[1] then
         resetupgrades()
+    elseif "ghost" == args[1] then
+        SetGhosting(true)
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -3010,6 +3012,10 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
+        if IsControlPressed(0, 22) == 1 then
+            PlaySoundFrontend(-1, "5_Second_Timer", "DLC_HEISTS_GENERAL_FRONTEND_SOUNDS", false)
+        end
+
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
         -- drawMsg(0.50, 0.54, "seconds", 0.7, 0)
@@ -3040,9 +3046,16 @@ Citizen.CreateThread(function()
                 end
             end
 
+            local ghostingRemaining = ghostingMaxTime - ghostingDifference
+            --1000 = every second 
+            if ghostingRemaining <= 5000 and ghostingRemaining >= 1000 and math.fmod(ghostingRemaining, 1000) <= 5 then
+                PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+            end
+
             SetGhostedEntityAlpha(ghostingInterval * 254)
             if ghostingDifference > ghostingMaxTime then
                 SetGhosting(false)
+                PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
             end
         else
             SetGhosting(false)
