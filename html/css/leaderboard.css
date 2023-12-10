@@ -82,7 +82,7 @@ ul#leaderboard li > span {
 }
 
 .current_racer {
-    border: .3rem solid  #01bd01;
+    border-right: .2rem solid  #01bd01;
     border-left: none;
 }
 
