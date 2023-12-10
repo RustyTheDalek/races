@@ -50,7 +50,20 @@ function readLeaderBoardEvents(event) {
     case "update_dnf_time":
       UpdateDNFTime(data.minutes, data.seconds);
       break;
+    case "toggle_leaderboard":
+      ToggleLeaderboard();
+      break;
   }
+}
+
+let leaderboardVisible = true;
+
+function ToggleLeaderboard() {
+
+  leaderboardVisible = !leaderboardVisible;
+
+  SetRaceLeaderboard(leaderboardVisible);
+
 }
 
 function UpdateDNFTime(minutes, seconds) {

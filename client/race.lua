@@ -3163,11 +3163,28 @@ function ClearLeaderboard()
         action = 'clear_leaderboard'
     })
 end
+function ToggleLeaderboardVisible()
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'toggle_leaderboard'
+    })
+end
 
 function HandleJoinState()
-    if IsControlJustReleased(0,  173) then
+    --Down
+    if IsControlJustReleased(0, 173) then
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
+    end
+
+    CheckVMenu()
+end
+
+function CheckVMenu()
+    --M Key / Back
+    if IsControlJustReleased(0, 301) or IsControlJustReleased(0, 212) then
+        print("M button pressed")
+        ToggleLeaderboardVisible()
     end
 end
 
@@ -3373,6 +3390,7 @@ Citizen.CreateThread(function()
                 end
             end
         elseif STATE_RACING == raceState then
+            CheckVMenu()
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
             local vehicle = GetVehiclePedIsIn(player, false)
             if elapsedTime < 0 then
