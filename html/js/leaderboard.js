@@ -93,17 +93,16 @@ function UpdateCurrentLap(current_lap) {
 function SetRaceData(current_lap, total_laps, total_checkpoints) {
   UpdateCurrentLap(current_lap);
   if (total_laps > 1) {
-    $('#laps').show();
+    leaderboard_container.find('#laps').addClass('right-visible');
     $('#total_laps').html(total_laps);
   }
   $('#total_checkpoints').html(total_checkpoints);
 }
 
 function ClearLeaderboard() {
+  leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
   $('#current_laps').html(0);
   $('#total_laps').html(0);
-  leaderboard_container.hide();
-  leaderboard_container.find('#laps').hide();
   leaderboard.empty();
   $('#dnf_timer_container').hide();
   $('#dnf_timer_container').find('#dnf_timer').html('00:00.00');
@@ -119,9 +118,10 @@ function UpdatePositions(racePositions) {
 
 function SetRaceLeaderboard(enabled) {
   if (enabled) {
-    leaderboard_container.show();
+    leaderboard_container.find('#leaderboard').find('.leaderboard_chunk').addClass('right-visible');
+    leaderboard_container.find('#checkpoints').addClass('right-visible');
   } else {
-    leaderboard_container.hide();
+    leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
   }
 }
 
