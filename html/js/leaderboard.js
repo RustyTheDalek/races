@@ -55,7 +55,7 @@ function readLeaderBoardEvents(event) {
 
 function UpdateDNFTime(minutes, seconds) {
   let dnf_containter = $('#dnf_timer_container');
-  dnf_containter.show();
+  dnf_containter.addClass('top-visible');
 
   let dnf_time = dnf_containter.find(`#dnf_timer`);
 
@@ -104,7 +104,7 @@ function ClearLeaderboard() {
   $('#current_laps').html(0);
   $('#total_laps').html(0);
   leaderboard.empty();
-  $('#dnf_timer_container').hide();
+  $('#dnf_timer_container').removeClass('top-visible');
   $('#dnf_timer_container').find('#dnf_timer').html('00:00.00');
 }
 
