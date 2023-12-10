@@ -66,7 +66,9 @@ function UpdateBestLapTime(source, minutes, seconds) {
 
 function UpdateLapTimes(type, source, minutes, seconds) {
   let seconds_formatted = seconds.toFixed(2).toString().padStart(5, '0');
-  leaderboard.find(`#${source} .${type}`).html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
+  let lap_time = leaderboard.find(`#${source} .${type}`);
+  lap_time.show();
+  lap_time.html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
 }
 
 function UpdateCurrentCheckpoint(current_checkpoint) {
@@ -164,6 +166,7 @@ function AddRacerToleaderboard(racers) {
     });
 
     let current_lap = $("<div/>", {
+      style: 'display:none;',
       class: 'current',
       text: '00:00.00'
     });
