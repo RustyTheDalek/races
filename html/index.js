@@ -46,78 +46,29 @@ $(function () {
     $("#listPanel").hide();
     $("#replyPanel").hide();
 
-    let unready_view = $("#ready-view");
-    let unready_racers = $("ul#unready-racers");
+    function UpdateRacer(racer) {
 
-    function SetVisible(target, visible) {
-        if (visible) {
-            target.show();
+        let racer_chunk = $(`#leaderboard_container`).find(`#${racer.source}`);
+
+        if(racer.ready) {
+            racer_chunk.addClass("ready");
+            racer_chunk.removeClass("not-ready");
         } else {
-            target.hide();
+            racer_chunk.addClass("not-ready");
+            racer_chunk.removeClass("ready");
         }
     }
 
-    function AddRacerName(racer) {
-        let unready_racer = unready_racers.append(`<li id="${racer.source}">${racer.playerName}</li>`);
-
-        SetVisible(unready_racer, !racer.ready)
-    }
-
-    function UpdateRacer(racer) {
-        SetVisible(unready_racers.find(`#${racer.source}`), !racer.ready);
-    }
-
-    function RemoveRacerName(id) {
-        unready_racers.find(`#${id}`).remove();
-    }
-
-    function AddRacerNames(racers) {
-
-        racers.forEach(racer => {
-            let racer_exists = unready_racers.find(`#${racer.source}`).length > 0;
-
-            if (!racer_exists) {
-                AddRacerName(racer);
-            } else {
-                UpdateRacer(racer)
-            }
-
-        });
-
-        // let racerNameAlreadUnready = $(`#${id}`).length > 0;
-
-        // if(racerNameAlreadUnready) {
-        //     RemoveRacerName(id);
-        // } else {
-        //     AddRacerName(id, name);
-        // }
-    }
-
     function ClearReady() {
-        unready_view.hide();
-        unready_racers.empty();
+        $(`#leaderboard_container`).find('.leaderboard_chunk').removeClass("not-ready");
+        $(`#leaderboard_container`).find('.leaderboard_chunk').removeClass("ready");
     }
+
 
     function handleReady(data) {
         switch (data.action) {
-            case 'set_visible':
-                SetVisible($('#ready-view'), data.value);
-                break;
-            case 'set_racers':
-                $('#total-ready').html(data.numReady);
-                $('#total-racers').html(data.numRacers);
-                break;
-            case 'set_ready':
-                $('#total-ready').html(data.value);
-                break;
-            case 'set_total':
-                $('#total-racers').html(data.value);
-                break;
             case 'send_racer_ready_data':
                 UpdateRacer(data.racer);
-                break;
-            case 'send_racer_names':
-                AddRacerNames(data.racers);
                 break;
             case 'clear_ready':
                 ClearReady();

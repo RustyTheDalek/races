@@ -32,6 +32,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Ready count */
 
+#leaderboard .not-ready {
+    background-color: #cc4300;
+}
+
+#leaderboard .ready {
+    background-color: green;
+}
+
 .center-view {
     display: inline-block;
     position: relative;

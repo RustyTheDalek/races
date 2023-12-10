@@ -103,6 +103,7 @@ function ClearLeaderboard() {
   $('#current_laps').html(0);
   $('#total_laps').html(0);
   leaderboard_container.hide();
+  leaderboard_container.find('#laps').hide();
   leaderboard.empty();
   $('#dnf_timer_container').hide();
   $('#dnf_timer_container').find('#dnf_timer').html('00:00.00');
@@ -142,7 +143,7 @@ function AddRacerToleaderboard(racers, source) {
     let racer_element = $("<li/>", {
       id: racer.source,
       value: racers_in_leaderboard + 1,
-      class: `leaderboard_chunk ${first_place} ${current_racer}`,
+      class: `leaderboard_chunk not-ready ${first_place} ${current_racer}`,
       style: `top:${top}rem`,
     });
 

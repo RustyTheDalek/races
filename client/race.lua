@@ -2761,7 +2761,6 @@ AddEventHandler("races:start", function(rIndex, delay)
                     DeleteGridCheckPoints()
                     print(sologridCheckpoint)
                     ClearReady();
-                    SetRaceLeaderboard(true)
                     notifyPlayer("Vehicle fixed.\n")
 
                 elseif STATE_RACING == raceState then
@@ -2807,8 +2806,6 @@ AddEventHandler("races:joinnotification", function(playerName, racerDictionary, 
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
     AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
-    SendRacerNames(racerDictionary)
-    SetReadyUI(numReady, numRacing)
 end)
 
 RegisterNetEvent("races:onplayerleave")
@@ -2824,7 +2821,6 @@ AddEventHandler("races:leavenotification", function(message, source, rIndex, num
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     print(string.format("NumberRacing: %i", numRacing))
-    SetReadyUI(numReady, numRacing)
     RemoveRacerFromLeaderboard(source)
     sendMessage(message)
 end)
@@ -2840,7 +2836,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
         if starts[rIndex] ~= nil then
             if STATE_IDLE == raceState then
                 SendToRaceTier(tier, specialClass)
-                InitialiseReady()
                 raceState = STATE_JOINING
                 raceIndex = rIndex
                 numLaps = starts[rIndex].laps
@@ -2857,6 +2852,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     totalCheckpoints = startIsFinish == true and #waypoints or #waypoints - 1
                 }
                 SendRaceData(raceData)
+                SetRaceLeaderboard(true)
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -3158,23 +3154,6 @@ function ClearReady()
     })
 end
 
-function SetReadyVisible(visible)
-    SendNUIMessage({
-        type = 'ready',
-        action = 'set_visible',
-        value = visible
-    })
-end
-
-function SetReadyUI(numReady, numRacers)
-    SendNUIMessage({
-        type = 'ready',
-        action = 'set_racers',
-        numReady = numReady,
-        numRacers = numRacers
-    })
-end
-
 function SetRaceLeaderboard(enabled)
     SendNUIMessage({
         type = 'leaderboard',
@@ -3198,14 +3177,6 @@ function ClearLeaderboard()
     })
 end
 
-function SetReadyRacersUI(numReady)
-    SendNUIMessage({
-        type = 'ready',
-        action = 'set_ready',
-        value = numReady,
-    })
-end
-
 function HandleJoinState()
     if IsControlJustReleased(0,  173) then
         ready = not ready
@@ -3223,14 +3194,6 @@ function HandleJoinState()
     msg = msg .. ": press Down Arrow or D-PAD Down to toggle ready"
 
     drawMsg(0.50, 0.50, msg, 0.7, 0)
-end
-
-function SendRacerNames(racerDictionary)
-    SendNUIMessage({
-        type = 'ready',
-        action = 'send_racer_names',
-        racers = racerDictionary,
-    })
 end
 
 function SendVehicleName()
@@ -3264,9 +3227,6 @@ function AddRacersToLeaderboard(racerDictionary, source)
     })
 end
 
-function InitialiseReady()
-    SetReadyVisible(true)
-end
 
 function UpdateVehicleName()
     local player = PlayerPedId()
@@ -3285,11 +3245,8 @@ AddEventHandler("races:clearLeaderboard", function()
 end)
 
 RegisterNetEvent("races:sendReadyData")
-AddEventHandler("races:sendReadyData", function(numberReady, isReady, source, playerName)
-
-    SetReadyRacersUI(numberReady)
+AddEventHandler("races:sendReadyData", function(isReady, source, playerName)
     SendReadyData({ source = source, playerName = playerName, ready = isReady})
-
 end)
 
 --Update Vehicle Name thread

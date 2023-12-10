@@ -1683,7 +1683,7 @@ AddEventHandler("races:readyState", function(raceIndex, ready, netID)
     races[raceIndex].numReady = numReady
     races[raceIndex].numRacing = numRacing
 
-    TriggerClientEvent("races:sendReadyData", -1, numReady, ready, source, GetPlayerName(source))
+    TriggerClientEvent("races:sendReadyData", -1, ready, source, GetPlayerName(source))
 end)
 
 RegisterNetEvent("races:start")
