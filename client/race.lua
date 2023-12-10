@@ -2701,13 +2701,14 @@ AddEventHandler("races:start", function(rIndex, delay)
 
             if rIndex == raceIndex then
                 if STATE_JOINING == raceState then
+
+                    UpdateVehicleName()
+                    SendVehicleName()
                     raceStart = currentTime
                     raceDelay = delay
                     beginDNFTimeout = false
                     timeoutStart = -1
                     started = false
-                    currentVehicleHash = nil
-                    currentVehicleName = "FEET"
                     position = -1
                     numWaypointsPassed = 0
                     currentLap = 1
@@ -3223,6 +3224,20 @@ function SendRacerNames(racerDictionary)
     })
 end
 
+function SendVehicleName()
+    TriggerServerEvent("races:sendvehiclename", currentVehicleName or 'N/A' )
+end
+
+RegisterNetEvent("races:sendvehiclename")
+AddEventHandler("races:sendvehiclename", function(source, vehicleName)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'update_vehicle_name',
+        vehicleName = vehicleName,
+        source = source,
+    })
+end)
+
 function SendReadyData(racer)
     SendNUIMessage({
         type = 'ready',
@@ -3243,6 +3258,16 @@ function InitialiseReady()
     SetReadyVisible(true)
 end
 
+function UpdateVehicleName()
+    local player = PlayerPedId()
+    if IsPedInAnyVehicle(player, false) == 1 then
+        local vehicle = GetVehiclePedIsIn(player, false)
+        currentVehicleHash = GetEntityModel(vehicle)
+        currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
+    else
+        currentVehicleName = "On Feet"
+    end
+end
 
 RegisterNetEvent("races:clearLeaderboard")
 AddEventHandler("races:clearLeaderboard", function()
@@ -3255,6 +3280,18 @@ AddEventHandler("races:sendReadyData", function(numberReady, isReady, source, pl
     SetReadyRacersUI(numberReady)
     SendReadyData({ source = source, playerName = playerName, ready = isReady})
 
+end)
+
+--Update Vehicle Name thread
+--TODO: See if you can listen to events when a player enters/exits a vehicle
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(1000)
+        if raceState == STATE_RACING or raceState == STATE_JOINING then
+            UpdateVehicleName()
+            SendVehicleName()
+        end
+    end
 end)
 
 Citizen.CreateThread(function()
@@ -3391,6 +3428,7 @@ Citizen.CreateThread(function()
             end
         elseif STATE_RACING == raceState then
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
+            local vehicle = GetVehiclePedIsIn(player, false)
             if elapsedTime < 0 then
                 drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
                 drawMsg(0.50, 0.50, ("%05.2f"):format(-elapsedTime / 1000.0), 0.7, 0)
@@ -3444,15 +3482,6 @@ Citizen.CreateThread(function()
                     FreezeEntityPosition(GetVehiclePedIsIn(player, false), true)
                 end
             else
-                local vehicle = nil
-                if IsPedInAnyVehicle(player, false) == 1 then
-                    vehicle = GetVehiclePedIsIn(player, false)
-                    FreezeEntityPosition(vehicle, false)
-                    currentVehicleHash = GetEntityModel(vehicle)
-                    currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
-                else
-                    currentVehicleName = "FEET"
-                end
 
                 if false == started then
                     started = true
@@ -3477,13 +3506,12 @@ Citizen.CreateThread(function()
                     respawnCtrlPressed = false
                 end
 
-                drawRect(leftSide - 0.01, topSide + 0.1, 0.15, 0.1, 0, 0, 0, 127)
-                local minutes, seconds = minutesSeconds(elapsedTime)
-                drawMsg(leftSide, topSide + 0.12, "Vehicle:", 0.5, 1)
-                drawMsg(rightSide, topSide + 0.12, currentVehicleName, 0.46, 1)
+                FreezeEntityPosition(vehicle, false)
+
+                drawRect(leftSide - 0.01, topSide + 0.145, 0.1, 0.1, 0, 0, 0, 127)
 
                 local lapTime = currentTime - lapTimeStart
-                minutes, seconds = minutesSeconds(lapTime)
+                local minutes, seconds = minutesSeconds(lapTime)
                 SendCurrentLapTime(minutes, seconds)
 
                 if(boost_active == true) then
@@ -3538,6 +3566,7 @@ Citizen.CreateThread(function()
                                 lapTimeStart = currentTime
                                 if -1 == bestLapTime or lapTime < bestLapTime then
                                     bestLapTime = lapTime
+                                    minutes, seconds = minutesSeconds(bestLapTime)
                                     SendBestLapTime(minutes, seconds)
                                     bestLapVehicleName = currentVehicleName
                                 end

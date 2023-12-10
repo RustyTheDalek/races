@@ -21,30 +21,29 @@
     right: 0;
 }
 
-#checkpoints {
-    height: 1.35rem;
-    width: 5rem;
+#checkpoints, #laps {
+    height: 2.5rem;
+    width: 10.5rem;
+    font-size: 2.25rem;
+    top: 2.5rem;
+}
 
-    font-size: 1.5rem;
+#checkpoints {
     display: flex;
     align-items: center;
     justify-content: center;
     padding-left: 0.5rem;
     position: absolute;
-    top: 2rem;
 }
 
 #laps {
-    height: 1.35rem;
-    width: 6rem;
-    font-size: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     padding-left: 0.5rem;
     position: absolute;
-    top: 2rem;
-    right: 5.8rem;
+
+    right: 11.3rem;
     clip-path: polygon(0 0, 95% 0%, 100% 100%, 5% 100%);
 }
 
@@ -54,8 +53,8 @@ ul#leaderboard li {
     align-items: center;
     grid-gap: .5rem;
     font-size: .8rem;
-    width: 18rem;
-    height: 2.5rem;
+    width: 22rem;
+    height: 3.5rem;
     white-space: nowrap;
 
     transition: 
@@ -65,10 +64,9 @@ ul#leaderboard li {
 }
 
 ul#leaderboard li.first-place{
-    font-size: 1.25vw;
     clip-path: polygon(0 0, 100% 0%, 100% 100%, 10% 100%);
-    width: 22rem;
-    height: 3.5rem;
+    width: 25rem;
+    height: 4rem;
 }
 
 #leaderboard_container li.first-place > span {
@@ -77,8 +75,27 @@ ul#leaderboard li.first-place{
 }
 
 ul#leaderboard li > span {
+    border-right: .1rem solid white;
     font-size: 2rem;
     padding-left: 1rem;
+    padding-right: 0.2rem;
+}
+
+/*Racer Detail */
+.racer_detail {
+    display: flex;
+    flex-direction: column;
+    grid-gap: .25rem;
+}
+
+.racer {
+    font-size: 1.25rem;
+    font-weight: bold;
+    border-bottom: .1rem solid white;
+}
+
+.vehicle {
+    font-size: .9rem;
 }
 
 /*Lap times */
@@ -94,7 +111,7 @@ ul#leaderboard li > span {
 
 .lap_times > .best, 
 .lap_times > .current {
-    font-size: 1.25rem;
+    font-size: 1rem;
 }
 
 .lap_times > .best::before {

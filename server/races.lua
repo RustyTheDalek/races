@@ -2167,6 +2167,12 @@ AddEventHandler("races:update_best_lap_time", function( minutes, seconds)
     TriggerClientEvent("races:update_best_lap_time", -1, source, minutes, seconds)
 end)
 
+RegisterNetEvent("races:sendvehiclename")
+AddEventHandler("races:sendvehiclename", function(currentVehicleName)
+    local source = source
+    TriggerClientEvent("races:sendvehiclename", -1, source, currentVehicleName)
+end)
+
 
 Citizen.CreateThread(function()
     while true do

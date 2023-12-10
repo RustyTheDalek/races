@@ -1,8 +1,8 @@
 let leaderboard_container = $("#leaderboard_container");
 let leaderboard = $("#leaderboard");
 
-
-let topOffset = 5;
+let topOffset = 6.5;
+let spacing = 4.5;
 
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
@@ -45,7 +45,15 @@ function readLeaderBoardEvents(event) {
       console.log(data);
       UpdateBestLapTime(data.source, data.minutes, data.seconds);
       break;
+    case "update_vehicle_name":
+      console.log(data);
+      UpdateVehicleName(data.source, data.vehicleName);
+      break;
   }
+}
+
+function UpdateVehicleName(source, vehicleName) {
+  leaderboard.find(`#${source}`).find('.racer_detail').find('.vehicle').text(vehicleName);
 }
 
 function UpdateCurrentLapTime(source, minutes, seconds) {
@@ -58,7 +66,7 @@ function UpdateBestLapTime(source, minutes, seconds) {
 
 function UpdateLapTimes(type, source, minutes, seconds) {
   let seconds_formatted = seconds.toFixed(2).toString().padStart(5, '0');
-  $(`#${source} .${type}`).html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
+  leaderboard.find(`#${source} .${type}`).html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
 }
 
 function UpdateCurrentCheckpoint(current_checkpoint) {
@@ -111,7 +119,7 @@ function AddRacerToleaderboard(racers) {
     let racers_in_leaderboard = leaderboard.children().length;
 
     //Decide on top offset based on position
-    let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * 3.2 : topOffset - 1;
+    let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * spacing : topOffset - 0.5;
     //Only add first-place class if it's first item to be added;
     let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
 
@@ -120,8 +128,27 @@ function AddRacerToleaderboard(racers) {
       value: racers_in_leaderboard + 1,
       class: `leaderboard_chunk ${first_place}`,
       style: `top:${top}rem`,
-      text: racer.playerName,
     });
+
+    let racer_detail = $("<div/>", {
+      class: 'racer_detail'
+    });
+
+    racer_element.append(racer_detail);
+    
+    let racer_name = $("<div/>", {
+      class: 'racer',
+      text: racer.playerName
+    });
+
+    racer_detail.append(racer_name);
+
+    let vehicle = $("<div/>", {
+      class: 'vehicle',
+      text: racer.vehicleName
+    });
+
+    racer_detail.append(vehicle);
 
     let racer_position = $("<span/>", { text: `${racers_in_leaderboard + 1}` });
 
@@ -172,7 +199,7 @@ function SortLeaderboard() {
 
   racers.sort(byPollPosition);
   racers.each(function (index) {
-    offset = index > 0 ? topOffset + index * 3.2 : topOffset - 1;
+    offset = index > 0 ? topOffset + index * spacing : topOffset - 0.5;
 
     if (index == 0) {
       $(this).addClass("first-place");
