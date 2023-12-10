@@ -1802,6 +1802,15 @@ function SendCurrentLapTime(minutes, seconds)
     })
 end
 
+function UpdateDNFTime(minutes, seconds)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "update_dnf_time",
+        minutes = minutes,
+        seconds = seconds
+    })
+end
+
 function SendBestLapTime(minutes, seconds)
     TriggerServerEvent("races:update_best_lap_time", minutes, seconds)
 end
@@ -3509,22 +3518,15 @@ Citizen.CreateThread(function()
 
                 FreezeEntityPosition(vehicle, false)
 
-                drawRect(leftSide - 0.01, topSide + 0.145, 0.1, 0.1, 0, 0, 0, 127)
-
                 local lapTime = currentTime - lapTimeStart
                 local minutes, seconds = minutesSeconds(lapTime)
                 SendCurrentLapTime(minutes, seconds)
-
-                if(boost_active == true) then
-                    drawMsg(leftSide, topSide + 0.15, "Boost Active", 0.3, 1)
-                end
 
                 if true == beginDNFTimeout then
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
                     if milliseconds > 0 then
                         minutes, seconds = minutesSeconds(milliseconds)
-                        drawMsg(leftSide, topSide + 0.17, "DNF time", 0.3, 1)
-                        drawMsg(rightSide, topSide + 0.17, ("%02d:%05.2f"):format(minutes, seconds), 0.3, 1)
+                        UpdateDNFTime(minutes, seconds)
                     else -- DNF
                         DeleteCheckpoint(raceCheckpoint)
                         finishRace(-1)

@@ -42,14 +42,25 @@ function readLeaderBoardEvents(event) {
       UpdateCurrentLapTime(data.source, data.minutes, data.seconds);
       break;
     case "updatebestlaptime":
-      console.log(data);
       UpdateBestLapTime(data.source, data.minutes, data.seconds);
       break;
     case "update_vehicle_name":
-      console.log(data);
       UpdateVehicleName(data.source, data.vehicleName);
       break;
+    case "update_dnf_time":
+      UpdateDNFTime(data.minutes, data.seconds);
+      break;
   }
+}
+
+function UpdateDNFTime(minutes, seconds) {
+  let dnf_containter = $('#dnf_timer_container');
+  dnf_containter.show();
+
+  let dnf_time = dnf_containter.find(`#dnf_timer`);
+
+  let seconds_formatted = seconds.toFixed(2).toString().padStart(5, '0');
+  dnf_time.html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
 }
 
 function UpdateVehicleName(source, vehicleName) {
@@ -93,6 +104,8 @@ function ClearLeaderboard() {
   $('#total_laps').html(0);
   leaderboard_container.hide();
   leaderboard.empty();
+  $('#dnf_timer_container').hide();
+  $('#dnf_timer_container').find('#dnf_timer').html('00:00.00');
 }
 
 function UpdatePositions(racePositions) {
