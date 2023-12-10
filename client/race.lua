@@ -3246,6 +3246,10 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
+        -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
+        -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
+        -- drawMsg(0.50, 0.54, "seconds", 0.7, 0)
+
         if true == ghosting then
             local ghostingDifference = currentTime - ghostingTime
             local deltaTime = GetFrameTime()
