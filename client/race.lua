@@ -153,7 +153,7 @@ local randVehicles = {}                   -- list of random vehicles used in ran
 
 local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
 local respawnTime = -1                    -- time when respawn control pressed
-local respawnTimer = 1500
+local respawnTimer = 500
 local startCoord = nil                    -- coordinates of vehicle once race has started
 
 local results = {}                        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
@@ -3163,6 +3163,7 @@ function ClearLeaderboard()
         action = 'clear_leaderboard'
     })
 end
+
 function ToggleLeaderboardVisible()
     SendNUIMessage({
         type = 'leaderboard',
