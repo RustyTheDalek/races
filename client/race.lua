@@ -2797,7 +2797,7 @@ AddEventHandler("races:joinnotification", function(playerName, racerDictionary, 
     local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
     starts[rIndex].checkpoint = checkpoint
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
-    AddRacersToLeaderboard(racerDictionary)
+    AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
     SendRacerNames(racerDictionary)
     SetReadyUI(numReady, numRacing)
 end)
@@ -3246,11 +3246,12 @@ function SendReadyData(racer)
     })
 end
 
-function AddRacersToLeaderboard(racerDictionary)
+function AddRacersToLeaderboard(racerDictionary, source)
     SendNUIMessage({
         type = 'leaderboard',
         action = 'add_racers',
         racers = racerDictionary,
+        source = source
     })
 end
 

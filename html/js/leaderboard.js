@@ -15,7 +15,7 @@ function readLeaderBoardEvents(event) {
 
   switch (data.action) {
     case "add_racers":
-      AddRacerToleaderboard(data.racers);
+      AddRacerToleaderboard(data.racers, data.source);
       break;
     case "remove_racer":
       RemovePlayerFromleaderboard(data.source);
@@ -111,7 +111,7 @@ function SetRaceLeaderboard(enabled) {
   }
 }
 
-function AddRacerToleaderboard(racers) {
+function AddRacerToleaderboard(racers, source) {
 
   racers.forEach((racer) => {
     let racer_exists = leaderboard.find(`#${racer.source}`).length > 0;
@@ -124,11 +124,12 @@ function AddRacerToleaderboard(racers) {
     let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * spacing : topOffset - 0.5;
     //Only add first-place class if it's first item to be added;
     let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
+    let current_racer = source === racer.source  ? "current_racer" : "";
 
     let racer_element = $("<li/>", {
       id: racer.source,
       value: racers_in_leaderboard + 1,
-      class: `leaderboard_chunk ${first_place}`,
+      class: `leaderboard_chunk ${first_place} ${current_racer}`,
       style: `top:${top}rem`,
     });
 

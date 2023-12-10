@@ -81,6 +81,11 @@ ul#leaderboard li > span {
     padding-right: 0.2rem;
 }
 
+.current_racer {
+    border: .3rem solid  #01bd01;
+    border-left: none;
+}
+
 /*Racer Detail */
 .racer_detail {
     display: flex;
