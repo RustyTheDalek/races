@@ -95,10 +95,6 @@ local defaultRadius <const> = 8.0         -- default waypoint radius
 local minRadius <const> = 0.5             -- minimum waypoint radius
 local maxRadius <const> = 20.0            -- maximum waypoint radius
 
-local topSide <const> = 0.45              -- top position of HUD
-local leftSide <const> = 0.02             -- left position of HUD
-local rightSide <const> = leftSide + 0.055 -- right position of HUD
-
 local maxNumVisible <const> = 3           -- maximum number of waypoints visible during a race
 local numVisible = maxNumVisible          -- number of waypoints visible during a race - may be less than maxNumVisible
 
@@ -165,9 +161,6 @@ local results = {}                        -- results[] = {source, playerName, fi
 local started = false                     -- flag indicating if race started
 
 local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
-
-local speedo = false                      -- flag indicating if speedometer is displayed
-local unitom = "imperial"                 -- current unit of measurement
 
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
 local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
@@ -644,7 +637,6 @@ local function finishRace(time)
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-    speedo = false
     if originalVehicleHash ~= nil then
         local vehicle = switchVehicle(PlayerPedId(), originalVehicleHash)
         if vehicle ~= nil then
@@ -1687,27 +1679,6 @@ local function lvehicles(vclass)
     end
 end
 
-local function setSpeedo(unit)
-    if unit ~= nil then
-        if "imperial" == unit then
-            unitom = "imperial"
-            sendMessage("Unit of measurement changed to Imperial.\n")
-        elseif "metric" == unit then
-            unitom = "metric"
-            sendMessage("Unit of measurement changed to Metric.\n")
-        else
-            sendMessage("Invalid unit of measurement.\n")
-        end
-    else
-        speedo = not speedo
-        if true == speedo then
-            sendMessage("Speedometer enabled.\n")
-        else
-            sendMessage("Speedometer disabled.\n")
-        end
-    end
-end
-
 local function showPanel(panel)
     panelShown = true
     if nil == panel then
@@ -2696,7 +2667,6 @@ AddEventHandler("races:unregister", function(rIndex)
                 restoreBlips()
                 SetBlipRoute(waypoints[1].blip, true)
                 SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-                speedo = false
                 removeRacerBlipGT()
                 RenderScriptCams(false, false, 0, true, true)
                 local player = PlayerPedId()
@@ -2743,7 +2713,6 @@ AddEventHandler("races:start", function(rIndex, delay)
                     drawLights = false
                     numRacers = -1
                     results = {}
-                    speedo = false
                     startCoord = GetEntityCoords(PlayerPedId())
                     camTransStarted = false
 
@@ -3755,17 +3724,6 @@ Citizen.CreateThread(function()
         -- else
         --     enteringVehicle = false
         -- end
-
-        if true == speedo then
-            local speed = GetEntitySpeed(player)
-            if "metric" == unitom then
-                drawMsg(leftSide, topSide + 0.25, "Speed(kph)", 0.7, 1)
-                drawMsg(rightSide, topSide + 0.25, ("%05.2f"):format(speed * 3.6), 0.7, 1)
-            else
-                drawMsg(leftSide, topSide + 0.25, "Speed(mph)", 0.7, 1)
-                drawMsg(rightSide, topSide + 0.25, ("%05.2f"):format(speed * 2.2369363), 0.7, 1)
-            end
-        end
 
         if true == panelShown then
             DisableControlAction(0, 142, true)
