@@ -436,7 +436,7 @@ $(function () {
         $.post("https://races/register", JSON.stringify({
             tier: $("#tier").find(":selected").val(),
             specialClass: $("#specialClass").find(":selected").val(),
-            laps: $("#laps").val(),
+            laps: $('#registerPanel').find("#laps").val(),
             timeout: $("#timeout").val(),
             rtype: $("#rtype").val(),
             restrict: $("#register_rest_vehicle").val(),
