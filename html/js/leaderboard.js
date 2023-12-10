@@ -191,6 +191,11 @@ function AddRacerToleaderboard(racers, source) {
 
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
+
+    setTimeout(() => {
+      console.log(racer_element);
+      racer_element.addClass('right-visible');
+    }, 250)
   });
 }
 
