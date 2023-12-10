@@ -62,6 +62,7 @@ $(function () {
     function ClearReady() {
         $(`#leaderboard_container`).find('.leaderboard_chunk').removeClass("not-ready");
         $(`#leaderboard_container`).find('.leaderboard_chunk').removeClass("ready");
+        SetReadyText(false);
     }
 
 
@@ -73,6 +74,18 @@ $(function () {
             case 'clear_ready':
                 ClearReady();
                 break;
+            case 'set_ready_text':
+                SetReadyText(data.value);
+                break;
+        }
+    }
+
+    function SetReadyText(value) {
+        let ready_message = $('#ready-message');
+        if(value === true) {
+            ready_message.addClass('bottom-visible');
+        } else{
+            ready_message.removeClass('bottom-visible');
         }
     }
 

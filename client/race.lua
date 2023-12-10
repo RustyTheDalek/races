@@ -1826,6 +1826,14 @@ AddEventHandler("races:update_best_lap_time", function(source, minutes, seconds)
     })
 end)
 
+function SetReadyText(value)
+    SendNUIMessage({
+        type = "ready",
+        action = "set_ready_text",
+        value = value
+    })
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2837,6 +2845,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
             if STATE_IDLE == raceState then
                 SendToRaceTier(tier, specialClass)
                 raceState = STATE_JOINING
+                SetReadyText(true)
                 raceIndex = rIndex
                 numLaps = starts[rIndex].laps
                 DNFTimeout = starts[rIndex].timeout * 1000
@@ -3181,19 +3190,7 @@ function HandleJoinState()
     if IsControlJustReleased(0,  173) then
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
-        -- run code here
     end
-
-    local msg = ''
-    if(ready) then
-        msg ="READY"
-    else
-        msg = "NOT-READY"
-    end
-
-    msg = msg .. ": press Down Arrow or D-PAD Down to toggle ready"
-
-    drawMsg(0.50, 0.50, msg, 0.7, 0)
 end
 
 function SendVehicleName()
