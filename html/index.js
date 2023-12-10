@@ -77,6 +77,19 @@ $(function () {
             case 'set_ready_text':
                 SetReadyText(data.value);
                 break;
+            case 'set_join_text':
+                SetJoinMessage(data.value);
+                break;
+        }
+    }
+
+    function SetJoinMessage(value) {
+        let join_message = $('#join-message');
+        if(value !== '') {
+            join_message.text(value)
+            join_message.addClass('bottom-visible');
+        } else{
+            join_message.removeClass('bottom-visible');
         }
     }
 

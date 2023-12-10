@@ -1834,6 +1834,14 @@ function SetReadyText(value)
     })
 end
 
+function SetJoinMessage(message)
+    SendNUIMessage({
+        type = "ready",
+        action = "set_join_text",
+        value = message
+    })
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2843,6 +2851,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
             if STATE_IDLE == raceState then
+                SetJoinMessage('')
                 SendToRaceTier(tier, specialClass)
                 raceState = STATE_JOINING
                 SetReadyText(true)
@@ -3618,8 +3627,7 @@ Citizen.CreateThread(function()
                     " saved track '" .. starts[closestIndex].trackName .. "' "
                 end
                 msg = msg .. "registered by " .. starts[closestIndex].owner
-                drawMsg(0.50, 0.50, msg, 0.7, 0)
-                msg = ("tier %s : Special Class %s : %d lap(s)"):format(starts[closestIndex].tier, starts[closestIndex].specialClass, starts[closestIndex].laps)
+                msg = msg .. (" tier %s : Special Class %s : %d lap(s)"):format(starts[closestIndex].tier, starts[closestIndex].specialClass, starts[closestIndex].laps)
                 if "rest" == starts[closestIndex].rtype then
                     msg = msg .. " : using '" .. starts[closestIndex].restrict .. "' vehicle"
                 elseif "class" == starts[closestIndex].rtype then
@@ -3635,7 +3643,7 @@ Citizen.CreateThread(function()
                         msg = msg .. " : '" .. starts[closestIndex].svehicle .. "'"
                     end
                 end
-                drawMsg(0.50, 0.54, msg, 0.7, 0)
+                SetJoinMessage(msg)
                 if IsControlJustReleased(0, 51) == 1 then -- E key or DPAD RIGHT
                     local joinRace = true
                     originalVehicleHash = nil
@@ -3723,6 +3731,8 @@ Citizen.CreateThread(function()
                         TriggerServerEvent("races:join", closestIndex, PedToNet(player), nil)
                     end
                 end
+            else
+                SetJoinMessage('')
             end
         end
 

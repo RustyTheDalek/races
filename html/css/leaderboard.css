@@ -129,7 +129,7 @@ ul#leaderboard li > span {
     content: "Current: ";
 }
 
-.ready-message{
+.ui-message{
     position: absolute;
     text-align:center;
     bottom: -8rem;
