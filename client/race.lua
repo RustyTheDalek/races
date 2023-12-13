@@ -3012,10 +3012,6 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
-        if IsControlPressed(0, 22) == 1 then
-            PlaySoundFrontend(-1, "5_Second_Timer", "DLC_HEISTS_GENERAL_FRONTEND_SOUNDS", false)
-        end
-
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
         -- drawMsg(0.50, 0.54, "seconds", 0.7, 0)
