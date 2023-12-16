@@ -4,6 +4,9 @@ let leaderboard = $("#leaderboard");
 let topOffset = 6.5;
 let spacing = 4.5;
 
+let vMenuActive = false;
+let laps_visible = false;
+
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
 });
@@ -50,19 +53,25 @@ function readLeaderBoardEvents(event) {
     case "update_dnf_time":
       UpdateDNFTime(data.minutes, data.seconds);
       break;
-    case "toggle_leaderboard":
-      ToggleLeaderboard();
+    case "toggle_vmenu_on":
+      console.log(data);
+      ToggleVMenuOn(data.race_state);
       break;
   }
 }
 
-let leaderboardVisible = true;
+function ToggleVMenuOn(raceState) {
 
-function ToggleLeaderboard() {
+  vMenuActive = !vMenuActive;
 
-  leaderboardVisible = !leaderboardVisible;
+  console.log(vMenuActive);
 
-  SetRaceLeaderboard(leaderboardVisible);
+  //2 & 3 represent the Race states: Joining & Racing
+  //TODO: Make more human readable by using enum
+  if (raceState === 2 || raceState === 3) {
+    console.log("Racing or Joining");
+    SetRaceLeaderboard(!vMenuActive);
+  }
 
 }
 
@@ -106,13 +115,14 @@ function UpdateCurrentLap(current_lap) {
 function SetRaceData(current_lap, total_laps, total_checkpoints) {
   UpdateCurrentLap(current_lap);
   if (total_laps > 1) {
-    leaderboard_container.find('#laps').addClass('right-visible');
+    laps_visible = true;
     $('#total_laps').html(total_laps);
   }
   $('#total_checkpoints').html(total_checkpoints);
 }
 
 function ClearLeaderboard() {
+  laps_visible = false;
   leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
   $('#current_laps').html(0);
   $('#total_laps').html(0);
@@ -130,9 +140,12 @@ function UpdatePositions(racePositions) {
 }
 
 function SetRaceLeaderboard(enabled) {
-  if (enabled) {
+  if (enabled && !vMenuActive) {
     leaderboard_container.find('#leaderboard').find('.leaderboard_chunk').addClass('right-visible');
     leaderboard_container.find('#checkpoints').addClass('right-visible');
+    if (laps_visible) {
+      leaderboard_container.find('#laps').addClass('right-visible');
+    }
   } else {
     leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
   }
@@ -151,7 +164,7 @@ function AddRacerToleaderboard(racers, source) {
     let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * spacing : topOffset - 0.5;
     //Only add first-place class if it's first item to be added;
     let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
-    let current_racer = source === racer.source  ? "current_racer" : "";
+    let current_racer = source === racer.source ? "current_racer" : "";
 
     let racer_element = $("<li/>", {
       id: racer.source,
@@ -165,7 +178,7 @@ function AddRacerToleaderboard(racers, source) {
     });
 
     racer_element.append(racer_detail);
-    
+
     let racer_name = $("<div/>", {
       class: 'racer',
       text: racer.playerName
@@ -205,10 +218,12 @@ function AddRacerToleaderboard(racers, source) {
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
 
-    setTimeout(() => {
-      console.log(racer_element);
-      racer_element.addClass('right-visible');
-    }, 250)
+    if (!vMenuActive) {
+      setTimeout(() => {
+        console.log(racer_element);
+        racer_element.addClass('right-visible');
+      }, 250)
+    }
   });
 }
 
@@ -250,7 +265,7 @@ function SortLeaderboard() {
   });
 }
 
-function zeroPad(nr,base){
-  var  len = (String(base).length - String(nr).length)+1;
-  return len > 0? new Array(len).join('0')+nr : nr;
+function zeroPad(nr, base) {
+  var len = (String(base).length - String(nr).length) + 1;
+  return len > 0 ? new Array(len).join('0') + nr : nr;
 }

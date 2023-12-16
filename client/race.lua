@@ -146,6 +146,8 @@ local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
 local ready = false
 
+local vMenuOn = false
+
 exports.spawnmanager:setAutoSpawnCallback(function()
     if STATE_RACING == raceState then
         print("In race, spawning at race")
@@ -2587,7 +2589,9 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     totalCheckpoints = startIsFinish == true and #waypoints or #waypoints - 1
                 }
                 SendRaceData(raceData)
-                SetRaceLeaderboard(true)
+                if not vMenuOn then
+                    SetRaceLeaderboard(true)
+                end
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -2912,10 +2916,11 @@ function ClearLeaderboard()
     })
 end
 
-function ToggleLeaderboardVisible()
+function ToggleVMenuOn()
     SendNUIMessage({
         type = 'leaderboard',
-        action = 'toggle_leaderboard'
+        action = 'toggle_vmenu_on',
+        race_state = raceState
     })
 end
 
@@ -2925,15 +2930,14 @@ function HandleJoinState()
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
     end
-
-    CheckVMenu()
 end
 
 function CheckVMenu()
     --M Key / Back
     if IsControlJustReleased(0, 301) or IsControlJustReleased(0, 212) then
         print("M button pressed")
-        ToggleLeaderboardVisible()
+        vMenuOn = not vMenuOn
+        ToggleVMenuOn()
     end
 end
 
@@ -3011,6 +3015,8 @@ Citizen.CreateThread(function()
         local heading = GetEntityHeading(player)
 
         local currentTime = GetGameTimer()
+
+        CheckVMenu()
 
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
@@ -3146,7 +3152,6 @@ Citizen.CreateThread(function()
                 end
             end
         elseif STATE_RACING == raceState then
-            CheckVMenu()
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
             local vehicle = GetVehiclePedIsIn(player, false)
             if elapsedTime < 0 then
