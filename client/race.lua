@@ -148,6 +148,8 @@ local ready = false
 
 local vMenuOn = false
 
+local wantedMode = false
+
 exports.spawnmanager:setAutoSpawnCallback(function()
     if STATE_RACING == raceState then
         print("In race, spawning at race")
@@ -602,6 +604,11 @@ local function vehicleInList(vehicle, list)
 end
 
 local function finishRace(time)
+    if wantedMode == true then
+        SetMaxWantedLevel(0)
+        SetPlayerWantedLevel(PlayerId(), 0, false)
+        SetPlayerWantedLevelNow(PlayerId(), false)
+    end
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
     ResetReady(PedToNet(PlayerPedId()))
@@ -1087,7 +1094,6 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
 
     tier = (nil == tier or "." == tier) and defaultTier or string.lower(tier)
     specialClass = (nil == specialClass or "." == specialClass) and defaultSpecialClass or specialClass
-    
 
     laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
     if laps ~= nil and laps > 0 then
@@ -1160,11 +1166,13 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                                     return
                                 end
                             end
+                        elseif "wanted" == rtype then
+                            print("wanted race type")
                         elseif rtype ~= nil then
                             sendMessage("Cannot register.  Unknown race type.\n")
                             return
                         end
-                        local rdata = { 
+                        local rdata = {
                             rtype = rtype,
                             restrict = restrict,
                             vclass = vclass,
@@ -1864,6 +1872,8 @@ RegisterNUICallback("register", function(data)
         register(tier, specialClass, laps, timeout, rtype, vclass, nil)
     elseif "rand" == rtype then
         register(tier, specialClass, laps, timeout, rtype, vclass, svehicle)
+    elseif "wanted" == rtype then
+        register(tier, specialClass, laps, timeout, rtype, nil, nil)
     end
 end)
 
@@ -2358,6 +2368,8 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             if rdata.svehicle ~= nil then
                 msg = msg .. " : '" .. rdata.svehicle .. "'"
             end
+        elseif "wanted" == rdata.rtype then
+            msg = msg .. " : wanted race mode"
         end
         msg = msg .. ")"
         AddTextComponentSubstringPlayerName(msg)
@@ -2612,6 +2624,9 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                         msg = msg .. " : '" .. startVehicle .. "'"
                     end
                     randVehicles = starts[rIndex].vehicleList
+                elseif "wanted" == starts[rIndex].rtype then
+                    msg = msg .. " : using wanted race mode"
+                    wantedMode = true
                 end
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
@@ -2837,6 +2852,7 @@ end)
 
 local boost_active = false
 
+--Race extras
 Citizen.CreateThread(function()
     while true do
         if STATE_RACING ~= true then
@@ -2972,6 +2988,21 @@ function UpdateVehicleName()
         currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
     else
         currentVehicleName = "On Feet"
+    end
+end
+
+function HandleWanted()
+    if wantedMode == true then
+        local player = PlayerId()
+
+        local wantedLevel = math.max(6-position, 0)
+        wantedLevel = math.min(wantedLevel, 5)
+        local currentWantedLevel =  GetPlayerWantedLevel(player)
+        if currentWantedLevel ~= wantedLevel then
+            SetMaxWantedLevel(wantedLevel)
+            SetPlayerWantedLevel(player, wantedLevel, false)
+            SetPlayerWantedLevelNow(player, false)
+        end
     end
 end
 
@@ -3228,6 +3259,8 @@ Citizen.CreateThread(function()
                 local minutes, seconds = minutesSeconds(lapTime)
                 SendCurrentLapTime(minutes, seconds)
 
+                HandleWanted()
+
                 if true == beginDNFTimeout then
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
                     if milliseconds > 0 then
@@ -3385,6 +3418,8 @@ Citizen.CreateThread(function()
                     if starts[closestIndex].svehicle ~= nil then
                         msg = msg .. " : '" .. starts[closestIndex].svehicle .. "'"
                     end
+                elseif "wanted" == starts[closestIndex].rtype then
+                    msg = msg .. " : using wanted race mode"
                 end
                 SetJoinMessage(msg)
                 if IsControlJustReleased(0, 51) == 1 then -- E key or DPAD RIGHT

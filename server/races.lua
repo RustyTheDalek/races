@@ -786,6 +786,8 @@ local function saveResults(race)
         if race.svehicle ~= nil then
             msg = msg .. " : '" .. race.svehicle .. "'"
         end
+    elseif "wanted" == race.rtype then
+        msg = msg .. " : using wanted race mode"
     end
     msg = msg .. "\n"
     if #race.results > 0 then
@@ -1526,6 +1528,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                         if rdata.svehicle ~= nil then
                             umsg = umsg .. " : '" .. rdata.svehicle .. "'"
                         end
+                    elseif "wanted" == rdata.rtype then
+                        umsg = " : wanted race mode "
                     elseif rdata.rtype ~= nil then
                         sendMessage(source, "Cannot register.  Unknown race type.\n")
                         return
