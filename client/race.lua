@@ -1768,14 +1768,6 @@ AddEventHandler("races:update_best_lap_time", function(source, minutes, seconds)
     })
 end)
 
-function SetReadyText(value)
-    SendNUIMessage({
-        type = "ready",
-        action = "set_ready_text",
-        value = value
-    })
-end
-
 function SetJoinMessage(message)
     SendNUIMessage({
         type = "ready",
@@ -2573,7 +2565,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 SetJoinMessage('')
                 SendToRaceTier(tier, specialClass)
                 raceState = STATE_JOINING
-                SetReadyText(true)
                 raceIndex = rIndex
                 numLaps = starts[rIndex].laps
                 DNFTimeout = starts[rIndex].timeout * 1000
