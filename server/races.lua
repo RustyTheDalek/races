@@ -64,6 +64,8 @@ local ROLE_SPAWN <const> = 4        -- spawn vehicles role
 local gridLineup = {}
 UseRaceResults = false
 
+local defaultDelay <const> = 5 
+
 local requirePermissionToEdit <const> = false     -- flag indicating if permission is required to edit tracks
 local requirePermissionToRegister <const> = false -- flag indicating if permission is required to register races
 local requirePermissionToSpawn <const> = false    -- flag indicating if permission is required to spawn vehicles
@@ -97,6 +99,7 @@ local defaultRadius <const> = 5.0                       -- default waypoint radi
 
 local requests = {}                                     -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
+local READY_RACERS_COUNTDOWN = 5000
 local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
 local dist <const> = { 60, 20, 10, 5, 3, 2 }            -- prize distribution
@@ -971,6 +974,31 @@ local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
     --print("finished placing playes")
 end
 
+local function StartRaceCountdown(raceIndex)
+    races[raceIndex].countdown = true
+    races[raceIndex].countdownTimeStart = GetGameTimer()
+end
+
+local function StopRaceCountdown(raceIndex)
+    races[raceIndex].countdown = false
+    races[raceIndex].countdownTimeStart = 0
+end
+
+local function CheckReady(race, raceIndex)
+    if race.numReady == race.numRacing and race.countdown == false then
+        StartRaceCountdown(raceIndex)
+    else
+        StopRaceCountdown(raceIndex)
+    end
+end
+
+local function ProcessReadyCountdown(raceIndex)
+    if GetGameTimer() - races[raceIndex].countdownTimeStart > READY_RACERS_COUNTDOWN then
+        --START races
+        StartRace(races[raceIndex], raceIndex, defaultDelay)
+    end
+end
+
 AddEventHandler("respawnPlayerPedEvent", function(player, content)
     TriggerClientEvent('races:respawn', player)
 end)
@@ -1566,6 +1594,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                         vehicleList = rdata.vehicleList,
                         numRacing = 0,
                         numReady = 0,
+                        countdown = false,
+                        countdownTimeStart = 0,
                         players = {},
                         results = {},
                         gridPositions = {}
@@ -1690,6 +1720,17 @@ AddEventHandler("races:readyState", function(raceIndex, ready, netID)
     TriggerClientEvent("races:sendReadyData", -1, ready, source, GetPlayerName(source))
 end)
 
+function StartRace(race, source, delay)
+    race.countdown = false
+    race.countdownTimeStart = 0
+    race.state = STATE_RACING
+    for _, player in pairs(race.players) do
+        TriggerClientEvent("races:start", player.source, source, delay)
+    end
+    TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
+    sendMessage(source, "Race started.\n")
+end
+
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay, override)
     local source = source
@@ -1708,16 +1749,7 @@ AddEventHandler("races:start", function(delay, override)
                             return
                         end
 
-                        races[source].state = STATE_RACING
-                        local sourceJoined = false
-                        for _, player in pairs(races[source].players) do
-                            TriggerClientEvent("races:start", player.source, source, delay)
-                            if player.source == source then
-                                sourceJoined = true
-                            end
-                        end
-                        TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
-                        sendMessage(source, "Race started.\n")
+                        StartRace(races[source], source, delay)
                     else
                         sendMessage(source, "Cannot start.  No players have joined race.\n")
                     end
@@ -2181,8 +2213,15 @@ end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)
+
         for rIndex, race in pairs(races) do
-            if STATE_RACING == race.state then
+            if STATE_REGISTERING == race.state then
+                if race.countdown == false and race.numRacing > 0 then
+                    CheckReady(race, rIndex)
+                elseif race.countdown == true then
+                    ProcessReadyCountdown(rIndex)
+                end
+            elseif STATE_RACING == race.state then
                 local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
                 local complete = true
 
