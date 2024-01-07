@@ -60,7 +60,7 @@ ul#leaderboard li {
     align-items: center;
     grid-gap: .5rem;
     font-size: .8rem;
-    width: 22rem;
+    width: 23rem;
     height: 3.5rem;
     white-space: nowrap;
 
@@ -74,7 +74,7 @@ ul#leaderboard li {
 
 ul#leaderboard li.first-place{
     clip-path: polygon(0 0, 100% 0%, 100% 100%, 10% 100%);
-    width: 25rem;
+    width: 26rem;
     height: 4rem;
 }
 
