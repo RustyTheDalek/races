@@ -475,6 +475,10 @@ $(function () {
         $.post("https://races/unregister");
     });
 
+    $("#auto-join").click(function () {
+        $.post("https://races/autojoin");
+    });
+
     $("#start").click(function () {
         $.post("https://races/start", JSON.stringify({
             delay: $("#delay").val()

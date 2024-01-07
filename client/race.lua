@@ -1830,6 +1830,10 @@ RegisterNUICallback("list", function(data)
     listTracks(data.access)
 end)
 
+RegisterNUICallback("autojoin", function(data)
+    autojoin()
+end)
+
 RegisterNUICallback("register", function(data)
 
     local tier = data.tier
