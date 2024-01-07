@@ -3210,6 +3210,8 @@ Citizen.CreateThread(function()
                         RenderScriptCams(false, true, 1000, true, true)
 
                         SetGameplayCamRelativeRotation(GetEntityRotation(entity))
+
+                        DestroyAllCams(true)
                     end)
                 end
 
