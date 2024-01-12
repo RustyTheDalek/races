@@ -1631,6 +1631,18 @@ AddEventHandler("races:unregister", function()
     end
 end)
 
+RegisterNetEvent("races:endrace")
+AddEventHandler("races:endrace", function()
+    local source = source
+    if races[source] ~= nil then
+        races[source] = nil
+        TriggerClientEvent("races:leave", -1)
+        sendMessage(source, "Race Ended.\n")
+    else
+        sendMessage(source, "Cannot End race.  You have no active race.\n")
+    end
+end)
+
 RegisterNetEvent("races:grid")
 AddEventHandler("races:grid", function()
     local source = source

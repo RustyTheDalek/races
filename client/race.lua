@@ -1491,6 +1491,10 @@ local function leave()
     end
 end
 
+local function endrace()
+    TriggerServerEvent("races:endrace")
+end
+
 local function rivals()
     if STATE_JOINING == raceState or STATE_RACING == raceState then
         TriggerServerEvent("races:rivals", raceIndex)
@@ -2176,6 +2180,8 @@ RegisterCommand("races", function(_, args)
         end
     elseif "leave" == args[1] then
         leave()
+    elseif "end" == args[1] then
+        endrace()
     elseif "rivals" == args[1] then
         rivals()
     elseif "respawn" == args[1] then
@@ -2554,6 +2560,11 @@ end)
 RegisterNetEvent("races:onplayerleave")
 AddEventHandler("races:onplayerleave", function()
     ClearReady()
+end)
+
+RegisterNetEvent("races:leave")
+AddEventHandler("races:leave", function()
+    leave()
 end)
 
 RegisterNetEvent("races:leavenotification")
