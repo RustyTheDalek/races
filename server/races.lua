@@ -763,6 +763,18 @@ local function minutesSeconds(milliseconds)
     return minutes, seconds
 end
 
+local function save_result_csv(trackName, results)
+    local date = os.date("%d_%m", os.time())
+    local resultsFilePath = ("./resources/races/results/%s_%s_results.csv"):format(trackName, date)
+    local file, errMsg, errCode = io.open(resultsFilePath, "w+")
+    if file ~= fail then
+        file:write(results)
+        file:close()
+    else
+        print("Error opening file '" .. resultsFilePath .. "' for write : '" .. errMsg .. "' : " .. errCode)
+    end
+end
+
 local function saveResults(race)
     -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
     local msg = "Race using "
@@ -790,28 +802,41 @@ local function saveResults(race)
         msg = msg .. " : using wanted race mode"
     end
     msg = msg .. "\n"
+
+    local race_results_data = ""
+
     if #race.results > 0 then
         -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
         msg = msg .. "Results:\n"
         for pos, result in ipairs(race.results) do
+
+            local best_minutes = 99
+            local best_seconds = 99
+
             if -1 == result.finishTime then
                 msg = msg .. "DNF - " .. result.playerName
-                if result.bestLapTime >= 0 then
-                    local minutes, seconds = minutesSeconds(result.bestLapTime)
-                    msg = msg .. (" - best lap %02d:%05.2f using %s"):format(minutes, seconds, result.vehicleName)
-                end
-                msg = msg .. "\n"
             else
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
-                local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
-                msg = msg ..
-                    ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                        result.playerName, lMinutes, lSeconds, result.vehicleName)
+                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
+                msg = msg .. ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds, result.playerName, best_minutes, best_seconds, result.vehicleName)
             end
+
+            if result.bestLapTime >= 0 then
+                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
+                msg = msg .. (" - best lap %02d:%05.2f using %s"):format(best_minutes, best_seconds, result.vehicleName)
+            end
+            msg = msg .. "\n"
+
+            local race_results_line = ("%d,%s,%02d:%05.2f,\n"):format(pos, result.playerName, best_minutes, best_seconds)
+            race_results_data = race_results_data .. race_results_line
+
         end
     else
         msg = msg .. "No results.\n"
     end
+
+    save_result_csv(race.trackName, race_results_data)
+
     local resultsFilePath = "./resources/races/results_" .. race.owner .. ".txt"
     local file, errMsg, errCode = io.open(resultsFilePath, "w+")
     if file ~= fail then
