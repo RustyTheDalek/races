@@ -1635,7 +1635,6 @@ RegisterNetEvent("races:endrace")
 AddEventHandler("races:endrace", function()
     local source = source
     if races[source] ~= nil then
-        races[source] = nil
         TriggerClientEvent("races:leave", -1)
         sendMessage(source, "Race Ended.\n")
     else
