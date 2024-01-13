@@ -1838,6 +1838,10 @@ RegisterNUICallback("autojoin", function(data)
     autojoin()
 end)
 
+RegisterNUICallback("gridracers", function(data)
+    setupGrid()
+end)
+
 RegisterNUICallback("register", function(data)
 
     local tier = data.tier

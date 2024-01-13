@@ -479,6 +479,10 @@ $(function () {
         $.post("https://races/autojoin");
     });
 
+    $("#grid-racers").click(function () {
+        $.post("https://races/gridracers");
+    });
+
     $("#start").click(function () {
         $.post("https://races/start", JSON.stringify({
             delay: $("#delay").val()
