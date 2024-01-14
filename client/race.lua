@@ -600,6 +600,7 @@ local function vehicleInList(vehicle, list)
 end
 
 local function finishRace(time)
+    PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
     if wantedMode == true then
         SetMaxWantedLevel(0)
         SetPlayerWantedLevel(PlayerId(), 0, false)
@@ -3076,6 +3077,11 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
+        if(IsControlJustPressed(0, 18)) then
+            print("here")
+            PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
+        end
+
         CheckVMenu()
 
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
@@ -3111,13 +3117,13 @@ Citizen.CreateThread(function()
             local ghostingRemaining = ghostingMaxTime - ghostingDifference
             --1000 = every second 
             if ghostingRemaining <= 5000 and ghostingRemaining >= 1000 and math.fmod(ghostingRemaining, 1000) <= 5 then
-                PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+                PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
             end
 
             SetGhostedEntityAlpha(ghostingInterval * 254)
             if ghostingDifference > ghostingMaxTime then
                 SetGhosting(false)
-                PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
+                PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
             end
         else
             SetGhosting(false)
@@ -3343,11 +3349,11 @@ Citizen.CreateThread(function()
 
                             resetupgrades(vehicle)
                             DeleteCheckpoint(raceCheckpoint)
-                            PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
 
                             numWaypointsPassed = numWaypointsPassed + 1
 
                             if currentWaypoint < #waypoints then
+                                PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
                                 currentWaypoint = currentWaypoint + 1
                             else
                                 currentWaypoint = 1
@@ -3360,6 +3366,11 @@ Citizen.CreateThread(function()
                                 end
                                 if currentLap < numLaps then
                                     currentLap = currentLap + 1
+                                    PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
+                                    --Last lap gets a unique sound to signify it's end
+                                    if(currentLap == numLaps) then
+                                        PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
+                                    end
                                     UpdateCurrentLap()
                                     if #randVehicles > 0 then
                                         local randIndex = math.random(#randVehicles)
