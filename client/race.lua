@@ -602,6 +602,7 @@ end
 local function finishRace(time)
     PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
     if wantedMode == true then
+        wantedMode = false
         SetMaxWantedLevel(0)
         SetPlayerWantedLevel(PlayerId(), 0, false)
         SetPlayerWantedLevelNow(PlayerId(), false)
