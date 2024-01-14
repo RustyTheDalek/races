@@ -3077,11 +3077,6 @@ Citizen.CreateThread(function()
 
         local currentTime = GetGameTimer()
 
-        if(IsControlJustPressed(0, 18)) then
-            print("here")
-            PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
-        end
-
         CheckVMenu()
 
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
