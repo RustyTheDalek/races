@@ -69,11 +69,9 @@ function readLeaderBoardEvents(event) {
       UpdateDNFTime(data.minutes, data.seconds);
       break;
     case "toggle_vmenu_on":
-      console.log(data);
       ToggleVMenuOn(data.race_state);
       break;
     case "set_ghosting":
-      console.log(data);
       SetGhostingIndicator(data.source, data.time);
       break;
     case "set_respawn":
@@ -117,12 +115,9 @@ function ToggleVMenuOn(raceState) {
 
   vMenuActive = !vMenuActive;
 
-  console.log(vMenuActive);
-
   //2 & 3 represent the Race states: Joining & Racing
   //TODO: Make more human readable by using enum
   if (raceState === 2 || raceState === 3) {
-    console.log("Racing or Joining");
     SetRaceLeaderboard(!vMenuActive);
   }
 
@@ -279,7 +274,6 @@ function AddRacerToleaderboard(racers, source) {
 
     if (!vMenuActive) {
       setTimeout(() => {
-        console.log(racer_element);
         racer_element.addClass('right-visible');
       }, 250)
     }
