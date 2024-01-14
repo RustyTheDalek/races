@@ -1536,6 +1536,7 @@ end
 local function respawn()
     if STATE_RACING == raceState then
         ClearRespawnIndicator()
+        ghostingMaxTime = GHOSTING_DEFAULT
         SetGhosting(true)
         local passengers = {}
         local player = PlayerPedId()
