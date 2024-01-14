@@ -4,6 +4,21 @@
   color: white;
 }
 
+#laps.lobby-view,
+#checkpoints.lobby-view {
+  transform: translateY(50rem);
+}
+
+#leaderboard { 
+  transform: translateY(-4rem);
+  position: fixed;
+  transition: transform 1s ease-out;
+}
+
+#leaderboard.lobby-view {
+  transform: translateY(46rem);
+}
+
 #leaderboard_container {
   right: 0;
   display: flex;
@@ -29,25 +44,19 @@
   top: 2.5rem;
 }
 
-#checkpoints {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 0.5rem;
-  position: absolute;
-  transition: right 0.5s ease-in-out;
-}
-
+#checkpoints ,
 #leaderboard_container #laps {
   display: flex;
   align-items: center;
   justify-content: center;
   padding-left: 0.5rem;
   position: absolute;
+  transition: transform 1s ease-out, right 0.5s ease-in-out;
+}
 
+#leaderboard_container #laps {
   right: -30rem;
   clip-path: polygon(0 0, 95% 0%, 100% 100%, 5% 100%);
-  transition: right 0.5s ease-in-out;
 }
 
 #leaderboard_container #laps.right-visible {

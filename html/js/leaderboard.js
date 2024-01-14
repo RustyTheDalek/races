@@ -4,7 +4,6 @@ let leaderboard = $("#leaderboard");
 let topOffset = 6.5;
 let spacing = 4.5;
 
-let vMenuActive = false;
 let laps_visible = false;
 
 let dummy_data = [
@@ -68,8 +67,8 @@ function readLeaderBoardEvents(event) {
     case "update_dnf_time":
       UpdateDNFTime(data.minutes, data.seconds);
       break;
-    case "toggle_vmenu_on":
-      ToggleVMenuOn(data.race_state);
+    case "set_leaderboard_lower":
+      SetLeaderboardLower(data.lower);
       break;
     case "set_ghosting":
       SetGhostingIndicator(data.source, data.time);
@@ -111,14 +110,20 @@ function SetGhostingIndicator(source, time) {
   ghosting_indicator.width('0%');
 }
 
-function ToggleVMenuOn(raceState) {
+function SetLeaderboardLower(lower) {
 
-  vMenuActive = !vMenuActive;
+  if(lower) {
 
-  //2 & 3 represent the Race states: Joining & Racing
-  //TODO: Make more human readable by using enum
-  if (raceState === 2 || raceState === 3) {
-    SetRaceLeaderboard(!vMenuActive);
+    $('#leaderboard').addClass('lobby-view');
+    $('#laps').addClass('lobby-view');
+    $('#checkpoints').addClass('lobby-view');
+
+  } else {
+
+    $('#leaderboard').removeClass('lobby-view');
+    $('#laps').removeClass('lobby-view');
+    $('#checkpoints').removeClass('lobby-view');
+
   }
 
 }
@@ -188,7 +193,7 @@ function UpdatePositions(racePositions) {
 }
 
 function SetRaceLeaderboard(enabled) {
-  if (enabled && !vMenuActive) {
+  if (enabled) {
     leaderboard_container.find('#leaderboard').find('.leaderboard_chunk').addClass('right-visible');
     leaderboard_container.find('#checkpoints').addClass('right-visible');
     if (laps_visible) {
@@ -272,11 +277,9 @@ function AddRacerToleaderboard(racers, source) {
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
 
-    if (!vMenuActive) {
       setTimeout(() => {
         racer_element.addClass('right-visible');
       }, 250)
-    }
   });
 }
 

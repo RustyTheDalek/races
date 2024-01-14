@@ -147,8 +147,6 @@ local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
 local ready = false
 
-local vMenuOn = false
-
 local wantedMode = false
 
 exports.spawnmanager:setAutoSpawnCallback(function()
@@ -609,6 +607,7 @@ local function finishRace(time)
     end
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
+    SetLeaderboardLower(true)
     ResetReady(PedToNet(PlayerPedId()))
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
@@ -2617,9 +2616,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     totalCheckpoints = startIsFinish == true and #waypoints or #waypoints - 1
                 }
                 SendRaceData(raceData)
-                if not vMenuOn then
-                    SetRaceLeaderboard(true)
-                end
+                SetRaceLeaderboard(true)
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -2948,11 +2945,11 @@ function ClearLeaderboard()
     })
 end
 
-function ToggleVMenuOn()
+function SetLeaderboardLower(lower)
     SendNUIMessage({
         type = 'leaderboard',
-        action = 'toggle_vmenu_on',
-        race_state = raceState
+        action = 'set_leaderboard_lower',
+        lower = lower
     })
 end
 
@@ -2961,15 +2958,6 @@ function HandleJoinState()
     if IsControlJustReleased(0, 173) then
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
-    end
-end
-
-function CheckVMenu()
-    --M Key / Back
-    if IsControlJustReleased(0, 301) or IsControlJustReleased(0, 212) then
-        print("M button pressed")
-        vMenuOn = not vMenuOn
-        ToggleVMenuOn()
     end
 end
 
@@ -3077,8 +3065,6 @@ Citizen.CreateThread(function()
         local heading = GetEntityHeading(player)
 
         local currentTime = GetGameTimer()
-
-        CheckVMenu()
 
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
@@ -3216,6 +3202,9 @@ Citizen.CreateThread(function()
         elseif STATE_RACING == raceState then
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
             local vehicle = GetVehiclePedIsIn(player, false)
+
+            SetLeaderboardLower(false)
+
             if elapsedTime < 0 then
                 drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
                 drawMsg(0.50, 0.50, ("%05.2f"):format(-elapsedTime / 1000.0), 0.7, 0)
