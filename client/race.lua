@@ -120,6 +120,7 @@ local bestLapVehicleName = nil            -- name of vehicle in which player rec
 
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
 
+local respawnLock = false
 local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
 local respawnTime = -1                    -- time when respawn control pressed
 local respawnTimer = 500
@@ -456,11 +457,6 @@ local function drawRect(x, y, w, h, r, g, b, a)
     DrawRect(x + w / 2.0, y + h / 2.0, w, h, r, g, b, a)
 end
 
-local function drawRespawnMessage(numerator, denominator)
-    local percent = numerator / denominator
-    DrawRect(0.92, 0.95, 0.1, 0.03, 0, 0, 0, 127)
-    DrawRect(0.92, 0.95, 0.1 * percent, 0.03, 255, 255, 0, 255)
-end
 
 local function waypointsToCoords()
     local waypointCoords = {}
@@ -1539,6 +1535,7 @@ end
 
 local function respawn()
     if STATE_RACING == raceState then
+        ClearRespawnIndicator()
         SetGhosting(true)
         local passengers = {}
         local player = PlayerPedId()
@@ -3004,6 +3001,21 @@ function AddRacersToLeaderboard(racerDictionary, source)
     })
 end
 
+function SetRespawnIndicator(time)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'set_respawn',
+        time = time
+    })
+end
+
+function ClearRespawnIndicator()
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'clear_respawn'
+    })
+end
+
 
 function UpdateVehicleName()
     local player = PlayerPedId()
@@ -3267,17 +3279,23 @@ Citizen.CreateThread(function()
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
                     if true == respawnCtrlPressed then
-                        drawRespawnMessage(currentTime - respawnTime, respawnTimer)
                         if currentTime - respawnTime > respawnTimer then
                             respawnCtrlPressed = false
+                            respawnLock = true
                             respawn()
                         end
-                    else
+                    elseif respawnLock == false then
+                        SetRespawnIndicator(respawnTimer / 1000)
                         respawnCtrlPressed = true
                         respawnTime = currentTime
                     end
                 else
+                    ClearRespawnIndicator()
                     respawnCtrlPressed = false
+                end
+
+                if IsControlReleased(0, 19) == 1 then
+                    respawnLock = false
                 end
 
                 FreezeEntityPosition(vehicle, false)

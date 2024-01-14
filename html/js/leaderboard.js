@@ -7,6 +7,21 @@ let spacing = 4.5;
 let vMenuActive = false;
 let laps_visible = false;
 
+let dummy_data = [
+  {
+    playerName: "Mitchell19",
+    vehicleName: "A4 Tempesta Competizone Evo",
+    source: 1
+  },
+  {
+    playerName: "Mitchell19",
+    vehicleName: "A4 Tempesta Competizone Evo",
+    source: 2
+  }
+];
+
+// AddRacerToleaderboard(dummy_data, 1);
+
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
 });
@@ -61,7 +76,30 @@ function readLeaderBoardEvents(event) {
       console.log(data);
       SetGhostingIndicator(data.source, data.time);
       break;
+    case "set_respawn":
+      SetRespawnIndicator(data.time);
+      break;
+    case "clear_respawn":
+      ClearRespawnIndicator();
+      break;
   }
+}
+
+function ClearRespawnIndicator() {
+
+  let respawn_indicator = $(`.progress-circle-prog`);
+  respawn_indicator.removeAttr('style');
+
+}
+
+function SetRespawnIndicator(time) {
+
+  let respawn_indicator = $(`.progress-circle-prog`);
+
+  respawn_indicator.removeAttr('style');
+
+  respawn_indicator.css('transition', `stroke-dasharray ${time}s ease-in-out`);
+  respawn_indicator.css('stroke-dasharray', '465 999');
 }
 
 function SetGhostingIndicator(source, time) {
