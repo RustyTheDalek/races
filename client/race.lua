@@ -2849,6 +2849,12 @@ end)
 
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
+
+    if raceState ~= STATE_IDLE then
+        notifyPlayer("Cannnot join race. already joined.\n")
+        return
+    end
+
     removeRacerBlipGT()
     local player = PlayerPedId()
 
