@@ -1510,6 +1510,12 @@ local function SetGhosting(_ghosting)
         ghostState = GHOSTING_UP
         ghostingTime = GetGameTimer()
         ghostingInternalMaxTime = .5
+        SendNUIMessage({
+            type = "leaderboard",
+            action = "set_ghosting",
+            source = GetPlayerServerId(PlayerId()),
+            time = ghostingMaxTime / 1000
+        })
     else
         ghostingMaxTime = GHOSTING_DEFAULT
         ghostState = GHOSTING_IDLE

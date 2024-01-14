@@ -57,7 +57,22 @@ function readLeaderBoardEvents(event) {
       console.log(data);
       ToggleVMenuOn(data.race_state);
       break;
+    case "set_ghosting":
+      console.log(data);
+      SetGhostingIndicator(data.source, data.time);
+      break;
   }
+}
+
+function SetGhostingIndicator(source, time) {
+
+  let ghosting_indicator = $(`#${source} .ghosting_indicator`);
+
+  ghosting_indicator.removeAttr('style');
+
+  ghosting_indicator.show();
+  ghosting_indicator.css('transition', `width ${time}s linear`);
+  ghosting_indicator.width('0%');
 }
 
 function ToggleVMenuOn(raceState) {
@@ -214,6 +229,12 @@ function AddRacerToleaderboard(racers, source) {
 
     lap_times.append(best_lap);
     lap_times.append(current_lap);
+
+    let ghosting_indicator = $("<div/>", {
+      class: 'ghosting_indicator'
+    });
+
+    racer_element.append(ghosting_indicator);
 
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
