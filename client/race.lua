@@ -3040,6 +3040,10 @@ function HandleWanted()
     end
 end
 
+function SendCheckpointTime(waypointsPassed, lapTime)
+    TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, lapTime)
+end
+
 RegisterNetEvent("races:clearLeaderboard")
 AddEventHandler("races:clearLeaderboard", function()
     ClearLeaderboard()
@@ -3048,6 +3052,25 @@ end)
 RegisterNetEvent("races:sendReadyData")
 AddEventHandler("races:sendReadyData", function(isReady, source, playerName)
     SendReadyData({ source = source, playerName = playerName, ready = isReady})
+end)
+
+RegisterNetEvent("races:updateTimeSplit")
+AddEventHandler("races:updateTimeSplit", function(source, timeSplit)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'update_time_split',
+        timeSplit = timeSplit,
+        source = source,
+    })
+end)
+
+RegisterNetEvent("races:compareTimeSplit")
+AddEventHandler("races:compareTimeSplit", function(racersAhead)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'bulk_update_time_splits',
+        racersAhead = racersAhead
+    })
 end)
 
 --Update Vehicle Name thread
@@ -3342,6 +3365,8 @@ Citizen.CreateThread(function()
                             DeleteCheckpoint(raceCheckpoint)
 
                             numWaypointsPassed = numWaypointsPassed + 1
+
+                            SendCheckpointTime(numWaypointsPassed, lapTime)
 
                             if currentWaypoint < #waypoints then
                                 PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)

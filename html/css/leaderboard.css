@@ -4,6 +4,14 @@
   color: white;
 }
 
+.green-text {
+  color: green;
+}
+
+.red-text {
+  color: red;
+}
+
 #laps.lobby-view,
 #checkpoints.lobby-view {
   transform: translateY(50rem);
@@ -132,6 +140,11 @@ ul#leaderboard li > span {
 .lap_times > .best,
 .lap_times > .current {
   font-size: 1rem;
+}
+
+.lap_times > .time-split {
+  align-self: center;
+  padding-top: 0.5rem;
 }
 
 .lap_times > .best::before {

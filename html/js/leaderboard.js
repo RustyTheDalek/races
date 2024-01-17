@@ -79,7 +79,79 @@ function readLeaderBoardEvents(event) {
     case "clear_respawn":
       ClearRespawnIndicator();
       break;
+    case "update_time_split":
+      UpdateTimeSplit(data.source, data.timeSplit);
+      break;
+    case "bulk_update_time_splits":
+      BulkUpdateTimeSplits(data.racersAhead);
+      break;
   }
+}
+
+function BulkUpdateTimeSplits(racersAhead) {
+  console.log(racersAhead);
+
+  racersAhead.forEach(racer => {
+    UpdateTimeSplit(racer.source, racer.timeSplit);
+  });
+}
+
+function UpdateTimeSplit(source, timeDifference) {
+
+  timeDifference /= 1000;
+
+  let racerTimeSplit = leaderboard.find(`#${source}`).find('.time-split');
+  let timeDifferenceFormatted = '';
+
+  let deltaTimeDifference = parseFloat(racerTimeSplit.html());
+
+  if(timeDifference > 0) { //Racers is behind you
+    timeDifferenceFormatted = "+";
+    if(deltaTimeDifference > 0) {//Racer was behind you last time
+      if(timeDifference > deltaTimeDifference) { //They're further away
+        setBetterTimeColours(racerTimeSplit);
+      } else { //They're gaining on you
+        setWorseTimeColours(racerTimeSplit);
+      }
+    } else { //Racer was in front last time 
+      setBetterTimeColours(racerTimeSplit);
+    }
+  } else { //Racer is in front
+    if(deltaTimeDifference < 0) { //They were in front last time 
+      if(timeDifference < deltaTimeDifference) { //They're further away
+        setWorseTimeColours(racerTimeSplit);
+      } else {
+        setBetterTimeColours(racerTimeSplit);
+      }
+    } else { //They were Behind last time
+      setWorseTimeColours(racerTimeSplit);
+    }
+  }
+
+  if(timeDifference < deltaTimeDifference && deltaTimeDifference != 0) {
+
+  } else if(deltaTimeDifference != 0) {
+    racerTimeSplit.removeClass("red-text");
+    racerTimeSplit.addClass("green-text");
+  }
+
+  if(timeDifference > 0) {
+
+  }
+
+  timeDifferenceFormatted += `${timeDifference.toFixed(2)}`;
+
+  racerTimeSplit.show().html(timeDifferenceFormatted);
+}
+
+function setBetterTimeColours(timeSplit) {
+  timeSplit.removeClass("red-text");
+  timeSplit.addClass("green-text");
+}
+
+function setWorseTimeColours(timeSplit) {
+  timeSplit.removeClass("green-text");
+  timeSplit.addClass("red-text");
 }
 
 function ClearRespawnIndicator() {
@@ -265,8 +337,15 @@ function AddRacerToleaderboard(racers, source) {
       text: '00:00.00'
     });
 
+    let time_split = $("<div/>", {
+      style: 'display:none;',
+      class: 'time-split',
+      text: '0.00'
+    });
+
     lap_times.append(best_lap);
     lap_times.append(current_lap);
+    lap_times.append(time_split);
 
     let ghosting_indicator = $("<div/>", {
       class: 'ghosting_indicator'
