@@ -184,7 +184,7 @@ function SetGhostingIndicator(source, time) {
 
 function SetLeaderboardLower(lower) {
 
-  if(lower) {
+  if (lower) {
 
     $('#leaderboard').addClass('lobby-view');
     $('#laps').addClass('lobby-view');

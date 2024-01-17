@@ -17,7 +17,7 @@
   transform: translateY(50rem);
 }
 
-#leaderboard { 
+#leaderboard {
   transform: translateY(-4rem);
   position: fixed;
   transition: transform 1s ease-out;
@@ -52,7 +52,7 @@
   top: 2.5rem;
 }
 
-#checkpoints ,
+#checkpoints,
 #leaderboard_container #laps {
   display: flex;
   align-items: center;
@@ -137,8 +137,7 @@ ul#leaderboard li > span {
   grid-gap: 0.1rem;
 }
 
-.lap_times > .best,
-.lap_times > .current {
+.lap_times > * {
   font-size: 1rem;
 }
 
@@ -195,32 +194,32 @@ ul#leaderboard li > span {
 /*#region Respawn indicator */
 
 .progress {
-    position: absolute;   
-    height: 160px;
-    width: 160px;
-    cursor: pointer;
-    top: 50%;
-    left: 50%;
-    margin: -80px 0 0 -80px;
+  position: absolute;
+  height: 160px;
+  width: 160px;
+  cursor: pointer;
+  top: 50%;
+  left: 50%;
+  margin: -80px 0 0 -80px;
 }
 
 .progress-circle {
   transform: rotate(-90deg);
-	margin-top: -40px;
+  margin-top: -40px;
 }
 
 .progress-circle-back {
-	fill: none; 
-	/* stroke: #D2D2D2; */
-	stroke-width:10px;
+  fill: none;
+  /* stroke: #D2D2D2; */
+  stroke-width: 10px;
 }
 
 .progress-circle-prog {
-	fill: none; 
-	stroke: yellow;
-	stroke-width: 10px;  
-	stroke-dashoffset: 0px;
-	stroke-dasharray: 0 999;    
-    /* transition: stroke-dasharray 0.7s linear 0s; */
+  fill: none;
+  stroke: yellow;
+  stroke-width: 10px;
+  stroke-dashoffset: 0px;
+  stroke-dasharray: 0 999;
+  /* transition: stroke-dasharray 0.7s linear 0s; */
 }
 /*#endregion*/
