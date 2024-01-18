@@ -54,7 +54,7 @@ $(function () {
 
         let racer_chunk = $(`#leaderboard_container`).find(`#${racer.source}`);
 
-        if(racer.ready) {
+        if (racer.ready) {
             racer_chunk.addClass("ready");
             racer_chunk.removeClass("not-ready");
         } else {
@@ -95,19 +95,19 @@ $(function () {
 
     function SetJoinMessage(value) {
         let join_message = $('#join-message');
-        if(value !== '') {
+        if (value !== '') {
             join_message.text(value)
             join_message.addClass('bottom-visible');
-        } else{
+        } else {
             join_message.removeClass('bottom-visible');
         }
     }
 
     function SetReadyText(value) {
         let ready_message = $('#ready-message');
-        if(value === true) {
+        if (value === true) {
             ready_message.addClass('bottom-visible');
-        } else{
+        } else {
             ready_message.removeClass('bottom-visible');
         }
     }
