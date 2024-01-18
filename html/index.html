@@ -9,19 +9,19 @@
 </head>
 
 <body>
-    
     <div class="progress">
         <svg class="progress-circle" width="200px" height="200px" xmlns="http://www.w3.org/2000/svg">
-            <circle class="progress-circle-back"
-                    cx="80" cy="80" r="74"></circle>
-            <circle class="progress-circle-prog"
-                    cx="80" cy="80" r="74"></circle>
+            <circle class="progress-circle-back" cx="80" cy="80" r="74"></circle>
+            <circle class="progress-circle-prog" cx="80" cy="80" r="74"></circle>
         </svg>
-
     </div>	
-
-    <div class="center-view dnf_timer_container" id="dnf_timer_container">
+    <div class="center-view top-hidden" id="dnf_timer_container">
         DNF Time: <span id="dnf_timer">00:00.00</span>
+    </div>
+    <div class="center-view top-hidden top-visible" id="preRaceCountdownContainer">
+        <p>All Racers ready!
+            Starting race in<br/>
+        <span id="preRaceCountdown">..</span></p>
     </div>
     <div id="leaderboard_container">
         <div class="leaderboard_chunk lobby-view" id="laps">

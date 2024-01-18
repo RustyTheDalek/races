@@ -2876,6 +2876,24 @@ AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
     -- sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
 end)
 
+RegisterNetEvent("races:startPreRaceCountdown")
+AddEventHandler("races:startPreRaceCountdown", function(countdownTimer)
+    SendNUIMessage({
+        type = "ready",
+        action = "startPreRaceCountdown",
+        countdown = countdownTimer / 1000
+    })
+end)
+
+RegisterNetEvent("races:stopPreRaceCountdown")
+AddEventHandler("races:stopPreRaceCountdown", function()
+    SendNUIMessage({
+        type = "ready",
+        action = "stopPreRaceCountdown"
+    })
+end)
+
+
 --#endregion
 
 local boost_active = false

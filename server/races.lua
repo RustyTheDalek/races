@@ -1006,11 +1006,13 @@ local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
 end
 
 local function StartRaceCountdown(raceIndex)
+    TriggerClientEvent("races:startPreRaceCountdown", -1, READY_RACERS_COUNTDOWN)
     races[raceIndex].countdown = true
     races[raceIndex].countdownTimeStart = GetGameTimer()
 end
 
 local function StopRaceCountdown(raceIndex)
+    TriggerClientEvent("races:stopPreRaceCountdown", -1)
     races[raceIndex].countdown = false
     races[raceIndex].countdownTimeStart = 0
 end
@@ -1018,7 +1020,9 @@ end
 local function CheckReady(race, raceIndex)
     if race.numReady == race.numRacing and race.countdown == false then
         StartRaceCountdown(raceIndex)
-    else
+    end
+
+    if race.countdown == true and race.numReady ~= race.numRacing then
         StopRaceCountdown(raceIndex)
     end
 end
@@ -1672,8 +1676,12 @@ AddEventHandler("races:start", function(delay, override)
                             return
                         end
 
-                        race.state = STATE_RACING
+                        if race.countdown == true then
+                            StopRaceCountdown(source)
+                        end
 
+                        race.state = STATE_RACING
+                        
                         local sourceJoined = false
                         for _, player in pairs(race.players) do
                             TriggerClientEvent("races:start", player.source, source, delay)
@@ -2186,9 +2194,8 @@ Citizen.CreateThread(function()
 
         for rIndex, race in pairs(races) do
             if STATE_REGISTERING == race.state then
-                if race.countdown == false and race.numRacing > 0 then
-                    CheckReady(race, rIndex)
-                elseif race.countdown == true then
+                CheckReady(race, rIndex)
+                if race.countdown == true then
                     ProcessReadyCountdown(rIndex)
                 end
             elseif STATE_RACING == race.state then

@@ -42,20 +42,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 .center-view {
     display: inline-block;
-    position: relative;
+    position: absolute;
     left: 50%;
     transform: translateX(-50%);
     
     text-align: center;
-}
-
-.dnf_timer_container {
-    top:-10rem;
     font-size: 2rem;
     font-weight: bold;
     font-family: Arial, Helvetica, sans-serif;
 
-    padding:1rem;
+    padding:1rem 2rem;
     background-color: black;
     clip-path: polygon(0 0, 100% 0%, 95% 100%, 5% 100%);
     transition: top 0.5s ease-in-out;
@@ -63,6 +59,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 .top-visible {
     top:0rem;
+}
+
+.top-hidden {
+    top: -10rem;
+}
+
+#preRaceCountdown {
+    font-size: 3rem;
 }
 
 body {
