@@ -4,8 +4,22 @@ let leaderboard = $("#leaderboard");
 let topOffset = 6.5;
 let spacing = 4.5;
 
-let vMenuActive = false;
 let laps_visible = false;
+
+let dummy_data = [
+  {
+    playerName: "Mitchell19",
+    vehicleName: "A4 Tempesta Competizone Evo",
+    source: 1
+  },
+  {
+    playerName: "Mitchell19",
+    vehicleName: "A4 Tempesta Competizone Evo",
+    source: 2
+  }
+];
+
+// AddRacerToleaderboard(dummy_data, 1);
 
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
@@ -53,24 +67,135 @@ function readLeaderBoardEvents(event) {
     case "update_dnf_time":
       UpdateDNFTime(data.minutes, data.seconds);
       break;
-    case "toggle_vmenu_on":
-      console.log(data);
-      ToggleVMenuOn(data.race_state);
+    case "set_leaderboard_lower":
+      SetLeaderboardLower(data.lower);
+      break;
+    case "set_ghosting":
+      SetGhostingIndicator(data.source, data.time);
+      break;
+    case "set_respawn":
+      SetRespawnIndicator(data.time);
+      break;
+    case "clear_respawn":
+      ClearRespawnIndicator();
+      break;
+    case "update_time_split":
+      UpdateTimeSplit(data.source, data.timeSplit);
+      break;
+    case "bulk_update_time_splits":
+      BulkUpdateTimeSplits(data.racersAhead);
       break;
   }
 }
 
-function ToggleVMenuOn(raceState) {
+function BulkUpdateTimeSplits(racersAhead) {
+  console.log(racersAhead);
 
-  vMenuActive = !vMenuActive;
+  racersAhead.forEach(racer => {
+    UpdateTimeSplit(racer.source, racer.timeSplit);
+  });
+}
 
-  console.log(vMenuActive);
+function UpdateTimeSplit(source, timeDifference) {
 
-  //2 & 3 represent the Race states: Joining & Racing
-  //TODO: Make more human readable by using enum
-  if (raceState === 2 || raceState === 3) {
-    console.log("Racing or Joining");
-    SetRaceLeaderboard(!vMenuActive);
+  timeDifference /= 1000;
+
+  let racerTimeSplit = leaderboard.find(`#${source}`).find('.time-split');
+  let timeDifferenceFormatted = '';
+
+  let deltaTimeDifference = parseFloat(racerTimeSplit.html());
+
+  if(timeDifference > 0) { //Racers is behind you
+    timeDifferenceFormatted = "+";
+    if(deltaTimeDifference > 0) {//Racer was behind you last time
+      if(timeDifference > deltaTimeDifference) { //They're further away
+        setBetterTimeColours(racerTimeSplit);
+      } else { //They're gaining on you
+        setWorseTimeColours(racerTimeSplit);
+      }
+    } else { //Racer was in front last time 
+      setBetterTimeColours(racerTimeSplit);
+    }
+  } else { //Racer is in front
+    if(deltaTimeDifference < 0) { //They were in front last time 
+      if(timeDifference < deltaTimeDifference) { //They're further away
+        setWorseTimeColours(racerTimeSplit);
+      } else {
+        setBetterTimeColours(racerTimeSplit);
+      }
+    } else { //They were Behind last time
+      setWorseTimeColours(racerTimeSplit);
+    }
+  }
+
+  if(timeDifference < deltaTimeDifference && deltaTimeDifference != 0) {
+
+  } else if(deltaTimeDifference != 0) {
+    racerTimeSplit.removeClass("red-text");
+    racerTimeSplit.addClass("green-text");
+  }
+
+  if(timeDifference > 0) {
+
+  }
+
+  timeDifferenceFormatted += `${timeDifference.toFixed(2)}`;
+
+  racerTimeSplit.show().html(timeDifferenceFormatted);
+}
+
+function setBetterTimeColours(timeSplit) {
+  timeSplit.removeClass("red-text");
+  timeSplit.addClass("green-text");
+}
+
+function setWorseTimeColours(timeSplit) {
+  timeSplit.removeClass("green-text");
+  timeSplit.addClass("red-text");
+}
+
+function ClearRespawnIndicator() {
+
+  let respawn_indicator = $(`.progress-circle-prog`);
+  respawn_indicator.removeAttr('style');
+
+}
+
+function SetRespawnIndicator(time) {
+
+  let respawn_indicator = $(`.progress-circle-prog`);
+
+  respawn_indicator.removeAttr('style');
+
+  respawn_indicator.css('transition', `stroke-dasharray ${time}s ease-in-out`);
+  respawn_indicator.css('stroke-dasharray', '465 999');
+}
+
+function SetGhostingIndicator(source, time) {
+
+  let ghosting_indicator = $(`#${source} .ghosting_indicator`);
+
+  ghosting_indicator.removeAttr('style');
+
+  ghosting_indicator.show();
+  ghosting_indicator.css('transition', `width ${time}s linear`);
+  ghosting_indicator.width('0%');
+}
+
+function SetLeaderboardLower(lower) {
+
+  if (lower) {
+
+    $('#leaderboard').addClass('lobby-view');
+    $('#laps').addClass('lobby-view');
+    $('#checkpoints').addClass('lobby-view');
+
+  } else {
+
+    $('#leaderboard').removeClass('lobby-view');
+    $('#laps').removeClass('lobby-view');
+    $('#checkpoints').removeClass('lobby-view');
+
   }
 
 }
@@ -140,7 +265,7 @@ function UpdatePositions(racePositions) {
 }
 
 function SetRaceLeaderboard(enabled) {
-  if (enabled && !vMenuActive) {
+  if (enabled) {
     leaderboard_container.find('#leaderboard').find('.leaderboard_chunk').addClass('right-visible');
     leaderboard_container.find('#checkpoints').addClass('right-visible');
     if (laps_visible) {
@@ -212,18 +337,28 @@ function AddRacerToleaderboard(racers, source) {
       text: '00:00.00'
     });
 
+    let time_split = $("<div/>", {
+      style: 'display:none;',
+      class: 'time-split',
+      text: '0.00'
+    });
+
     lap_times.append(best_lap);
     lap_times.append(current_lap);
+    lap_times.append(time_split);
+
+    let ghosting_indicator = $("<div/>", {
+      class: 'ghosting_indicator'
+    });
+
+    racer_element.append(ghosting_indicator);
 
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
 
-    if (!vMenuActive) {
       setTimeout(() => {
-        console.log(racer_element);
         racer_element.addClass('right-visible');
       }, 250)
-    }
   });
 }
 

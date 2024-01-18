@@ -120,6 +120,7 @@ local bestLapVehicleName = nil            -- name of vehicle in which player rec
 
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
 
+local respawnLock = false
 local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
 local respawnTime = -1                    -- time when respawn control pressed
 local respawnTimer = 500
@@ -145,8 +146,6 @@ local localPlayerPed = GetPlayerPed(-1)
 local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
 local ready = false
-
-local vMenuOn = false
 
 local wantedMode = false
 
@@ -456,11 +455,6 @@ local function drawRect(x, y, w, h, r, g, b, a)
     DrawRect(x + w / 2.0, y + h / 2.0, w, h, r, g, b, a)
 end
 
-local function drawRespawnMessage(numerator, denominator)
-    local percent = numerator / denominator
-    DrawRect(0.92, 0.95, 0.1, 0.03, 0, 0, 0, 127)
-    DrawRect(0.92, 0.95, 0.1 * percent, 0.03, 255, 255, 0, 255)
-end
 
 local function waypointsToCoords()
     local waypointCoords = {}
@@ -604,13 +598,16 @@ local function vehicleInList(vehicle, list)
 end
 
 local function finishRace(time)
+    PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
     if wantedMode == true then
+        wantedMode = false
         SetMaxWantedLevel(0)
         SetPlayerWantedLevel(PlayerId(), 0, false)
         SetPlayerWantedLevelNow(PlayerId(), false)
     end
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
+    SetLeaderboardLower(true)
     ResetReady(PedToNet(PlayerPedId()))
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
@@ -1491,6 +1488,10 @@ local function leave()
     end
 end
 
+local function endrace()
+    TriggerServerEvent("races:endrace")
+end
+
 local function rivals()
     if STATE_JOINING == raceState or STATE_RACING == raceState then
         TriggerServerEvent("races:rivals", raceIndex)
@@ -1506,6 +1507,12 @@ local function SetGhosting(_ghosting)
         ghostState = GHOSTING_UP
         ghostingTime = GetGameTimer()
         ghostingInternalMaxTime = .5
+        SendNUIMessage({
+            type = "leaderboard",
+            action = "set_ghosting",
+            source = GetPlayerServerId(PlayerId()),
+            time = ghostingMaxTime / 1000
+        })
     else
         ghostingMaxTime = GHOSTING_DEFAULT
         ghostState = GHOSTING_IDLE
@@ -1529,6 +1536,8 @@ end
 
 local function respawn()
     if STATE_RACING == raceState then
+        ClearRespawnIndicator()
+        ghostingMaxTime = GHOSTING_DEFAULT
         SetGhosting(true)
         local passengers = {}
         local player = PlayerPedId()
@@ -1828,6 +1837,14 @@ end)
 
 RegisterNUICallback("list", function(data)
     listTracks(data.access)
+end)
+
+RegisterNUICallback("autojoin", function(data)
+    autojoin()
+end)
+
+RegisterNUICallback("gridracers", function(data)
+    setupGrid()
 end)
 
 RegisterNUICallback("register", function(data)
@@ -2172,6 +2189,8 @@ RegisterCommand("races", function(_, args)
         end
     elseif "leave" == args[1] then
         leave()
+    elseif "end" == args[1] then
+        endrace()
     elseif "rivals" == args[1] then
         rivals()
     elseif "respawn" == args[1] then
@@ -2552,6 +2571,11 @@ AddEventHandler("races:onplayerleave", function()
     ClearReady()
 end)
 
+RegisterNetEvent("races:leave")
+AddEventHandler("races:leave", function()
+    leave()
+end)
+
 RegisterNetEvent("races:leavenotification")
 AddEventHandler("races:leavenotification", function(message, source, rIndex, numReady, numRacing, registrationCoords)
     print("Leave race notification")
@@ -2592,9 +2616,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     totalCheckpoints = startIsFinish == true and #waypoints or #waypoints - 1
                 }
                 SendRaceData(raceData)
-                if not vMenuOn then
-                    SetRaceLeaderboard(true)
-                end
+                SetRaceLeaderboard(true)
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -2827,6 +2849,12 @@ end)
 
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
+
+    if raceState ~= STATE_IDLE then
+        notifyPlayer("Cannnot join race. already joined.\n")
+        return
+    end
+
     removeRacerBlipGT()
     local player = PlayerPedId()
 
@@ -2923,11 +2951,11 @@ function ClearLeaderboard()
     })
 end
 
-function ToggleVMenuOn()
+function SetLeaderboardLower(lower)
     SendNUIMessage({
         type = 'leaderboard',
-        action = 'toggle_vmenu_on',
-        race_state = raceState
+        action = 'set_leaderboard_lower',
+        lower = lower
     })
 end
 
@@ -2936,15 +2964,6 @@ function HandleJoinState()
     if IsControlJustReleased(0, 173) then
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
-    end
-end
-
-function CheckVMenu()
-    --M Key / Back
-    if IsControlJustReleased(0, 301) or IsControlJustReleased(0, 212) then
-        print("M button pressed")
-        vMenuOn = not vMenuOn
-        ToggleVMenuOn()
     end
 end
 
@@ -2979,6 +2998,21 @@ function AddRacersToLeaderboard(racerDictionary, source)
     })
 end
 
+function SetRespawnIndicator(time)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'set_respawn',
+        time = time
+    })
+end
+
+function ClearRespawnIndicator()
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'clear_respawn'
+    })
+end
+
 
 function UpdateVehicleName()
     local player = PlayerPedId()
@@ -3006,6 +3040,10 @@ function HandleWanted()
     end
 end
 
+function SendCheckpointTime(waypointsPassed, lapTime)
+    TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, lapTime)
+end
+
 RegisterNetEvent("races:clearLeaderboard")
 AddEventHandler("races:clearLeaderboard", function()
     ClearLeaderboard()
@@ -3014,6 +3052,25 @@ end)
 RegisterNetEvent("races:sendReadyData")
 AddEventHandler("races:sendReadyData", function(isReady, source, playerName)
     SendReadyData({ source = source, playerName = playerName, ready = isReady})
+end)
+
+RegisterNetEvent("races:updateTimeSplit")
+AddEventHandler("races:updateTimeSplit", function(source, timeSplit)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'update_time_split',
+        timeSplit = timeSplit,
+        source = source,
+    })
+end)
+
+RegisterNetEvent("races:compareTimeSplit")
+AddEventHandler("races:compareTimeSplit", function(racersAhead)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'bulk_update_time_splits',
+        racersAhead = racersAhead
+    })
 end)
 
 --Update Vehicle Name thread
@@ -3037,8 +3094,6 @@ Citizen.CreateThread(function()
         local heading = GetEntityHeading(player)
 
         local currentTime = GetGameTimer()
-
-        CheckVMenu()
 
         -- drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
@@ -3073,13 +3128,13 @@ Citizen.CreateThread(function()
             local ghostingRemaining = ghostingMaxTime - ghostingDifference
             --1000 = every second 
             if ghostingRemaining <= 5000 and ghostingRemaining >= 1000 and math.fmod(ghostingRemaining, 1000) <= 5 then
-                PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+                PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
             end
 
             SetGhostedEntityAlpha(ghostingInterval * 254)
             if ghostingDifference > ghostingMaxTime then
                 SetGhosting(false)
-                PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
+                PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
             end
         else
             SetGhosting(false)
@@ -3176,6 +3231,9 @@ Citizen.CreateThread(function()
         elseif STATE_RACING == raceState then
             local elapsedTime = currentTime - raceStart - raceDelay * 1000
             local vehicle = GetVehiclePedIsIn(player, false)
+
+            SetLeaderboardLower(false)
+
             if elapsedTime < 0 then
                 drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
                 drawMsg(0.50, 0.50, ("%05.2f"):format(-elapsedTime / 1000.0), 0.7, 0)
@@ -3210,6 +3268,8 @@ Citizen.CreateThread(function()
                         RenderScriptCams(false, true, 1000, true, true)
 
                         SetGameplayCamRelativeRotation(GetEntityRotation(entity))
+
+                        DestroyAllCams(true)
                     end)
                 end
 
@@ -3240,17 +3300,23 @@ Citizen.CreateThread(function()
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
                     if true == respawnCtrlPressed then
-                        drawRespawnMessage(currentTime - respawnTime, respawnTimer)
                         if currentTime - respawnTime > respawnTimer then
                             respawnCtrlPressed = false
+                            respawnLock = true
                             respawn()
                         end
-                    else
+                    elseif respawnLock == false then
+                        SetRespawnIndicator(respawnTimer / 1000)
                         respawnCtrlPressed = true
                         respawnTime = currentTime
                     end
                 else
+                    ClearRespawnIndicator()
                     respawnCtrlPressed = false
+                end
+
+                if IsControlReleased(0, 19) == 1 then
+                    respawnLock = false
                 end
 
                 FreezeEntityPosition(vehicle, false)
@@ -3297,11 +3363,13 @@ Citizen.CreateThread(function()
 
                             resetupgrades(vehicle)
                             DeleteCheckpoint(raceCheckpoint)
-                            PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
 
                             numWaypointsPassed = numWaypointsPassed + 1
 
+                            SendCheckpointTime(numWaypointsPassed, lapTime)
+
                             if currentWaypoint < #waypoints then
+                                PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
                                 currentWaypoint = currentWaypoint + 1
                             else
                                 currentWaypoint = 1
@@ -3314,6 +3382,11 @@ Citizen.CreateThread(function()
                                 end
                                 if currentLap < numLaps then
                                     currentLap = currentLap + 1
+                                    PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
+                                    --Last lap gets a unique sound to signify it's end
+                                    if(currentLap == numLaps) then
+                                        PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
+                                    end
                                     UpdateCurrentLap()
                                     if #randVehicles > 0 then
                                         local randIndex = math.random(#randVehicles)

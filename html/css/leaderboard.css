@@ -1,163 +1,225 @@
 :root {
-    overflow: hidden;
-    font-family:Arial, Helvetica, sans-serif;
-    color:white;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+}
+
+.green-text {
+  color: green;
+}
+
+.red-text {
+  color: red;
+}
+
+#laps.lobby-view,
+#checkpoints.lobby-view {
+  transform: translateY(50rem);
+}
+
+#leaderboard {
+  transform: translateY(-4rem);
+  position: fixed;
+  transition: transform 1s ease-out;
+}
+
+#leaderboard.lobby-view {
+  transform: translateY(46rem);
 }
 
 #leaderboard_container {
-    right: 0;
-    display:flex;
-    flex-direction: column;
-    align-items: flex-end;
-    grid-gap: .1rem;
-    overflow: hidden;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  grid-gap: 0.1rem;
+  overflow: hidden;
 }
 
 .leaderboard_chunk {
-    background-color: black;
-    clip-path: polygon(0 0, 100% 0%, 100% 100%, 5% 100%);
-    padding: .3rem 0;
-    padding-right: .5rem;
-    right: -30rem;
+  background-color: black;
+  clip-path: polygon(0 0, 100% 0%, 100% 100%, 5% 100%);
+  padding: 0.3rem 0;
+  padding-right: 0.5rem;
+  right: -30rem;
 }
 
-#leaderboard_container #checkpoints, 
+#leaderboard_container #checkpoints,
 #leaderboard_container #laps {
-    height: 2.5rem;
-    width: 10.5rem;
-    font-size: 2.25rem;
-    top: 2.5rem;
+  height: 2.5rem;
+  width: 10.5rem;
+  font-size: 2.25rem;
+  top: 2.5rem;
 }
 
-#checkpoints {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 0.5rem;
-    position: absolute;
-    transition: right 0.5s ease-in-out;
+#checkpoints,
+#leaderboard_container #laps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 0.5rem;
+  position: absolute;
+  transition: transform 1s ease-out, right 0.5s ease-in-out;
 }
 
 #leaderboard_container #laps {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 0.5rem;
-    position: absolute;
-
-    right: -30rem;
-    clip-path: polygon(0 0, 95% 0%, 100% 100%, 5% 100%);
-    transition: right 0.5s ease-in-out;
+  right: -30rem;
+  clip-path: polygon(0 0, 95% 0%, 100% 100%, 5% 100%);
 }
 
 #leaderboard_container #laps.right-visible {
-    right: 11.3rem;
+  right: 11.3rem;
 }
 
 ul#leaderboard li {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    grid-gap: .5rem;
-    font-size: .8rem;
-    width: 22rem;
-    height: 3.5rem;
-    white-space: nowrap;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  grid-gap: 0.5rem;
+  font-size: 0.8rem;
+  width: 23rem;
+  height: 3.5rem;
+  white-space: nowrap;
 
-    transition:
-    background-color 0.25s ease-in-out, 
-    top 1s ease-out,
-    font-size 1s cubic-bezier(.19,1,.22,1),
-    width 1s cubic-bezier(.19,1,.22,1),
-    right 0.5s ease-in-out;
+  transition: background-color 0.25s ease-in-out, top 1s ease-out,
+    font-size 1s cubic-bezier(0.19, 1, 0.22, 1),
+    width 1s cubic-bezier(0.19, 1, 0.22, 1), right 0.5s ease-in-out;
 }
 
-ul#leaderboard li.first-place{
-    clip-path: polygon(0 0, 100% 0%, 100% 100%, 10% 100%);
-    width: 25rem;
-    height: 4rem;
+ul#leaderboard li.first-place {
+  clip-path: polygon(0 0, 100% 0%, 100% 100%, 10% 100%);
+  width: 26rem;
+  height: 4rem;
 }
 
 #leaderboard_container li.first-place > span {
-    font-size: 3.5rem;
-    padding-left: 2rem;
+  font-size: 3.5rem;
+  padding-left: 2rem;
 }
 
 ul#leaderboard li > span {
-    border-right: .1rem solid white;
-    font-size: 2rem;
-    padding-left: 1rem;
-    padding-right: 0.2rem;
+  border-right: 0.1rem solid white;
+  font-size: 2rem;
+  padding-left: 1rem;
+  padding-right: 0.2rem;
 }
 
 .current_racer {
-    border-right: .2rem solid  #01bd01;
-    border-left: none;
+  border-right: 0.2rem solid #01bd01;
+  border-left: none;
 }
 
 /*Racer Detail */
 .racer_detail {
-    display: flex;
-    flex-direction: column;
-    grid-gap: .25rem;
+  display: flex;
+  flex-direction: column;
+  grid-gap: 0.25rem;
 }
 
 .racer {
-    font-size: 1.25rem;
-    font-weight: bold;
-    border-bottom: .1rem solid white;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-bottom: 0.1rem solid white;
 }
 
 .vehicle {
-    font-size: .9rem;
+  font-size: 0.9rem;
 }
 
 /*Lap times */
 .lap_times {
-    flex-grow: 2;
+  flex-grow: 2;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-end;
-    grid-gap : .1rem
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  grid-gap: 0.1rem;
 }
 
-.lap_times > .best, 
-.lap_times > .current {
-    font-size: 1rem;
+.lap_times > * {
+  font-size: 1rem;
+}
+
+.lap_times > .time-split {
+  align-self: center;
+  padding-top: 0.5rem;
 }
 
 .lap_times > .best::before {
-    content: "Best: ";
+  content: "Best: ";
 }
 
 .lap_times > .current::before {
-    content: "Current: ";
+  content: "Current: ";
 }
 
-.ui-message{
-    position: absolute;
-    text-align:center;
-    bottom: -8rem;
-    
-    font-size: 2rem;
-    font-weight: bold;
-    font-family: Arial, Helvetica, sans-serif;
-    padding: 2rem 3rem;
-    
-    background-color: black;
-    clip-path: polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
+.ui-message {
+  position: absolute;
+  text-align: center;
+  bottom: -8rem;
 
-    transition: bottom 0.5s ease-in-out;
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 2rem 3rem;
+
+  background-color: black;
+  clip-path: polygon(5% 0%, 95% 0%, 100% 100%, 0% 100%);
+
+  transition: bottom 0.5s ease-in-out;
 }
 
 .right-visible {
-    right: 0rem;
+  right: 0rem;
 }
 
 .bottom-visible {
-    bottom: 0rem;
+  bottom: 0rem;
 }
 
+/*#region Ghosting */
 
+.ghosting_indicator {
+  display: none;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background: grey;
+  z-index: -1;
+}
+
+/*#endregion*/
+
+/*#region Respawn indicator */
+
+.progress {
+  position: absolute;
+  height: 160px;
+  width: 160px;
+  cursor: pointer;
+  top: 50%;
+  left: 50%;
+  margin: -80px 0 0 -80px;
+}
+
+.progress-circle {
+  transform: rotate(-90deg);
+  margin-top: -40px;
+}
+
+.progress-circle-back {
+  fill: none;
+  /* stroke: #D2D2D2; */
+  stroke-width: 10px;
+}
+
+.progress-circle-prog {
+  fill: none;
+  stroke: yellow;
+  stroke-width: 10px;
+  stroke-dashoffset: 0px;
+  stroke-dasharray: 0 999;
+  /* transition: stroke-dasharray 0.7s linear 0s; */
+}
+/*#endregion*/

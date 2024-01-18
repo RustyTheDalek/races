@@ -102,8 +102,13 @@ local requests = {}                                     -- requests[playerID] = 
 local READY_RACERS_COUNTDOWN = 5000
 local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
-local dist <const> = { 60, 20, 10, 5, 3, 2 }            -- prize distribution
-local distValid = true                                  -- flag indicating if prize distribution is valid
+--2D array for checkpointTimes
+--1st dimension is checkpoint
+--2nd dimension is rcers
+local checkpointTimes = {}
+
+local dist <const> = { 60, 20, 10, 5, 3, 2 } -- prize distribution
+local distValid = true                       -- flag indicating if prize distribution is valid
 if #dist > 0 and dist[1] > 0 then
     local sum = dist[1]
     for i = 2, #dist do
@@ -766,6 +771,18 @@ local function minutesSeconds(milliseconds)
     return minutes, seconds
 end
 
+local function save_result_csv(trackName, results)
+    local date = os.date("%d_%m", os.time())
+    local resultsFilePath = ("./resources/races/results/%s_%s_results.csv"):format(trackName, date)
+    local file, errMsg, errCode = io.open(resultsFilePath, "w+")
+    if file ~= fail then
+        file:write(results)
+        file:close()
+    else
+        print("Error opening file '" .. resultsFilePath .. "' for write : '" .. errMsg .. "' : " .. errCode)
+    end
+end
+
 local function saveResults(race)
     -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
     local msg = "Race using "
@@ -774,7 +791,9 @@ local function saveResults(race)
     else
         msg = msg .. (true == race.isPublic and "publicly" or "privately") .. " saved track '" .. race.trackName .. "' "
     end
-    msg = msg .. ("registered by %s : tier %s : SpecialClass %s : %d lap(s)"):format(race.owner, race.tier, race.specialClass, race.laps)
+    msg = msg ..
+    ("registered by %s : tier %s : SpecialClass %s : %d lap(s)"):format(race.owner, race.tier, race.specialClass,
+        race.laps)
     if "rest" == race.rtype then
         msg = msg .. " : using '" .. race.restrict .. "' vehicle"
     elseif "class" == race.rtype then
@@ -793,28 +812,41 @@ local function saveResults(race)
         msg = msg .. " : using wanted race mode"
     end
     msg = msg .. "\n"
+
+    local race_results_data = ""
+
     if #race.results > 0 then
         -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
         msg = msg .. "Results:\n"
         for pos, result in ipairs(race.results) do
+            local best_minutes = 99
+            local best_seconds = 99
+
             if -1 == result.finishTime then
                 msg = msg .. "DNF - " .. result.playerName
-                if result.bestLapTime >= 0 then
-                    local minutes, seconds = minutesSeconds(result.bestLapTime)
-                    msg = msg .. (" - best lap %02d:%05.2f using %s"):format(minutes, seconds, result.vehicleName)
-                end
-                msg = msg .. "\n"
             else
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
-                local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
+                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
                 msg = msg ..
-                    ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                        result.playerName, lMinutes, lSeconds, result.vehicleName)
+                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
+                    result.playerName, best_minutes, best_seconds, result.vehicleName)
             end
+
+            if result.bestLapTime >= 0 then
+                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
+                msg = msg .. (" - best lap %02d:%05.2f using %s"):format(best_minutes, best_seconds, result.vehicleName)
+            end
+            msg = msg .. "\n"
+
+            local race_results_line = ("%d,%s,%02d:%05.2f,\n"):format(pos, result.playerName, best_minutes, best_seconds)
+            race_results_data = race_results_data .. race_results_line
         end
     else
         msg = msg .. "No results.\n"
     end
+
+    save_result_csv(race.trackName, race_results_data)
+
     local resultsFilePath = "./resources/races/results_" .. race.owner .. ".txt"
     local file, errMsg, errCode = io.open(resultsFilePath, "w+")
     if file ~= fail then
@@ -920,7 +952,6 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 end
 
 local function OnPlayerLeave(race, rIndex, netID, source)
-
     print("On Player Leave called")
     race.numRacing = race.numRacing - 1
 
@@ -1099,7 +1130,6 @@ AddEventHandler("playerDropped", function()
     for i, race in pairs(races) do
         for netID, player in pairs(race.players) do
             if player.source == source then
-
                 --Remove player from gridLineup
                 for j = 1, #gridLineup do
                     if gridLineup[j] == race.players[netID].source then
@@ -1455,7 +1485,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                             (true == isPublic and "publicly" or "privately") ..
                             " saved track '" .. trackName .. "' "
                     end
-                    msg = msg .. ("by %s : tier %s : Special Class %s : %d lap(s)"):format(owner, tier, rdata.specialClass, laps)
+                    msg = msg ..
+                    ("by %s : tier %s : Special Class %s : %d lap(s)"):format(owner, tier, rdata.specialClass, laps)
                     msg = msg .. umsg .. "\n"
                     if false == distValid then
                         msg = msg .. "Prize distribution table is invalid\n"
@@ -1520,6 +1551,17 @@ AddEventHandler("races:unregister", function()
     end
 end)
 
+RegisterNetEvent("races:endrace")
+AddEventHandler("races:endrace", function()
+    local source = source
+    if races[source] ~= nil then
+        TriggerClientEvent("races:leave", -1)
+        sendMessage(source, "Race Ended.\n")
+    else
+        sendMessage(source, "Cannot End race.  You have no active race.\n")
+    end
+end)
+
 RegisterNetEvent("races:grid")
 AddEventHandler("races:grid", function()
     local source = source
@@ -1564,12 +1606,7 @@ AddEventHandler("races:autojoin", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    for _, playerId in ipairs(GetPlayers()) do
-        local name = GetPlayerName(playerId)
-        -- print(('Player %s with id %i is in the server'):format(name, playerId))
-        -- ('%s'):format('text') is same as string.format('%s', 'text)
-        TriggerClientEvent("races:autojoin", playerId, source)
-    end
+    TriggerClientEvent("races:autojoin", -1, source)
 end)
 
 RegisterNetEvent("races:readyState")
@@ -1623,17 +1660,29 @@ AddEventHandler("races:start", function(delay, override)
         return
     end
 
+    local race = races[source]
+
     if delay ~= nil then
-        if races[source] ~= nil then
-            if STATE_REGISTERING == races[source].state then
+        if race ~= nil then
+            if STATE_REGISTERING == race.state then
                 if delay >= 5 then
-                    if races[source].numRacing > 0 then
-                        if (races[source].numReady ~= races[source].numRacing and override == false) then
+                    if race.numRacing > 0 then
+                        if (race.numReady ~= race.numRacing and override == false) then
                             sendMessage(source, "Cannot start. Not all Players ready.\n")
                             return
                         end
 
-                        StartRace(races[source], source, delay)
+                        race.state = STATE_RACING
+
+                        local sourceJoined = false
+                        for _, player in pairs(race.players) do
+                            TriggerClientEvent("races:start", player.source, source, delay)
+                            if player.source == source then
+                                sourceJoined = true
+                            end
+                        end
+                        TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
+                        sendMessage(source, "Race started.\n")
                     else
                         sendMessage(source, "Cannot start.  No players have joined race.\n")
                     end
@@ -1908,7 +1957,8 @@ AddEventHandler("races:join", function(rIndex, netID)
                 TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
                     races[rIndex].trackName,
                     races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
-                TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass, races[rIndex].waypointCoords)
+                TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
+                    races[rIndex].waypointCoords)
             else
                 notifyPlayer(source, "Cannot join.  Race in progress.\n")
             end
@@ -2082,7 +2132,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 end)
 
 RegisterNetEvent("races:update_best_lap_time")
-AddEventHandler("races:update_best_lap_time", function( minutes, seconds)
+AddEventHandler("races:update_best_lap_time", function(minutes, seconds)
     local source = source
     TriggerClientEvent("races:update_best_lap_time", -1, source, minutes, seconds)
 end)
@@ -2091,6 +2141,42 @@ RegisterNetEvent("races:sendvehiclename")
 AddEventHandler("races:sendvehiclename", function(currentVehicleName)
     local source = source
     TriggerClientEvent("races:sendvehiclename", -1, source, currentVehicleName)
+end)
+
+RegisterNetEvent("races:sendCheckpointTime")
+AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
+    local source = source
+
+    local racersAhead = {}
+    local racersBehind = {}
+
+    print("Sending Checkpoint Time")
+    print(waypointsPassed)
+    print(source)
+
+    table.insert(checkpointTimes, {})
+
+    for racerAheadSource, racerAheadLapTime in pairs(checkpointTimes[waypointsPassed]) do
+        if(racerAheadSource ~= source) then
+            print("checkpointTimes at [" .. waypointsPassed .. "][" .. racerAheadSource .. "] has values")
+            print("Updating time split for " .. racerAheadSource .. " with my source " .. source .. " and a difference of " .. lapTime - racerAheadLapTime)
+            TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, lapTime - racerAheadLapTime)
+
+            table.insert(racersAhead, { source = racerAheadSource , timeSplit = (racerAheadLapTime - lapTime) })
+        end
+    end
+
+    checkpointTimes[waypointsPassed][source] = lapTime
+
+    print(#checkpointTimes)
+    print(checkpointTimes)
+    print(#checkpointTimes[waypointsPassed])
+    print(checkpointTimes[waypointsPassed])
+    print(checkpointTimes[waypointsPassed][source])
+
+    if(#racersAhead > 0) then
+        TriggerClientEvent("races:compareTimeSplit", source, racersAhead)
+    end
 end)
 
 
