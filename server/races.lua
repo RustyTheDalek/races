@@ -22,7 +22,7 @@ local requirePermissionBits <const> =             -- bit flag indicating if perm
 local function createFileIfEmpty(fileName)
     if LoadResourceFile('races', fileName) == nil then
         SaveResourceFile('races', fileName)
-end
+    end
 end
 
 createFileIfEmpty('raceData.json')
@@ -104,18 +104,6 @@ local function sendMessage(source, msg)
     TriggerClientEvent("races:message", source, msg)
 end
 
-local function logMessage(msg)
-    if true == saveLog then
-        local file, errMsg, errCode = io.open(logFilePath, "a")
-        if file ~= fail then
-            file:write(os.date() .. " : " .. msg .. "\n")
-            file:close()
-        else
-            print("logMessage: Error opening file '" .. logFilePath .. "' for append : '" .. errMsg .. "' : " .. errCode)
-        end
-    end
-end
-
 local function getTrack(trackName)
     local track = LoadResourceFile('races', trackName .. '.json')
     if track ~= nil then
@@ -164,7 +152,7 @@ local function export(trackName, withBLT)
                         if true == SaveResourceFile('races', trackName .. '.json', publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
-                            logMessage(msg)
+                            
                         else
                             print("export: Could not export track '" .. trackName .. "'.")
                         end
@@ -203,7 +191,7 @@ local function import(trackName, withBLT)
                     if true == SaveResourceFile('races', 'raceData.json', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
-                        logMessage(msg)
+                        
                     else
                         print("import: Could not import '" .. trackName .. "'.")
                     end
@@ -264,7 +252,7 @@ local function approve(playerID)
                             end
                             local msg = "approve: Request by '" .. name .. "' for " .. roleType .. " role approved."
                             print(msg)
-                            logMessage(msg)
+                            
                             TriggerClientEvent("races:roles", playerID, rolesData[license].roleBits)
                             notifyPlayer(playerID, "Request for " .. roleType .. " role approved.\n")
                             requests[playerID] = nil
@@ -302,7 +290,7 @@ local function deny(playerID)
                 end
                 local msg = "deny: Request by '" .. name .. "' for " .. roleType .. " role denied."
                 print(msg)
-                logMessage(msg)
+                
                 notifyPlayer(playerID, "Request for " .. roleType .. " role denied.\n")
                 requests[playerID] = nil
             else
@@ -409,7 +397,7 @@ local function removeRole(playerName, roleName)
                 end
                 if true == SaveResourceFile('races', 'rolesData.json', rolesData) then
                     print(msg)
-                    logMessage(msg)
+                    
                 else
                     print("removeRole: Could not remove role.")
                 end
@@ -453,7 +441,7 @@ local function updateRaceData()
             if true == SaveResourceFile('races', 'raceData_updated.json', newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
-                logMessage(msg)
+                
             else
                 print("updateRaceData: Could not update raceData.json.")
             end
@@ -503,7 +491,7 @@ local function updateTrack(trackName)
                             local msg = "updateTrack: '" ..
                                 trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
-                            logMessage(msg)
+                            
                         else
                             print("updateTrack: Could not update track.")
                         end
@@ -1223,9 +1211,6 @@ AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:save", source, isPublic, trackName)
                 TriggerEvent("races:trackNames", isPublic, source)
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
@@ -1253,9 +1238,6 @@ AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords)
             track = { waypointCoords = waypointCoords, bestLaps = {} }
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:overwrite", source, isPublic, trackName)
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error overwriting " ..
@@ -1285,9 +1267,6 @@ AddEventHandler("races:delete", function(isPublic, trackName)
                 TriggerEvent("races:trackNames", isPublic, source)
                 sendMessage(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' deleted " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'")
             else
                 sendMessage(source,
                     "Error deleting " ..
@@ -1675,9 +1654,6 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
                 TriggerEvent("races:listNames", isPublic, source)
                 sendMessage(source,
                     "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error saving " ..
@@ -1707,9 +1683,6 @@ AddEventHandler("races:overwriteLst", function(isPublic, name, vehicleList)
                 --TriggerClientEvent("races:overwrite", source, isPublic, trackName)
                 sendMessage(source,
                     "Overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' overwrote " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error overwriting " ..
@@ -1739,9 +1712,6 @@ AddEventHandler("races:deleteLst", function(isPublic, name)
                 TriggerEvent("races:listNames", isPublic, source)
                 sendMessage(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-                logMessage("'" ..
-                    GetPlayerName(source) ..
-                    "' deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'")
             else
                 sendMessage(source,
                     "Error deleting " ..
