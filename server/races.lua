@@ -8,7 +8,7 @@ local ROLE_SPAWN <const> = 4        -- spawn vehicles role
 local gridLineup = {}
 UseRaceResults = false
 
-local defaultDelay <const> = 5 
+local defaultDelay <const> = 5
 
 local requirePermissionToEdit <const> = false     -- flag indicating if permission is required to edit tracks
 local requirePermissionToRegister <const> = false -- flag indicating if permission is required to register races
@@ -19,24 +19,14 @@ local requirePermissionBits <const> =             -- bit flag indicating if perm
     (true == requirePermissionToRegister and ROLE_REGISTER or 0) |
     (true == requirePermissionToSpawn and ROLE_SPAWN or 0)
 
-local function createFileIfEmpty(fileName)
-    if LoadResourceFile('races', fileName) == nil then
-        SaveResourceFile('races', fileName)
-    end
-end
+local allVehicleFileName <const> = "vehicles.txt" -- list of all vehicles filename
 
-createFileIfEmpty('raceData.json')
-createFileIfEmpty('rolesData.json')
-createFileIfEmpty('vehicleListData.json')
+local defaultRadius <const> = 5.0                 -- default waypoint radius
 
-local allVehicleFileName <const> = "vehicles.txt"       -- list of all vehicles filename
-
-local defaultRadius <const> = 5.0                       -- default waypoint radius
-
-local requests = {}                                     -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
+local requests = {}                               -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
 local READY_RACERS_COUNTDOWN = 5000
-local races = {}                                        -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
+local races = {} -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
 --2D array for checkpointTimes
 --1st dimension is checkpoint
@@ -56,25 +46,24 @@ function dump(o)
     end
 end
 
-function explode (inputstr, sep)
+function explode(inputstr, sep)
     if sep == nil then
-            sep = "%s"
+        sep = "%s"
     end
-    local t={}
-    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-            table.insert(t, str)
+    local t = {}
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
     end
     return t
 end
 
 function removeDuplicates(table)
-
     local hash = {}
     local res = {}
 
-    for _,v in ipairs(table) do
+    for _, v in ipairs(table) do
         if (not hash[v]) then
-            res[#res+1] = v
+            res[#res + 1] = v
             hash[v] = true
         end
     end
@@ -82,6 +71,24 @@ function removeDuplicates(table)
     return res
 end
 
+local function SaveRacesFile(filename, data, length)
+    if (length == nil) then length = -1 end
+    return SaveResourceFile(GetCurrentResourceName(), filename, data, length)
+end
+
+local function LoadRacesFile(filename)
+    return LoadResourceFile(GetCurrentResourceName(), filename)
+end
+
+local function createFileIfEmpty(fileName)
+    if LoadRacesFile(fileName) == nil then
+        SaveRacesFile(fileName, {})
+    end
+end
+
+createFileIfEmpty('raceData.json')
+createFileIfEmpty('rolesData.json')
+createFileIfEmpty('vehicleListData.json')
 
 local function map(tbl, f)
     local t = {}
@@ -112,7 +119,7 @@ local function sendMessage(source, msg)
 end
 
 local function getTrack(trackName)
-    local track = LoadResourceFile('races', trackName .. '.json')
+    local track = LoadRacesFile(trackName .. '.json')
     if track ~= nil then
         if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
             if #track.waypointCoords > 1 then
@@ -145,20 +152,19 @@ end
 
 local function export(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadResourceFile('races', 'raceData.json')
+        local raceData = LoadRacesFile('raceData.json')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
                 if publicTracks[trackName] ~= nil then
-                    local track = LoadResourceFile('races', trackName .. ".json")
+                    local track = LoadRacesFile(trackName .. ".json")
                     if track == fail then
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
-                        if true == SaveResourceFile('races', trackName .. '.json', publicTracks[trackName]) then
+                        if true == SaveRacesFile(trackName .. '.json', publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
-                            
                         else
                             print("export: Could not export track '" .. trackName .. "'.")
                         end
@@ -183,7 +189,7 @@ end
 
 local function import(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadResourceFile('races', 'raceData.json')
+        local raceData = LoadRacesFile('raceData.json')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"] ~= nil and raceData["PUBLIC"] or {}
             if nil == publicTracks[trackName] then
@@ -194,10 +200,9 @@ local function import(trackName, withBLT)
                     end
                     publicTracks[trackName] = track
                     raceData["PUBLIC"] = publicTracks
-                    if true == SaveResourceFile('races', 'raceData.json', raceData) then
+                    if true == SaveRacesFile('raceData.json', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
-                        
                     else
                         print("import: Could not import '" .. trackName .. "'.")
                     end
@@ -240,7 +245,7 @@ local function approve(playerID)
             if requests[playerID] ~= nil then
                 local license = GetPlayerIdentifier(playerID, 0)
                 if license ~= nil then
-                    local rolesData = LoadResourceFile('races', 'rolesData.json')
+                    local rolesData = LoadRacesFile('rolesData.json')
                     if rolesData ~= nil then
                         license = string.sub(license, 9)
                         --requests[playerID] = {name, roleBit}
@@ -249,7 +254,7 @@ local function approve(playerID)
                         else
                             rolesData[license] = { name = name, roleBits = requests[playerID].roleBit }
                         end
-                        if true == SaveResourceFile('races', 'rolesData.json', rolesData) then
+                        if true == SaveRacesFile('rolesData.json', rolesData) then
                             local roleType = "SPAWN"
                             if ROLE_EDIT == requests[playerID].roleBit then
                                 roleType = "EDIT"
@@ -258,7 +263,7 @@ local function approve(playerID)
                             end
                             local msg = "approve: Request by '" .. name .. "' for " .. roleType .. " role approved."
                             print(msg)
-                            
+
                             TriggerClientEvent("races:roles", playerID, rolesData[license].roleBits)
                             notifyPlayer(playerID, "Request for " .. roleType .. " role approved.\n")
                             requests[playerID] = nil
@@ -296,7 +301,7 @@ local function deny(playerID)
                 end
                 local msg = "deny: Request by '" .. name .. "' for " .. roleType .. " role denied."
                 print(msg)
-                
+
                 notifyPlayer(playerID, "Request for " .. roleType .. " role denied.\n")
                 requests[playerID] = nil
             else
@@ -315,7 +320,7 @@ local function listRoles()
     print("Permission to register races: " .. (true == requirePermissionToRegister and "required" or "NOT required"))
     print("Permission to spawn vehicles: " .. (true == requirePermissionToSpawn and "required" or "NOT required"))
     -- rolesData[license] = {name, roleBits}
-    local rolesData = LoadResourceFile('races', 'rolesData.json')
+    local rolesData = LoadRacesFile('rolesData.json')
     if rolesData ~= nil then
         local rolesFound = false
         for _, role in pairs(rolesData) do
@@ -346,7 +351,7 @@ end
 
 local function removeRole(playerName, roleName)
     if playerName ~= nil then
-        local rolesData = LoadResourceFile('races', 'rolesData.json')
+        local rolesData = LoadRacesFile('rolesData.json')
         if rolesData ~= nil then
             local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN)
             local roleType = ""
@@ -401,9 +406,8 @@ local function removeRole(playerName, roleName)
                 else
                     msg = "removeRole: '" .. playerName .. "' role " .. roleType .. " removed."
                 end
-                if true == SaveResourceFile('races', 'rolesData.json', rolesData) then
+                if true == SaveRacesFile('rolesData.json', rolesData) then
                     print(msg)
-                    
                 else
                     print("removeRole: Could not remove role.")
                 end
@@ -419,7 +423,7 @@ local function removeRole(playerName, roleName)
 end
 
 local function updateRaceData()
-    local raceData = LoadResourceFile('races', 'raceData.json')
+    local raceData = LoadRacesFile('raceData.json')
     if raceData ~= nil then
         local update = false
         local newRaceData = {}
@@ -444,10 +448,9 @@ local function updateRaceData()
             end
         end
         if true == update then
-            if true == SaveResourceFile('races', 'raceData_updated.json', newRaceData) then
+            if true == SaveRacesFile('raceData_updated.json', newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
-                
             else
                 print("updateRaceData: Could not update raceData.json.")
             end
@@ -461,7 +464,7 @@ end
 
 local function updateTrack(trackName)
     if trackName ~= nil then
-        local track = LoadResourceFile('races', trackName .. '.json')
+        local track = LoadRacesFile(trackName .. '.json')
         if track ~= nil then
             if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
                 if #track.waypointCoords > 1 then
@@ -493,11 +496,10 @@ local function updateTrack(trackName)
                             end
                         end
 
-                        if true == SaveResourceFile('races', trackName .. '_updated.json', { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                        if true == SaveRacesFile(trackName .. '_updated.json', { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
                                 trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
-                            
                         else
                             print("updateTrack: Could not update track.")
                         end
@@ -521,7 +523,7 @@ end
 local function loadTrack(isPublic, source, trackName)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadResourceFile('races', 'raceData.json')
+        local raceData = LoadRacesFile('raceData.json')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -542,7 +544,7 @@ end
 local function saveTrack(isPublic, source, trackName, track)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadResourceFile('races', 'raceData.json')
+        local raceData = LoadRacesFile('raceData.json')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -550,7 +552,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            if true == SaveResourceFile('races' , 'raceData.json', raceData) then
+            if true == SaveRacesFile('raceData.json', raceData) then
                 return true
             else
                 notifyPlayer(source, "saveTrack: Could not write race data.\n")
@@ -567,7 +569,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
+        local vehicleListData = LoadRacesFile('vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -588,7 +590,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
+        local vehicleListData = LoadRacesFile('vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -596,7 +598,7 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
             local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
             lists[name] = vehicleList
             vehicleListData[license] = lists
-            if true == SaveResourceFile('races', 'vehicleListData.json', vehicleListData) then
+            if true == SaveRacesFile('vehicleListData.json', vehicleListData) then
                 return true
             else
                 notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
@@ -701,9 +703,9 @@ end
 local function save_result_csv(trackName, results)
     local date = os.date("%d_%m", os.time())
     local resultsFileName = ('/results/%s_%s_results.csv'):format(trackName, date)
-    local saveCSVResults = SaveResourceFile('races', resultsFileName, results)
+    local saveCSVResults = SaveRacesFile(resultsFileName, results)
 
-    if(saveCSVResults == nil) then
+    if (saveCSVResults == nil) then
         print("Error saving file '" .. resultsFilePath)
     end
 end
@@ -717,8 +719,8 @@ local function saveResults(race)
         msg = msg .. (true == race.isPublic and "publicly" or "privately") .. " saved track '" .. race.trackName .. "' "
     end
     msg = msg ..
-    ("registered by %s : tier %s : SpecialClass %s : %d lap(s)"):format(race.owner, race.tier, race.specialClass,
-        race.laps)
+        ("registered by %s : tier %s : SpecialClass %s : %d lap(s)"):format(race.owner, race.tier, race.specialClass,
+            race.laps)
     if "rest" == race.rtype then
         msg = msg .. " : using '" .. race.restrict .. "' vehicle"
     elseif "class" == race.rtype then
@@ -753,8 +755,8 @@ local function saveResults(race)
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
                 best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
                 msg = msg ..
-                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                    result.playerName, best_minutes, best_seconds, result.vehicleName)
+                    ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
+                        result.playerName, best_minutes, best_seconds, result.vehicleName)
             end
 
             if result.bestLapTime >= 0 then
@@ -772,7 +774,7 @@ local function saveResults(race)
 
     save_result_csv(race.trackName, race_results_data)
 
-    if(SaveResourceFile('races' , 'results_' .. race.owner .. ".txt", msg) == nil) then
+    if (SaveRacesFile('results_' .. race.owner .. ".txt", msg) == nil) then
         print('Error Saving file file results_' .. race.owner .. '.txt')
     end
 end
@@ -805,7 +807,7 @@ end
 
 local function getRoleBits(source)
     local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) & ~requirePermissionBits
-    local rolesData = LoadResourceFile('races', 'rolesData.json')
+    local rolesData = LoadRacesFile('rolesData.json')
     if rolesData ~= nil then
         local license = GetPlayerIdentifier(source, 0)
         if license ~= nil then
@@ -1099,14 +1101,13 @@ AddEventHandler("races:init", function()
         end
     end
 
-    local allVehicles = {}
-    local allVehiclesFile = LoadResourceFile('races', 'vehicles.txt')
+    local allVehicles = json.decode(LoadRacesFile('vehicles.json'))
 
-    if(allVehiclesFile == nill) then
-        notifyPlayer(source, "Error opening file vehicles.txt for read")
+    if (allVehicles == nil) then
+        notifyPlayer(source, "Error opening file vehicles.json for read")
+        return
     end
 
-    allVehicles = explode(allVehiclesFile, '\n')
     table.sort(allVehicles)
     allVehicles = removeDuplicates(allVehicles)
 
@@ -1122,7 +1123,7 @@ AddEventHandler("races:request", function(roleBit)
                 if roleBit & requirePermissionBits ~= 0 then
                     local license = GetPlayerIdentifier(source, 0)
                     if license ~= nil then
-                        local rolesData = LoadResourceFile('races', 'rolesData.json')
+                        local rolesData = LoadRacesFile('rolesData.json')
                         if rolesData ~= nil then
                             local roleType = "SPAWN"
                             if ROLE_EDIT == roleBit then
@@ -1287,7 +1288,7 @@ AddEventHandler("races:list", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadResourceFile('races', 'raceData.json')
+            local raceData = LoadRacesFile('raceData.json')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1384,7 +1385,7 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                             " saved track '" .. trackName .. "' "
                     end
                     msg = msg ..
-                    ("by %s : tier %s : Special Class %s : %d lap(s)"):format(owner, tier, rdata.specialClass, laps)
+                        ("by %s : tier %s : Special Class %s : %d lap(s)"):format(owner, tier, rdata.specialClass, laps)
                     msg = msg .. umsg .. "\n"
                     if false == distValid then
                         msg = msg .. "Prize distribution table is invalid\n"
@@ -1575,7 +1576,7 @@ AddEventHandler("races:start", function(delay, override)
                         end
 
                         race.state = STATE_RACING
-                        
+
                         local sourceJoined = false
                         for _, player in pairs(race.players) do
                             TriggerClientEvent("races:start", player.source, source, delay)
@@ -1719,7 +1720,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
+            local vehicleListData = LoadRacesFile('vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1966,7 +1967,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadResourceFile('races', 'raceData.json')
+            local raceData = LoadRacesFile('raceData.json')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1999,7 +2000,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
+            local vehicleListData = LoadRacesFile('vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -2050,12 +2051,14 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
     table.insert(checkpointTimes, {})
 
     for racerAheadSource, racerAheadLapTime in pairs(checkpointTimes[waypointsPassed]) do
-        if(racerAheadSource ~= source) then
+        if (racerAheadSource ~= source) then
             print("checkpointTimes at [" .. waypointsPassed .. "][" .. racerAheadSource .. "] has values")
-            print("Updating time split for " .. racerAheadSource .. " with my source " .. source .. " and a difference of " .. lapTime - racerAheadLapTime)
+            print("Updating time split for " ..
+                racerAheadSource ..
+                " with my source " .. source .. " and a difference of " .. lapTime - racerAheadLapTime)
             TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, lapTime - racerAheadLapTime)
 
-            table.insert(racersAhead, { source = racerAheadSource , timeSplit = (racerAheadLapTime - lapTime) })
+            table.insert(racersAhead, { source = racerAheadSource, timeSplit = (racerAheadLapTime - lapTime) })
         end
     end
 
@@ -2067,7 +2070,7 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
     print(checkpointTimes[waypointsPassed])
     print(checkpointTimes[waypointsPassed][source])
 
-    if(#racersAhead > 0) then
+    if (#racersAhead > 0) then
         TriggerClientEvent("races:compareTimeSplit", source, racersAhead)
     end
 end)
