@@ -149,6 +149,7 @@ local ready = false
 
 local wantedMode = false
 
+AddEventHandler('onClientGameTypeStart', function()
 exports.spawnmanager:setAutoSpawnCallback(function()
     if STATE_RACING == raceState then
         print("In race, spawning at race")
@@ -183,7 +184,10 @@ exports.spawnmanager:setAutoSpawnCallback(function()
 
     end
 end)
+
 exports.spawnmanager:setAutoSpawn(true)
+    exports.spawnmanager:forceRespawn()
+end)
 
 math.randomseed(GetCloudTimeAsInt())
 
