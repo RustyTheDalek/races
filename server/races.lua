@@ -43,26 +43,6 @@ local races = {}                                        -- races[playerID] = {st
 --2nd dimension is rcers
 local checkpointTimes = {}
 
-local dist <const> = { 60, 20, 10, 5, 3, 2 } -- prize distribution
-local distValid = true                       -- flag indicating if prize distribution is valid
-if #dist > 0 and dist[1] > 0 then
-    local sum = dist[1]
-    for i = 2, #dist do
-        if dist[i] > 0 and dist[i - 1] >= dist[i] then
-            sum = sum + dist[i]
-        else
-            distValid = false
-            break
-        end
-    end
-    distValid = distValid and 100 == sum
-else
-    distValid = false
-end
-if false == distValid then
-    print("^1Prize distribution table is invalid.")
-end
-
 function dump(o)
     if type(o) == 'table' then
         local s = '{ '
