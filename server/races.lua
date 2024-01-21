@@ -150,9 +150,8 @@ local function export(trackName, withBLT)
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
                 if publicTracks[trackName] ~= nil then
-                    local trackFilePath = "./resources/races/" .. trackName .. ".json"
-                    local file = io.open(trackFilePath, "r")
-                    if fail == file then
+                    local track = LoadResourceFile('races', trackName .. ".json")
+                    if track == fail then
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
@@ -701,13 +700,11 @@ end
 
 local function save_result_csv(trackName, results)
     local date = os.date("%d_%m", os.time())
-    local resultsFilePath = ("./resources/races/results/%s_%s_results.csv"):format(trackName, date)
-    local file, errMsg, errCode = io.open(resultsFilePath, "w+")
-    if file ~= fail then
-        file:write(results)
-        file:close()
-    else
-        print("Error opening file '" .. resultsFilePath .. "' for write : '" .. errMsg .. "' : " .. errCode)
+    local resultsFileName = ('/results/%s_%s_results.csv'):format(trackName, date)
+    local saveCSVResults = SaveResourceFile('races', resultsFileName, results)
+
+    if(saveCSVResults == nil) then
+        print("Error saving file '" .. resultsFilePath)
     end
 end
 
@@ -775,13 +772,8 @@ local function saveResults(race)
 
     save_result_csv(race.trackName, race_results_data)
 
-    local resultsFilePath = "./resources/races/results_" .. race.owner .. ".txt"
-    local file, errMsg, errCode = io.open(resultsFilePath, "w+")
-    if file ~= fail then
-        file:write(msg)
-        file:close()
-    else
-        print("Error opening file '" .. resultsFilePath .. "' for write : '" .. errMsg .. "' : " .. errCode)
+    if(SaveResourceFile('races' , 'results_' .. race.owner .. ".txt", msg) == nil) then
+        print('Error Saving file file results_' .. race.owner .. '.txt')
     end
 end
 
@@ -1108,33 +1100,16 @@ AddEventHandler("races:init", function()
     end
 
     local allVehicles = {}
-    local vehicleFilePath = "./resources/races/" .. allVehicleFileName
-    local file, errMsg, errCode = io.open(vehicleFilePath, "r")
-    if file ~= fail then
-        for vehicle in file:lines() do
-            if string.len(vehicle) > 0 then
-                allVehicles[#allVehicles + 1] = vehicle
-            end
-        end
-        table.sort(allVehicles)
-        local current = allVehicles[1]
-        for i = 2, #allVehicles do
-            while true do
-                if allVehicles[i] ~= nil then
-                    if allVehicles[i] == current then
-                        table.remove(allVehicles, i)
-                    else
-                        current = allVehicles[i]
-                        break
-                    end
-                else
-                    break
-                end
-            end
-        end
-    else
-        notifyPlayer(source, "Error opening file '" .. vehicleFilePath .. "' for read : '" .. errMsg .. "' : " .. errCode)
+    local allVehiclesFile = LoadResourceFile('races', 'vehicles.txt')
+
+    if(allVehiclesFile == nill) then
+        notifyPlayer(source, "Error opening file vehicles.txt for read")
     end
+
+    allVehicles = explode(allVehiclesFile, '\n')
+    table.sort(allVehicles)
+    allVehicles = removeDuplicates(allVehicles)
+
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 end)
 
