@@ -1,27 +1,3 @@
-local function readData(path)
-    local data = nil
-    local file, errMsg, errCode = io.open(path, "r")
-    if file ~= fail then
-        data = json.decode(file:read("a"))
-        file:close()
-    else
-        print("readData: Error opening file '" .. path .. "' for read : '" .. errMsg .. "' : " .. errCode)
-    end
-    return data
-end
-
-local function writeData(path, data)
-    local file, errMsg, errCode = io.open(path, "w+")
-    if file ~= fail then
-        file:write(json.encode(data))
-        file:close()
-        return true
-    else
-        print("writeData: Error opening file '" .. path .. "' for write : '" .. errMsg .. "' : " .. errCode)
-    end
-    return false
-end
-
 local STATE_REGISTERING <const> = 0 -- registering race status
 local STATE_RACING <const> = 1      -- racing race status
 
@@ -43,23 +19,15 @@ local requirePermissionBits <const> =             -- bit flag indicating if perm
     (true == requirePermissionToRegister and ROLE_REGISTER or 0) |
     (true == requirePermissionToSpawn and ROLE_SPAWN or 0)
 
-local raceDataFilePath <const> = "./resources/races/raceData.json" -- race data file path
-if readData(raceDataFilePath) == nil then
-    writeData(raceDataFilePath, {})
+local function createFileIfEmpty(fileName)
+    if LoadResourceFile('races', fileName) == nil then
+        SaveResourceFile('races', fileName)
+end
 end
 
-local rolesDataFilePath <const> = "./resources/races/rolesData.json" -- roles data file path
-if readData(rolesDataFilePath) == nil then
-    writeData(rolesDataFilePath, {})
-end
-
-local vehicleListDataFilePath <const> = "./resources/races/vehicleListData.json" -- vehicle list data file path
-if readData(vehicleListDataFilePath) == nil then
-    writeData(vehicleListDataFilePath, {})
-end
-
-local saveLog <const> = false                           -- flag indicating if certain events should be logged
-local logFilePath <const> = "./resources/races/log.txt" -- log file path
+createFileIfEmpty('raceData.json')
+createFileIfEmpty('rolesData.json')
+createFileIfEmpty('vehicleListData.json')
 
 local allVehicleFileName <const> = "vehicles.txt"       -- list of all vehicles filename
 
@@ -149,7 +117,7 @@ local function logMessage(msg)
 end
 
 local function getTrack(trackName)
-    local track = readData("./resources/races/" .. trackName .. ".json")
+    local track = LoadResourceFile('races', trackName .. '.json')
     if track ~= nil then
         if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
             if #track.waypointCoords > 1 then
@@ -182,7 +150,7 @@ end
 
 local function export(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = readData(raceDataFilePath)
+        local raceData = LoadResourceFile('races', 'raceData.json')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
@@ -193,7 +161,7 @@ local function export(trackName, withBLT)
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
-                        if true == writeData(trackFilePath, publicTracks[trackName]) then
+                        if true == SaveResourceFile('races', trackName .. '.json', publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
                             logMessage(msg)
@@ -221,7 +189,7 @@ end
 
 local function import(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = readData(raceDataFilePath)
+        local raceData = LoadResourceFile('races', 'raceData.json')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"] ~= nil and raceData["PUBLIC"] or {}
             if nil == publicTracks[trackName] then
@@ -232,7 +200,7 @@ local function import(trackName, withBLT)
                     end
                     publicTracks[trackName] = track
                     raceData["PUBLIC"] = publicTracks
-                    if true == writeData(raceDataFilePath, raceData) then
+                    if true == SaveResourceFile('races', 'raceData.json', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
                         logMessage(msg)
@@ -278,7 +246,7 @@ local function approve(playerID)
             if requests[playerID] ~= nil then
                 local license = GetPlayerIdentifier(playerID, 0)
                 if license ~= nil then
-                    local rolesData = readData(rolesDataFilePath)
+                    local rolesData = LoadResourceFile('races', 'rolesData.json')
                     if rolesData ~= nil then
                         license = string.sub(license, 9)
                         --requests[playerID] = {name, roleBit}
@@ -287,7 +255,7 @@ local function approve(playerID)
                         else
                             rolesData[license] = { name = name, roleBits = requests[playerID].roleBit }
                         end
-                        if true == writeData(rolesDataFilePath, rolesData) then
+                        if true == SaveResourceFile('races', 'rolesData.json', rolesData) then
                             local roleType = "SPAWN"
                             if ROLE_EDIT == requests[playerID].roleBit then
                                 roleType = "EDIT"
@@ -353,7 +321,7 @@ local function listRoles()
     print("Permission to register races: " .. (true == requirePermissionToRegister and "required" or "NOT required"))
     print("Permission to spawn vehicles: " .. (true == requirePermissionToSpawn and "required" or "NOT required"))
     -- rolesData[license] = {name, roleBits}
-    local rolesData = readData(rolesDataFilePath)
+    local rolesData = LoadResourceFile('races', 'rolesData.json')
     if rolesData ~= nil then
         local rolesFound = false
         for _, role in pairs(rolesData) do
@@ -384,7 +352,7 @@ end
 
 local function removeRole(playerName, roleName)
     if playerName ~= nil then
-        local rolesData = readData(rolesDataFilePath)
+        local rolesData = LoadResourceFile('races', 'rolesData.json')
         if rolesData ~= nil then
             local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN)
             local roleType = ""
@@ -439,7 +407,7 @@ local function removeRole(playerName, roleName)
                 else
                     msg = "removeRole: '" .. playerName .. "' role " .. roleType .. " removed."
                 end
-                if true == writeData(rolesDataFilePath, rolesData) then
+                if true == SaveResourceFile('races', 'rolesData.json', rolesData) then
                     print(msg)
                     logMessage(msg)
                 else
@@ -457,7 +425,7 @@ local function removeRole(playerName, roleName)
 end
 
 local function updateRaceData()
-    local raceData = readData(raceDataFilePath)
+    local raceData = LoadResourceFile('races', 'raceData.json')
     if raceData ~= nil then
         local update = false
         local newRaceData = {}
@@ -482,10 +450,8 @@ local function updateRaceData()
             end
         end
         if true == update then
-            local updatedRaceDataFilePath = "./resources/races/raceData_updated.json"
-            if true == writeData(updatedRaceDataFilePath, newRaceData) then
-                local msg = "updateRaceData: raceData.json updated to current format in '" ..
-                    updatedRaceDataFilePath .. "'."
+            if true == SaveResourceFile('races', 'raceData_updated.json', newRaceData) then
+                local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
                 logMessage(msg)
             else
@@ -501,7 +467,7 @@ end
 
 local function updateTrack(trackName)
     if trackName ~= nil then
-        local track = readData("./resources/races/" .. trackName .. ".json")
+        local track = LoadResourceFile('races', trackName .. '.json')
         if track ~= nil then
             if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
                 if #track.waypointCoords > 1 then
@@ -533,10 +499,9 @@ local function updateTrack(trackName)
                             end
                         end
 
-                        local trackFilePath = "./resources/races/" .. trackName .. "_updated.json"
-                        if true == writeData(trackFilePath, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                        if true == SaveResourceFile('races', trackName .. '_updated.json', { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
-                                trackName .. ".json' updated to current format in '" .. trackFilePath .. "'."
+                                trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
                             logMessage(msg)
                         else
@@ -562,7 +527,7 @@ end
 local function loadTrack(isPublic, source, trackName)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = readData(raceDataFilePath)
+        local raceData = LoadResourceFile('races', 'raceData.json')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -583,7 +548,7 @@ end
 local function saveTrack(isPublic, source, trackName, track)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = readData(raceDataFilePath)
+        local raceData = LoadResourceFile('races', 'raceData.json')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -591,7 +556,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            if true == writeData(raceDataFilePath, raceData) then
+            if true == SaveResourceFile('races' , 'raceData.json', raceData) then
                 return true
             else
                 notifyPlayer(source, "saveTrack: Could not write race data.\n")
@@ -608,7 +573,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = readData(vehicleListDataFilePath)
+        local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -629,7 +594,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = readData(vehicleListDataFilePath)
+        local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -637,7 +602,7 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
             local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
             lists[name] = vehicleList
             vehicleListData[license] = lists
-            if true == writeData(vehicleListDataFilePath, vehicleListData) then
+            if true == SaveResourceFile('races', 'vehicleListData.json', vehicleListData) then
                 return true
             else
                 notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
@@ -853,7 +818,7 @@ end
 
 local function getRoleBits(source)
     local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) & ~requirePermissionBits
-    local rolesData = readData(rolesDataFilePath)
+    local rolesData = LoadResourceFile('races', 'rolesData.json')
     if rolesData ~= nil then
         local license = GetPlayerIdentifier(source, 0)
         if license ~= nil then
@@ -1187,7 +1152,7 @@ AddEventHandler("races:request", function(roleBit)
                 if roleBit & requirePermissionBits ~= 0 then
                     local license = GetPlayerIdentifier(source, 0)
                     if license ~= nil then
-                        local rolesData = readData(rolesDataFilePath)
+                        local rolesData = LoadResourceFile('races', 'rolesData.json')
                         if rolesData ~= nil then
                             local roleType = "SPAWN"
                             if ROLE_EDIT == roleBit then
@@ -1361,7 +1326,7 @@ AddEventHandler("races:list", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = readData(raceDataFilePath)
+            local raceData = LoadResourceFile('races', 'raceData.json')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1802,7 +1767,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = readData(vehicleListDataFilePath)
+            local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -2049,7 +2014,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = readData(raceDataFilePath)
+            local raceData = LoadResourceFile('races', 'raceData.json')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -2082,7 +2047,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = readData(vehicleListDataFilePath)
+            local vehicleListData = LoadResourceFile('races', 'vehicleListData.json')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
