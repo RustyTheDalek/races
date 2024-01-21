@@ -940,6 +940,10 @@ local function StopRaceCountdown(raceIndex)
 end
 
 local function CheckReady(race, raceIndex)
+    if(race.numRacing == 0 ) then
+        return
+    end
+
     if race.numReady == race.numRacing and race.countdown == false then
         StartRaceCountdown(raceIndex)
     end
