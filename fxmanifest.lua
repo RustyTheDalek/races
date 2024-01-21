@@ -3,9 +3,14 @@ game "gta5"
 
 lua54 "yes"
 
-dependency "chat"
+dependency "chat"  
+
+shared_scripts {
+    "shared/*.lua"
+}
 
 client_script {
+    "lib/*.lua",
     "client/race.lua",
     "client/editor.lua"
 }

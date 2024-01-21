@@ -4,18 +4,6 @@ local STATE_JOINING <const> = 2
 local STATE_RACING <const> = 3
 local raceState = STATE_IDLE -- race state
 
-local GHOSTING_IDLE <const> = 0
-local GHOSTING_DOWN <const> = 1
-local GHOSTING_UP <const> = 2
-local ghostState = GHOSTING_IDLE
-local ghosting = false
-local ghostingTime = 0               --Timer for how long you've been ghosting
-local GHOSTING_DEFAULT = 3000
-local GHOSTING_RACE_START = 30000
-local ghostingMaxTime = GHOSTING_DEFAULT
-local ghostingInterval = 0.0         --Timer for the animation of ghosting
-local ghostingInternalMaxTime = 0.25 --How quickly alpha values animates (s)
-
 local gridRadius <const> = 5.0
 local gridCheckpoint
 
@@ -149,43 +137,45 @@ local ready = false
 
 local wantedMode = false
 
+local ghosting = Ghosting:new()
+
 AddEventHandler('onClientGameTypeStart', function()
-exports.spawnmanager:setAutoSpawnCallback(function()
-    if STATE_RACING == raceState then
-        print("In race, spawning at race")
-        local coord = startCoord
-        if true == startIsFinish then
-            if currentWaypoint > 0 then
-                coord = waypoints[currentWaypoint].coord
+    exports.spawnmanager:setAutoSpawnCallback(function()
+        if STATE_RACING == raceState then
+            print("In race, spawning at race")
+            local coord = startCoord
+            if true == startIsFinish then
+                if currentWaypoint > 0 then
+                    coord = waypoints[currentWaypoint].coord
+                end
+            else
+                if currentWaypoint > 1 then
+                    coord = waypoints[currentWaypoint - 1].coord
+                end
             end
+
+            exports.spawnmanager:spawnPlayer({
+                x = coord.x,
+                y = coord.y,
+                z = coord.z,
+                heading = coord.heading,
+                skipFade = true
+            })
         else
-            if currentWaypoint > 1 then
-                coord = waypoints[currentWaypoint - 1].coord
-            end
+
+            print("Not in Race, spawning at airport")
+            exports.spawnmanager:spawnPlayer({
+                x = -1437.03,
+                y = -2993.15,
+                z = 13.94,
+                heading = 222.93,
+                skipFade = true
+            })
+
         end
+    end)
 
-        exports.spawnmanager:spawnPlayer({
-            x = coord.x,
-            y = coord.y,
-            z = coord.z,
-            heading = coord.heading,
-            skipFade = true
-        })
-    else
-
-        print("Not in Race, spawning at airport")
-        exports.spawnmanager:spawnPlayer({
-            x = -1437.03,
-            y = -2993.15,
-            z = 13.94,
-            heading = 222.93,
-            skipFade = true
-        })
-
-    end
-end)
-
-exports.spawnmanager:setAutoSpawn(true)
+    exports.spawnmanager:setAutoSpawn(true)
     exports.spawnmanager:forceRespawn()
 end)
 
@@ -1504,32 +1494,6 @@ local function rivals()
     end
 end
 
-local function SetGhosting(_ghosting)
-    ghosting = _ghosting
-    SetLocalPlayerAsGhost(_ghosting)
-    if true == ghosting then
-        ghostState = GHOSTING_UP
-        ghostingTime = GetGameTimer()
-        ghostingInternalMaxTime = .5
-        SendNUIMessage({
-            type = "leaderboard",
-            action = "set_ghosting",
-            source = GetPlayerServerId(PlayerId()),
-            time = ghostingMaxTime / 1000
-        })
-    else
-        ghostingMaxTime = GHOSTING_DEFAULT
-        ghostState = GHOSTING_IDLE
-        ghostingInterval = 0.0
-        ghostingTime = 0
-    end
-end
-
-local function SetGhostingOverride(_ghosting, ghostingTime)
-    ghostingMaxTime = ghostingTime
-    SetGhosting(_ghosting)
-end
-
 local function repairVehicle(vehicle)
     SetVehicleEngineHealth(vehicle, 1000.0)
     SetVehicleBodyHealth(vehicle, 1000.0)
@@ -1541,8 +1505,8 @@ end
 local function respawn()
     if STATE_RACING == raceState then
         ClearRespawnIndicator()
-        ghostingMaxTime = GHOSTING_DEFAULT
-        SetGhosting(true)
+        ghosting:ResetGhostingOverride()
+        ghosting:SetGhosting(true)
         local passengers = {}
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player, true)
@@ -2212,7 +2176,7 @@ RegisterCommand("races", function(_, args)
     elseif "upgrade" == args[1] then
         resetupgrades()
     elseif "ghost" == args[1] then
-        SetGhosting(true)
+        ghosting:SetGhosting(true)
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -2864,7 +2828,7 @@ AddEventHandler("races:autojoin", function(raceIndex)
 
     local registerPosition = starts[raceIndex].registerPosition
 
-    SetGhosting(true)
+    ghosting:SetGhosting(true)
     local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
     TeleportPlayer(startPoint, registerPosition.heading)
 
@@ -2931,12 +2895,6 @@ Citizen.CreateThread(function()
         end
     end
 end)
-
-function lerp(a,b,t) return a * (1-t) + b * t end
-
-function calculateGhostingInterval(ghostingDifference)
-    return lerp(0.5, 0.1, ghostingDifference / ghostingMaxTime)
-end
 
 function ResetReady(netID)
     ready = false
@@ -3121,46 +3079,7 @@ Citizen.CreateThread(function()
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
         -- drawMsg(0.50, 0.54, "seconds", 0.7, 0)
 
-        if true == ghosting then
-            local ghostingDifference = currentTime - ghostingTime
-            local deltaTime = GetFrameTime()
-
-            if ghostState == GHOSTING_UP then
-                if (ghostingInterval >= ghostingInternalMaxTime) then
-                    SetGhostedEntityAlpha(128)
-                    TriggerServerEvent('setplayeralpha', player, 150)
-                    ghostState = GHOSTING_DOWN
-                    ghostingInternalMaxTime = calculateGhostingInterval(ghostingInterval)
-                    ghostingInterval = ghostingInternalMaxTime
-                else
-                    ghostingInterval = ghostingInterval + deltaTime
-                end
-            elseif ghostState == GHOSTING_DOWN then
-                if (ghostingInterval <= 0) then
-                    SetGhostedEntityAlpha(50)
-                    TriggerServerEvent('setplayeralpha', player, 50)
-                    ghostState = GHOSTING_UP
-                    ghostingInternalMaxTime = calculateGhostingInterval(ghostingInterval)
-                    ghostingInterval = 0
-                else
-                    ghostingInterval = ghostingInterval - deltaTime
-                end
-            end
-
-            local ghostingRemaining = ghostingMaxTime - ghostingDifference
-            --1000 = every second 
-            if ghostingRemaining <= 5000 and ghostingRemaining >= 1000 and math.fmod(ghostingRemaining, 1000) <= 5 then
-                PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
-            end
-
-            SetGhostedEntityAlpha(ghostingInterval * 254)
-            if ghostingDifference > ghostingMaxTime then
-                SetGhosting(false)
-                PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
-            end
-        else
-            SetGhosting(false)
-        end
+        ghosting:Update(currentTime, player)
 
         if STATE_EDITING == raceState then
             local closestIndex = 0
@@ -3317,7 +3236,7 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
-                    SetGhostingOverride(true, GHOSTING_RACE_START)
+                    ghosting:SetGhostingRaceStart()
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
