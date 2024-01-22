@@ -26,6 +26,7 @@ end
 function Ghosting:StartGhosting(newLength)
     if(self.active == true and newLength < self.length) then
         print("Ignoring ghosting, already happening")
+        return
     end
 
     self.timer:Start(newLength)
