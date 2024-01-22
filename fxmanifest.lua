@@ -5,6 +5,8 @@ lua54 "yes"
 
 dependency "chat"  
 
+loadscreen_manual_shutdown 'yes'
+
 shared_scripts {
     "shared/*.lua"
 }

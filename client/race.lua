@@ -1,3 +1,5 @@
+SetManualShutdownLoadingScreenNui(true)
+
 local STATE_IDLE <const> = 0
 local STATE_EDITING <const> = 1
 local STATE_JOINING <const> = 2
