@@ -139,6 +139,8 @@ local wantedMode = false
 
 local ghosting = Ghosting:new()
 
+local configData
+
 AddEventHandler('onClientGameTypeStart', function()
     exports.spawnmanager:setAutoSpawnCallback(function()
         if STATE_RACING == raceState then
@@ -3023,6 +3025,12 @@ end
 function SendCheckpointTime(waypointsPassed, lapTime)
     TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, lapTime)
 end
+
+RegisterNetEvent("races:config")
+AddEventHandler("races:config", function(_configData)
+    configData = _configData
+
+end)
 
 RegisterNetEvent("races:clearLeaderboard")
 AddEventHandler("races:clearLeaderboard", function()

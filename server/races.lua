@@ -94,6 +94,10 @@ local function createFileIfEmpty(fileName)
     end
 end
 
+local function loadConfig()
+    return LoadRacesFileJson('config.json')
+end
+
 createFileIfEmpty('raceData.json')
 createFileIfEmpty('rolesData.json')
 createFileIfEmpty('vehicleListData.json')
@@ -1124,6 +1128,10 @@ AddEventHandler("races:init", function()
     allVehicles = removeDuplicates(allVehicles)
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
+
+    local configData = loadConfig()
+
+    TriggerClientEvent("races:config", source, configData)
 end)
 
 RegisterNetEvent("races:request")

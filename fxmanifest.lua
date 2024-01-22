@@ -26,5 +26,6 @@ files {
     "html/index.js",
     "html/js/leaderboard.js",
     "html/reset.css",
-    "html/css/leaderboard.css"
+    "html/css/leaderboard.css",
+    "config.json"
 }
