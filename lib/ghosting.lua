@@ -4,6 +4,7 @@ local ghostingTimeoutSoundStart = 0 -- At what time remaining does the Ghosting 
 
 Ghosting = {
     active = false,
+    length = 0,
     ghostedAlpha = 0,
     timer = Timer:new(),
     flickerTimer = Timer:new()
@@ -29,6 +30,7 @@ function Ghosting:StartGhosting(newLength)
         return
     end
 
+    self.length = newLength
     self.timer:Start(newLength)
     self.flickerTimer:Start(newLength / 2)
 
@@ -53,7 +55,7 @@ function Ghosting:StopGhosting()
 
     self.active = false
     self.ghostedAlpha = 0
-
+    self.length = 0
     self.timer:Stop()
     self.flickerTimer:Stop()
 end
