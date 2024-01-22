@@ -813,10 +813,6 @@ local function SetNextGridLineup(results)
     -- print(#gridLineup)
 end
 
-local function round(f)
-    return (f - math.floor(f) >= 0.5) and math.ceil(f) or math.floor(f)
-end
-
 local function getRoleBits(source)
     local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) & ~requirePermissionBits
     local rolesData = LoadRacesFileJson('rolesData.json')
