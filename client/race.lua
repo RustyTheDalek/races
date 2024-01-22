@@ -1509,8 +1509,7 @@ end
 local function respawn()
     if STATE_RACING == raceState then
         ClearRespawnIndicator()
-        ghosting:ResetGhostingOverride()
-        ghosting:SetGhosting(true)
+        ghosting:StartGhosting(configData['ghostingTime'])
         local passengers = {}
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player, true)
@@ -2180,7 +2179,7 @@ RegisterCommand("races", function(_, args)
     elseif "upgrade" == args[1] then
         resetupgrades()
     elseif "ghost" == args[1] then
-        ghosting:SetGhosting(true)
+        ghosting:StartGhosting(configData['ghostingTime'])
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -2511,7 +2510,6 @@ end)
 
 RegisterNetEvent("races:respawn")
 AddEventHandler("races:respawn", function()
-    -- Citizen.Wait(250)
     respawn()
 end)
 
@@ -2832,7 +2830,7 @@ AddEventHandler("races:autojoin", function(raceIndex)
 
     local registerPosition = starts[raceIndex].registerPosition
 
-    ghosting:SetGhosting(true)
+    ghosting:StartGhosting(configData['ghostingTime'])
     local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
     TeleportPlayer(startPoint, registerPosition.heading)
 
@@ -3031,6 +3029,8 @@ end
 RegisterNetEvent("races:config")
 AddEventHandler("races:config", function(_configData)
     configData = _configData
+
+    ghosting = Ghosting:new(nil, configData['ghosting'])
 
 end)
 
@@ -3246,7 +3246,7 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
-                    ghosting:SetGhostingRaceStart()
+                    ghosting:StartGhosting(configData['raceStartGhostingTime'])
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button

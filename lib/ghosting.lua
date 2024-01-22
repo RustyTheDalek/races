@@ -1,106 +1,95 @@
-local GHOSTING_IDLE <const> = 0
-local GHOSTING_DOWN <const> = 1
-local GHOSTING_UP <const> = 2
-
-local GHOSTING_DEFAULT <const> = 3000 --Default Ghosting Length
-local GHOSTING_RACE_START <const> = 30000
+local lowGhostingAlpha = 0
+local highGhostingAlpha = 0
+local ghostingTimeoutSoundStart = 0 -- At what time remaining does the Ghosting warning sound start
 
 Ghosting = {
-    ghostState = GHOSTING_IDLE,
-    ghosting = false,
-    ghostingTime = 0, --Timer for how long you've been ghosting
-    ghostingMaxTime = GHOSTING_DEFAULT,
-    ghostingInterval = 0.0,  --Timer for the animation of ghosting
-    ghostingInternalMaxTime = 0.25 --How quickly alpha values animates (s)
+    active = false,
+    ghostedAlpha = 0,
+    timer = Timer:new(),
+    flickerTimer = Timer:new()
 }
 
--- Derived class method new
-function Ghosting:new (o)
+function Ghosting:new (o, configData)
     o = o or {}
     setmetatable(o, self)
+
+    if(configData~= nil) then
+        lowGhostingAlpha = configData['lowGhostingAlpha']
+        highGhostingAlpha = configData['highGhostingAlpha']
+        ghostingTimeoutSoundStart = configData['ghostingTimeoutSoundStart']
+    end
+
     self.__index = self
     return o
 end
 
-function Ghosting:SetGhosting(_ghosting)
-    self.ghosting = _ghosting
-    SetLocalPlayerAsGhost(_ghosting)
-    if self.ghosting == true then
-        self.ghostState = GHOSTING_UP
-        self.ghostingTime = GetGameTimer()
-        self.ghostingInternalMaxTime = .5
-        SendNUIMessage({
-            type = "leaderboard",
-            action = "set_ghosting",
-            source = GetPlayerServerId(PlayerId()),
-            time = self.ghostingMaxTime / 1000
-        })
-    else
-        self.ghostingMaxTime = GHOSTING_DEFAULT
-        self.ghostState = GHOSTING_IDLE
-        self.ghostingInterval = 0.0
-        self.ghostingTime = 0
+function Ghosting:StartGhosting(newLength)
+    if(self.active == true and newLength < self.length) then
+        print("Ignoring ghosting, already happening")
     end
+
+    self.timer:Start(newLength)
+    self.flickerTimer:Start(newLength / 2)
+
+    self.active = true
+    SetLocalPlayerAsGhost(true)
+    self.ghostedAlpha = lowGhostingAlpha
+    SetGhostedEntityAlpha(lowGhostingAlpha)
+
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "set_ghosting",
+        source = GetPlayerServerId(PlayerId()),
+        time = newLength / 1000
+    })
 end
 
-function Ghosting:SetGhostingOverride(_ghosting, ghostingTime)
-    self.ghostingMaxTime = ghostingTime
-    self:SetGhosting(_ghosting)
-end
+function Ghosting:StopGhosting()
+    PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
 
-function Ghosting:SetGhostingRaceStart()
-    self.ghostingMaxTime = GHOSTING_RACE_START
-    self:SetGhosting(true)
-end
+    ResetGhostedEntityAlpha()
+    SetLocalPlayerAsGhost(false)
 
+    self.active = false
+    self.ghostedAlpha = 0
 
-function Ghosting:ResetGhostingOverride()
-    self.ghostingMaxTime = GHOSTING_DEFAULT
-end
-
-function Ghosting:CalculateGhostingInterval(ghostingDifference)
-    return lerp(0.5, 0.1, ghostingDifference / self.ghostingMaxTime)
+    self.timer:Stop()
+    self.flickerTimer:Stop()
 end
 
 function Ghosting:Update(currentTime, player)
-    if self.ghosting == true then
-        local ghostingDifference = currentTime - self.ghostingTime
-        local deltaTime = GetFrameTime()
+    if(self.active ~= true) then
+        return
+    end
 
-        if self.ghostState == GHOSTING_UP then
-            if (self.ghostingInterval >= self.ghostingInternalMaxTime) then
-                SetGhostedEntityAlpha(128)
-                TriggerServerEvent('setplayeralpha', player, 150)
-                self.ghostState = GHOSTING_DOWN
-                self.ghostingInternalMaxTime = self:CalculateGhostingInterval(self.ghostingInterval)
-                self.ghostingInterval = self.ghostingInternalMaxTime
-            else
-                self.ghostingInterval = self.ghostingInterval + deltaTime
-            end
-        elseif self.ghostState == GHOSTING_DOWN then
-            if (self.ghostingInterval <= 0) then
-                SetGhostedEntityAlpha(50)
-                TriggerServerEvent('setplayeralpha', player, 50)
-                self.ghostState = GHOSTING_UP
-                self.ghostingInternalMaxTime = self:CalculateGhostingInterval(self.ghostingInterval)
-                self.ghostingInterval = 0
-            else
-                self.ghostingInterval = self.ghostingInterval - deltaTime
-            end
+    self.timer:Update()
+    self.flickerTimer:Update()
+
+    if(self.timer.complete) then
+        print("Ghosting complete")
+        self.flickerTimer:Stop()
+        self:StopGhosting()
+    end
+
+    if(self.flickerTimer.complete) then 
+
+        print("Toggling Flicker")
+        local newGhostingAlpha
+
+        if(self.ghostedAlpha == lowGhostingAlpha) then
+            newGhostingAlpha = highGhostingAlpha
+        else
+            newGhostingAlpha = lowGhostingAlpha
         end
 
-        local ghostingRemaining = self.ghostingMaxTime - ghostingDifference
-        --1000 = every second 
-        if ghostingRemaining <= 5000 and ghostingRemaining >= 1000 and math.fmod(ghostingRemaining, 1000) <= 5 then
-            PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
-        end
+        SetGhostedEntityAlpha(newGhostingAlpha)
+        TriggerServerEvent('setplayeralpha', player, newGhostingAlpha)
+        self.flickerTimer:Start(self.timer.length / 2)
+    end
 
-        SetGhostedEntityAlpha(self.ghostingInterval * 254)
-        if ghostingDifference > self.ghostingMaxTime then
-            self:SetGhosting(false)
-            PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
-        end
-    else
-        self:SetGhosting(false)
+    local roundedTimer = round(self.timer.length, 0)
+
+    if(roundedTimer <= ghostingTimeoutSoundStart and math.fmod(roundedTimer, 1000) <= 5 and math.fmod(roundedTimer, 1000) > 0 ) then
+        PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
     end
 end
