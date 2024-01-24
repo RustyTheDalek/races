@@ -46,7 +46,7 @@ function Ghosting:StartGhosting(newLength)
     SetLocalPlayerAsGhost(true)
     self.currentGhostedAlpha = lowGhostingAlpha
     SetGhostedEntityAlpha(lowGhostingAlpha)
-    -- TriggerServerEvent('setplayeralpha', lowGhostingAlpha)
+    TriggerServerEvent('ghosting:setplayeralpha', lowGhostingAlpha)
 end
 
 function Ghosting:StopGhosting()
@@ -84,10 +84,10 @@ function Ghosting:Update()
 
         if(self.currentGhostedAlpha == lowGhostingAlpha) then
             newGhostingAlpha = highGhostingAlpha
-            TriggerServerEvent('setplayeralpha', 150)
+            TriggerServerEvent('ghosting:setplayeralpha', 150)
         else
             newGhostingAlpha = lowGhostingAlpha
-            TriggerServerEvent('setplayeralpha', 50)
+            TriggerServerEvent('ghosting:setplayeralpha', 50)
         end
 
         self.currentGhostedAlpha = newGhostingAlpha
@@ -99,3 +99,8 @@ function Ghosting:Update()
         self.flickerTimer:Start(flickerInterval)
     end
 end
+
+RegisterNetEvent("ghosting:setplayeralpha")
+AddEventHandler("ghosting:setplayeralpha", function(alphaValue)
+    SetGhostedEntityAlpha(alphaValue)
+end)

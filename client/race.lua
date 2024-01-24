@@ -2233,11 +2233,6 @@ RegisterCommand("races", function(_, args)
     end
 end)
 
-RegisterNetEvent("setplayeralpha")
-AddEventHandler("setplayeralpha", function(alphaValue)
-    SetGhostedEntityAlpha(alphaValue)
-end)
-
 RegisterNetEvent("races:roles")
 AddEventHandler("races:roles", function(roles)
     if 0 == roles & ROLE_EDIT and STATE_EDITING == raceState then
