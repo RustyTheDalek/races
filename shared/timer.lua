@@ -37,7 +37,7 @@ function Timer:Update()
     end
 
     self.length = self.length - GetFrameTime() * 1000
-    
+
     if self.length <= 0 then
         self.active = false
         self.complete = true
