@@ -1163,6 +1163,8 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                             end
                         elseif "wanted" == rtype then
                             print("wanted race type")
+                        elseif "ghost" == rtype then
+                            print("ghost race type")
                         elseif rtype ~= nil then
                             sendMessage("Cannot register.  Unknown race type.\n")
                             return
@@ -1860,7 +1862,7 @@ RegisterNUICallback("register", function(data)
         register(tier, specialClass, laps, timeout, rtype, vclass, nil)
     elseif "rand" == rtype then
         register(tier, specialClass, laps, timeout, rtype, vclass, svehicle)
-    elseif "wanted" == rtype then
+    else 
         register(tier, specialClass, laps, timeout, rtype, nil, nil)
     end
 end)
@@ -2355,6 +2357,8 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             end
         elseif "wanted" == rdata.rtype then
             msg = msg .. " : wanted race mode"
+        elseif "ghost" == rdata.rtype then
+            msg = msg .. " : ghost race mode"
         end
         msg = msg .. ")"
         AddTextComponentSubstringPlayerName(msg)
@@ -3439,6 +3443,8 @@ Citizen.CreateThread(function()
                     end
                 elseif "wanted" == starts[closestIndex].rtype then
                     msg = msg .. " : using wanted race mode"
+                elseif "ghost" == starts[closestIndex].rtype then
+                    msg = msg .. " : using ghost race mode"
                 end
                 SetJoinMessage(msg)
                 if IsControlJustReleased(0, 51) == 1 then -- E key or DPAD RIGHT

@@ -1386,6 +1386,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                         end
                     elseif "wanted" == rdata.rtype then
                         umsg = " : wanted race mode "
+                    elseif "ghost" == rdata.rtype then
+                        umsg = " : ghost race mode "
                     elseif rdata.rtype ~= nil then
                         sendMessage(source, "Cannot register.  Unknown race type.\n")
                         return
