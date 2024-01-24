@@ -167,7 +167,7 @@ function SetRespawnIndicator(time) {
 
   respawn_indicator.removeAttr('style');
 
-  respawn_indicator.css('transition', `stroke-dasharray ${time}s ease-in-out`);
+  respawn_indicator.css('transition', `stroke-dasharray ${time}s linear`);
   respawn_indicator.css('stroke-dasharray', '465 999');
 }
 
@@ -179,7 +179,12 @@ function SetGhostingIndicator(source, time) {
 
   ghosting_indicator.show();
   ghosting_indicator.css('transition', `width ${time}s linear`);
-  ghosting_indicator.width('0%');
+  ghosting_indicator.width('100%');
+
+  setTimeout(function() {
+    ghosting_indicator.removeAttr('style');
+    ghosting_indicator.hide();
+  }, time * 1000);
 }
 
 function SetLeaderboardLower(lower) {
