@@ -11,7 +11,7 @@ shared_scripts {
     "shared/*.lua"
 }
 
-client_script {
+client_scripts {
     "lib/*.lua",
     "client/race.lua",
     "client/editor.lua"
