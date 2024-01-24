@@ -1,9 +1,10 @@
 {
     "ghostingTime": 3000,
-    "raceStartGhostingTime": 30000,
+    "raceStartGhostingTime": 3000,
     "ghosting": {
         "lowGhostingAlpha": 50,
-        "highGhostingAlpha": 150,
-        "ghostingTimeoutSoundStart": 5000
+        "highGhostingAlpha": 128,
+        "flickerInterval": 1000,
+        "ghostingTimeoutStart": 5000
     }
 }

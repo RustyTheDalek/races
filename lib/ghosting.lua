@@ -1,11 +1,12 @@
 local lowGhostingAlpha = 0
 local highGhostingAlpha = 0
-local ghostingTimeoutSoundStart = 0 -- At what time remaining does the Ghosting warning sound start
+local ghostingTimeoutStart = 0 -- At what time to start indicating that ghosting is running out
+local flickerInterval = 0
 
 Ghosting = {
     active = false,
     length = 0,
-    ghostedAlpha = 0,
+    currentGhostedAlpha = 0,
     timer = Timer:new(),
     flickerTimer = Timer:new()
 }
@@ -17,7 +18,8 @@ function Ghosting:new (o, configData)
     if(configData~= nil) then
         lowGhostingAlpha = configData['lowGhostingAlpha']
         highGhostingAlpha = configData['highGhostingAlpha']
-        ghostingTimeoutSoundStart = configData['ghostingTimeoutSoundStart']
+        ghostingTimeoutStart = configData['ghostingTimeoutStart']
+        flickerInterval = configData['flickerInterval']
     end
 
     self.__index = self
@@ -30,37 +32,38 @@ function Ghosting:StartGhosting(newLength)
         return
     end
 
-    self.length = newLength
-    self.timer:Start(newLength)
-    self.flickerTimer:Start(newLength / 2)
-
-    self.active = true
-    SetLocalPlayerAsGhost(true)
-    self.ghostedAlpha = lowGhostingAlpha
-    SetGhostedEntityAlpha(lowGhostingAlpha)
-
     SendNUIMessage({
         type = "leaderboard",
         action = "set_ghosting",
         source = GetPlayerServerId(PlayerId()),
         time = newLength / 1000
     })
+
+    self.length = newLength
+    self.timer:Start(newLength)
+
+    self.active = true
+    SetLocalPlayerAsGhost(true)
+    self.currentGhostedAlpha = lowGhostingAlpha
+    SetGhostedEntityAlpha(lowGhostingAlpha)
+    -- TriggerServerEvent('setplayeralpha', lowGhostingAlpha)
 end
 
 function Ghosting:StopGhosting()
     PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
 
-    ResetGhostedEntityAlpha()
+    SetGhostedEntityAlpha(254)
     SetLocalPlayerAsGhost(false)
+    ResetGhostedEntityAlpha()
 
     self.active = false
-    self.ghostedAlpha = 0
+    self.currentGhostedAlpha = 0
     self.length = 0
     self.timer:Stop()
     self.flickerTimer:Stop()
 end
 
-function Ghosting:Update(currentTime, player)
+function Ghosting:Update()
     if(self.active ~= true) then
         return
     end
@@ -69,30 +72,30 @@ function Ghosting:Update(currentTime, player)
     self.flickerTimer:Update()
 
     if(self.timer.complete) then
-        print("Ghosting complete")
-        self.flickerTimer:Stop()
         self:StopGhosting()
+        return
     end
 
-    if(self.flickerTimer.complete) then 
+    if(self.flickerTimer.complete) then
 
+        PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
         print("Toggling Flicker")
-        local newGhostingAlpha
+        local newGhostingAlpha = nil
 
-        if(self.ghostedAlpha == lowGhostingAlpha) then
+        if(self.currentGhostedAlpha == lowGhostingAlpha) then
             newGhostingAlpha = highGhostingAlpha
+            TriggerServerEvent('setplayeralpha', 150)
         else
             newGhostingAlpha = lowGhostingAlpha
+            TriggerServerEvent('setplayeralpha', 50)
         end
 
+        self.currentGhostedAlpha = newGhostingAlpha
         SetGhostedEntityAlpha(newGhostingAlpha)
-        TriggerServerEvent('setplayeralpha', player, newGhostingAlpha)
-        self.flickerTimer:Start(self.timer.length / 2)
+        self.flickerTimer:Start(flickerInterval)
     end
 
-    local roundedTimer = round(self.timer.length, 0)
-
-    if(roundedTimer <= ghostingTimeoutSoundStart and math.fmod(roundedTimer, 1000) <= 5 and math.fmod(roundedTimer, 1000) > 0 ) then
-        PlaySoundFrontend(-1, "3_2_1", "HUD_MINI_GAME_SOUNDSET", true)
+    if(self.timer.length <= ghostingTimeoutStart and not self.flickerTimer.active) then
+        self.flickerTimer:Start(flickerInterval)
     end
 end
