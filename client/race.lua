@@ -2234,7 +2234,7 @@ RegisterCommand("races", function(_, args)
 end)
 
 RegisterNetEvent("setplayeralpha")
-AddEventHandler("setplayeralpha", function(playerID, alphaValue)
+AddEventHandler("setplayeralpha", function(alphaValue)
     SetGhostedEntityAlpha(alphaValue)
 end)
 
@@ -3089,7 +3089,7 @@ Citizen.CreateThread(function()
         -- drawMsg(0.50, 0.50, ("%05.2f"):format(-currentTime / 1000.0), 0.7, 0)
         -- drawMsg(0.50, 0.54, "seconds", 0.7, 0)
 
-        ghosting:Update(currentTime, player)
+        ghosting:Update()
 
         if STATE_EDITING == raceState then
             local closestIndex = 0
