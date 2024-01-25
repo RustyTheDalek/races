@@ -26,7 +26,25 @@ function Ghosting:new (o, configData)
     return o
 end
 
+function Ghosting:StartGhostingNoTimer()
+
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "set_ghosting",
+        source = GetPlayerServerId(PlayerId())
+    })
+
+    self.active = true
+    self.length = 0
+    SetLocalPlayerAsGhost(true)
+    self.currentGhostedAlpha = lowGhostingAlpha
+    SetGhostedEntityAlpha(lowGhostingAlpha)
+    TriggerServerEvent('ghosting:setplayeralpha', lowGhostingAlpha)
+
+end
+
 function Ghosting:StartGhosting(newLength)
+
     if(self.active == true and newLength < self.length) then
         print("Ignoring ghosting, already happening")
         return
@@ -56,6 +74,12 @@ function Ghosting:StopGhosting()
     SetLocalPlayerAsGhost(false)
     ResetGhostedEntityAlpha()
 
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "clear_ghosting",
+        source = GetPlayerServerId(PlayerId())
+    })
+
     self.active = false
     self.currentGhostedAlpha = 0
     self.length = 0
@@ -64,7 +88,8 @@ function Ghosting:StopGhosting()
 end
 
 function Ghosting:Update()
-    if(self.active ~= true) then
+    
+    if(self.active ~= true or self.length == 0) then
         return
     end
 
