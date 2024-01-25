@@ -73,6 +73,9 @@ function readLeaderBoardEvents(event) {
     case "set_ghosting":
       SetGhostingIndicator(data.source, data.time);
       break;
+    case "clear_ghosting":
+      ClearGhostingIndicator($(`#${source} .ghosting_indicator`));
+      break;
     case "set_respawn":
       SetRespawnIndicator(data.time);
       break;
@@ -171,20 +174,26 @@ function SetRespawnIndicator(time) {
   respawn_indicator.css('stroke-dasharray', '465 999');
 }
 
-function SetGhostingIndicator(source, time) {
+function SetGhostingIndicator(source, time = null) {
 
   let ghosting_indicator = $(`#${source} .ghosting_indicator`);
 
   ghosting_indicator.removeAttr('style');
 
   ghosting_indicator.show();
-  ghosting_indicator.css('transition', `width ${time}s linear`);
+  if(time) {
+      ghosting_indicator.css('transition', `width ${time}s linear`);
+  }
   ghosting_indicator.width('100%');
 
-  setTimeout(function() {
-    ghosting_indicator.removeAttr('style');
-    ghosting_indicator.hide();
-  }, time * 1000);
+  if(time){
+    setTimeout(ClearGhostingIndicator(ghosting_indicator), time * 1000);
+  }
+}
+
+function ClearGhostingIndicator(ghosting_indicator) {
+  ghosting_indicator.removeAttr('style');
+  ghosting_indicator.hide();
 }
 
 function SetLeaderboardLower(lower) {
