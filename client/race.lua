@@ -605,7 +605,6 @@ end
 
 local function StopRaceEffects()
     print("Stopping race effect")
-    currentRace.raceType = ''
     if currentRace.raceType == 'wanted' then
         SetMaxWantedLevel(0)
         SetPlayerWantedLevel(PlayerId(), 0, false)
@@ -613,6 +612,8 @@ local function StopRaceEffects()
     elseif currentRace.raceType == 'ghost' then
         ghosting:StopGhosting()
     end
+
+    currentRace.raceType = ''
 end
 
 local function finishRace(time)
