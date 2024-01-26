@@ -621,6 +621,7 @@ local function finishRace(time)
     StopRaceEffects()
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
+    ClearDNFTime()
     SetLeaderboardLower(true)
     ResetReady(PedToNet(PlayerPedId()))
     restoreBlips()
@@ -1758,6 +1759,13 @@ function UpdateDNFTime(minutes, seconds)
         action = "update_dnf_time",
         minutes = minutes,
         seconds = seconds
+    })
+end
+
+function ClearDNFTime()
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "clear_dnf_time"
     })
 end
 
