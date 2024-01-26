@@ -25,7 +25,9 @@ local startBlipColor <const> = 2          -- green
 local finishBlipColor <const> = 0         -- white
 local midBlipColor <const> = 38           -- dark blue
 local registerBlipColor <const> = 83      -- purple
-local racerBlipColor <const> = 2          -- green
+local racerAheadBlipColor <const> = 2     -- green
+local racerBehindBlipColor <const> = 1    -- red
+local defaultracerBlipColor <const> = 0    -- red
 
 local selectedBlipColor <const> = 1       -- red
 
@@ -879,6 +881,7 @@ local function editWaypoints(coord, heading)
 end
 
 local function removeRacerBlipGT()
+    RemoveRaceBlip()
     for _, racer in pairs(racerBlipGT) do
         RemoveBlip(racer.blip)
         RemoveMpGamerTag(racer.gamerTag)
@@ -1784,6 +1787,20 @@ function SetJoinMessage(message)
     })
 end
 
+function SetOwnRacerBlip()
+    
+    SetBlipSprite(GetMainPlayerBlipId(), racerSprite)
+    SetBlipColour(GetMainPlayerBlipId(), defaultracerBlipColor)   
+
+    if(position ~= -1) then
+        ShowNumberOnBlip(GetMainPlayerBlipId(), position)
+    end
+end
+
+function RemoveRaceBlip()
+    RemoveBlip(GetMainPlayerBlipId())
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2599,6 +2616,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
                 loadWaypointBlips(waypointCoords)
+                SetOwnRacerBlip()
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -2737,6 +2755,27 @@ end)
 
 RegisterNetEvent("races:racerPositions")
 AddEventHandler("races:racerPositions", function(racePositions)
+
+    SetOwnRacerBlip()
+
+    for source, racerBlip in pairs(racerBlipGT) do
+        print(("source: %s | blip %i"):format(source, racerBlip.blip))
+
+        local blip = racerBlip.blip
+        SetBlipSprite(blip, racerSprite)
+        local blipColour = defaultracerBlipColor
+
+        if(racePositions[source] < position) then
+            blipColour = racerAheadBlipColor
+        else
+            blipColour = racerBehindBlipColor
+        end
+
+        SetBlipColour(blip, blipColour)
+        ShowNumberOnBlip(blip, racerPosition)
+        racerBlip.blip = blip
+    end    
+
     SendNUIMessage({
         type = "leaderboard",
         action = "update_positions",
@@ -2756,6 +2795,8 @@ AddEventHandler("races:addRacer", function(netID, name)
             local blip = AddBlipForEntity(ped)
             SetBlipSprite(blip, racerSprite)
             SetBlipColour(blip, racerBlipColor)
+            SetBlipAsShortRange(blip, false)
+            SetBlipDisplay(blip, 8)
             local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
             SetMpGamerTagVisibility(gamerTag, 0, true)
             racerBlipGT[netID] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
