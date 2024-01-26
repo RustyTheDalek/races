@@ -137,7 +137,9 @@ local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
 local ready = false
 
-local wantedMode = false
+local currentRace = {
+    raceType = ""
+}
 
 local ghosting = Ghosting:new()
 
@@ -595,14 +597,27 @@ local function vehicleInList(vehicle, list)
     return false
 end
 
-local function finishRace(time)
-    PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
-    if wantedMode == true then
-        wantedMode = false
+local function StartRaceEffects()
+    if(currentRace.raceType == 'ghost') then
+        ghosting:StartGhostingNoTimer()
+    end
+end
+
+local function StopRaceEffects()
+    print("Stopping race effect")
+    currentRace.raceType = ''
+    if currentRace.raceType == 'wanted' then
         SetMaxWantedLevel(0)
         SetPlayerWantedLevel(PlayerId(), 0, false)
         SetPlayerWantedLevelNow(PlayerId(), false)
+    elseif currentRace.raceType == 'ghost' then
+        ghosting:StopGhosting()
     end
+end
+
+local function finishRace(time)
+    PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
+    StopRaceEffects()
     TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
     bestLapVehicleName, nil)
     SetLeaderboardLower(true)
@@ -1511,7 +1526,9 @@ end
 local function respawn()
     if STATE_RACING == raceState then
         ClearRespawnIndicator()
-        ghosting:StartGhosting(configData['ghostingTime'])
+        if(currentRace.raceType ~= 'ghost') then
+            ghosting:StartGhosting(configData['ghostingTime'])
+        end
         local passengers = {}
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player, true)
@@ -2484,6 +2501,8 @@ AddEventHandler("races:start", function(rIndex, delay)
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
 
+                    StartRaceEffects()
+
                     repairVehicle(vehicle)
                     resetupgrades(vehicle)
                     DeleteGridCheckPoints()
@@ -2617,7 +2636,10 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     randVehicles = starts[rIndex].vehicleList
                 elseif "wanted" == starts[rIndex].rtype then
                     msg = msg .. " : using wanted race mode"
-                    wantedMode = true
+                    currentRace.raceType = 'wanted'
+                elseif starts[rIndex].rtype == "ghost" then
+                    msg = msg .. " : using ghost race mode"
+                    currentRace.raceType = 'ghost'
                 end
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
@@ -2994,7 +3016,6 @@ function ClearRespawnIndicator()
     })
 end
 
-
 function UpdateVehicleName()
     local player = PlayerPedId()
     if IsPedInAnyVehicle(player, false) == 1 then
@@ -3006,8 +3027,8 @@ function UpdateVehicleName()
     end
 end
 
-function HandleWanted()
-    if wantedMode == true then
+function HandleRaceType()
+    if currentRace.raceType == 'wanted' then
         local player = PlayerId()
 
         local wantedLevel = math.max(6-position, 0)
@@ -3018,6 +3039,8 @@ function HandleWanted()
             SetPlayerWantedLevel(player, wantedLevel, false)
             SetPlayerWantedLevelNow(player, false)
         end
+    elseif currentRace.raceType == 'ghost' then
+        --
     end
 end
 
@@ -3245,7 +3268,9 @@ Citizen.CreateThread(function()
                     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
                     bestLapVehicleName = currentVehicleName
                     lapTimeStart = currentTime
-                    ghosting:StartGhosting(configData['raceStartGhostingTime'])
+                    if(currentRace.raceType ~= 'ghost') then
+                        ghosting:StartGhosting(configData['raceStartGhostingTime'])
+                    end
                 end
 
                 if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
@@ -3275,7 +3300,7 @@ Citizen.CreateThread(function()
                 local minutes, seconds = minutesSeconds(lapTime)
                 SendCurrentLapTime(minutes, seconds)
 
-                HandleWanted()
+                HandleRaceType()
 
                 if true == beginDNFTimeout then
                     local milliseconds = timeoutStart + DNFTimeout - currentTime
