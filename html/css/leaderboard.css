@@ -157,7 +157,7 @@ ul#leaderboard li > span {
 .ui-message {
   position: absolute;
   text-align: center;
-  bottom: -8rem;
+  bottom: -20rem;
 
   font-size: 2rem;
   font-weight: bold;
