@@ -2707,6 +2707,7 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
+            removeRacerBlipGT()
         end
     else
         notifyPlayer("Ignoring finish event.  Invalid parameters.\n")
@@ -2888,7 +2889,6 @@ AddEventHandler("races:autojoin", function(raceIndex)
         return
     end
 
-    removeRacerBlipGT()
     local player = PlayerPedId()
 
     local registerPosition = starts[raceIndex].registerPosition
@@ -3597,8 +3597,7 @@ Citizen.CreateThread(function()
                         end
                     end
                     if true == joinRace then
-                        removeRacerBlipGT()
-                        TriggerServerEvent("races:join", closestIndex, PedToNet(player), nil)
+                        TriggerServerEvent("races:join", closestIndex, PedToNet(player))
                     end
                 end
             else
