@@ -1822,6 +1822,18 @@ function SetOtherRacerBlip(racerPosition, source)
     racerBlipGT[source].blip = blip
 end
 
+function SetupGamerTag(ped, name)
+    local hudColour = 0
+    if(name == 'Rusty') then
+        hudColour = 49
+    end
+
+    local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
+    SetMpGamerTagColour(gamerTag, 0, hudColour)
+    SetMpGamerTagVisibility(gamerTag, 0, true)
+    return gamerTag
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2810,8 +2822,7 @@ AddEventHandler("races:addRacer", function(netID, source, name)
             SetBlipColour(blip, defaultRacerBlipColor)
             SetBlipAsShortRange(blip, false)
             SetBlipDisplay(blip, 8)
-            local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
-            SetMpGamerTagVisibility(gamerTag, 0, true)
+            local gamerTag = SetupGamerTag(ped, name)
             racerBlipGT[source] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
         end
     else
@@ -3655,8 +3666,7 @@ Citizen.CreateThread(function()
                 for _, racer in pairs(racerBlipGT) do
                     ped = NetToPed(racer.netID)
                     if DoesEntityExist(ped) == 1 then
-                        racer.gamerTag = CreateFakeMpGamerTag(ped, racer.name, false, false, nil, 0)
-                        SetMpGamerTagVisibility(racer.gamerTag, 0, true)
+                        racer.gamerTag = SetupGamerTag(ped, racer.name)
                     end
                 end
                 recreated = true
