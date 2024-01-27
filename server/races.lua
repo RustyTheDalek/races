@@ -1109,6 +1109,12 @@ AddEventHandler("races:init", function()
             }
             TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
                 race.owner, race.tier, race.laps, race.timeout, rdata)
+
+            for nID, player in pairs(race.players) do
+
+                print(("Player %s | NetID: %s | Source: %s"):format(player.playerName, player.netID, player.source))
+                TriggerClientEvent("races:addRacer", source, player.netID, player.source, player.playerName)
+            end
         end
     end
 
