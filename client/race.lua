@@ -2238,6 +2238,8 @@ RegisterCommand("races", function(_, args)
         resetupgrades()
     elseif "ghost" == args[1] then
         ghosting:StartGhosting(configData['ghostingTime'])
+    elseif "source" == args[1] then
+        notifyPlayer(GetPlayerServerId(PlayerId()))
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
