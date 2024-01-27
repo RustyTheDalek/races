@@ -20,12 +20,16 @@ local blue <const> = { r = 0, g = 0, b = 255 }
 local yellow <const> = { r = 255, g = 255, b = 0 }
 local purple <const> = { r = 255, g = 0, b = 255 }
 
+local defaultPlayerBlip <const> = 6
+
 local startFinishBlipColor <const> = 5    -- yellow
 local startBlipColor <const> = 2          -- green
 local finishBlipColor <const> = 0         -- white
 local midBlipColor <const> = 38           -- dark blue
 local registerBlipColor <const> = 83      -- purple
-local racerBlipColor <const> = 2          -- green
+local racerAheadBlipColor <const> = 2     -- green
+local racerBehindBlipColor <const> = 1    -- red
+local defaultRacerBlipColor <const> = 0   -- white
 
 local selectedBlipColor <const> = 1       -- red
 
@@ -880,6 +884,7 @@ local function editWaypoints(coord, heading)
 end
 
 local function removeRacerBlipGT()
+    RemoveRaceBlip()
     for _, racer in pairs(racerBlipGT) do
         RemoveBlip(racer.blip)
         RemoveMpGamerTag(racer.gamerTag)
@@ -1792,6 +1797,51 @@ function SetJoinMessage(message)
     })
 end
 
+function SetOwnRacerBlip()
+    SetBlipSprite(GetMainPlayerBlipId(), racerSprite)
+    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
+
+    if(position ~= -1) then
+        ShowNumberOnBlip(GetMainPlayerBlipId(), position)
+    end
+end
+
+function RemoveRaceBlip()
+    SetBlipSprite(GetMainPlayerBlipId(), defaultPlayerBlip)
+    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
+    HideNumberOnBlip(GetMainPlayerBlipId())
+end
+
+function SetOtherRacerBlip(racerPosition, source)
+    local blip = racerBlipGT[source].blip
+    SetBlipSprite(blip, racerSprite)
+    local blipColour = defaultRacerBlipColor
+
+    if(source ~= GetPlayerServerId(PlayerId())) then
+        if(racerPosition < position) then
+            blipColour = racerAheadBlipColor
+        else
+            blipColour = racerBehindBlipColor
+        end
+    end
+
+    SetBlipColour(blip, blipColour)
+    ShowNumberOnBlip(blip, racerPosition)
+    racerBlipGT[source].blip = blip
+end
+
+function SetupGamerTag(ped, name)
+    local hudColour = 0
+    if(name == 'Rusty') then
+        hudColour = 49
+    end
+
+    local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
+    SetMpGamerTagColour(gamerTag, 0, hudColour)
+    SetMpGamerTagVisibility(gamerTag, 0, true)
+    return gamerTag
+end
+
 --#region NUI callbacks
 
 RegisterNUICallback("request", function(data)
@@ -2208,6 +2258,8 @@ RegisterCommand("races", function(_, args)
         resetupgrades()
     elseif "ghost" == args[1] then
         ghosting:StartGhosting(configData['ghostingTime'])
+    elseif "source" == args[1] then
+        notifyPlayer(GetPlayerServerId(PlayerId()))
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -2607,6 +2659,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
                 loadWaypointBlips(waypointCoords)
+                SetOwnRacerBlip()
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -2697,6 +2750,7 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
+            removeRacerBlipGT()
         end
     else
         notifyPlayer("Ignoring finish event.  Invalid parameters.\n")
@@ -2743,8 +2797,18 @@ AddEventHandler("races:position", function(rIndex, pos, numR)
     end
 end)
 
+--racePositions index is the position of the racer in the race, the value at the index is the source of the player at that position
 RegisterNetEvent("races:racerPositions")
 AddEventHandler("races:racerPositions", function(racePositions)
+
+    for racerPosition, source in ipairs(racePositions) do
+        if source == GetPlayerServerId(PlayerId()) then
+            SetOwnRacerBlip()
+        else
+            SetOtherRacerBlip(racerPosition, source)
+        end
+    end
+
     SendNUIMessage({
         type = "leaderboard",
         action = "update_positions",
@@ -2753,20 +2817,21 @@ AddEventHandler("races:racerPositions", function(racePositions)
 end)
 
 RegisterNetEvent("races:addRacer")
-AddEventHandler("races:addRacer", function(netID, name)
-    if netID ~= nil and name ~= nil then
-        if racerBlipGT[netID] ~= nil then
-            RemoveBlip(racerBlipGT[netID].blip)
-            RemoveMpGamerTag(racerBlipGT[netID].gamerTag)
+AddEventHandler("races:addRacer", function(netID, source, name)
+    if netID ~= nil and name ~= nil and source ~= GetPlayerServerId(PlayerId()) then
+        if racerBlipGT[source] ~= nil then
+            RemoveBlip(racerBlipGT[source].blip)
+            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
         end
         local ped = NetToPed(netID)
         if DoesEntityExist(ped) == 1 then
             local blip = AddBlipForEntity(ped)
             SetBlipSprite(blip, racerSprite)
-            SetBlipColour(blip, racerBlipColor)
-            local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
-            SetMpGamerTagVisibility(gamerTag, 0, true)
-            racerBlipGT[netID] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
+            SetBlipColour(blip, defaultRacerBlipColor)
+            SetBlipAsShortRange(blip, false)
+            SetBlipDisplay(blip, 8)
+            local gamerTag = SetupGamerTag(ped, name)
+            racerBlipGT[source] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
         end
     else
         notifyPlayer("Ignoring addRacer event.  Invalid parameters.\n")
@@ -2774,13 +2839,13 @@ AddEventHandler("races:addRacer", function(netID, name)
 end)
 
 RegisterNetEvent("races:delRacer")
-AddEventHandler("races:delRacer", function(netID)
-    if netID ~= nil then
-        if racerBlipGT[netID] ~= nil then
+AddEventHandler("races:delRacer", function(source)
+    if source ~= nil then
+        if racerBlipGT[source] ~= nil then
             DeleteCheckpoint(gridCheckpoint)
-            RemoveBlip(racerBlipGT[netID].blip)
-            RemoveMpGamerTag(racerBlipGT[netID].gamerTag)
-            racerBlipGT[netID] = nil
+            RemoveBlip(racerBlipGT[source].blip)
+            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
+            racerBlipGT[source] = nil
         end
     else
         notifyPlayer("Ignoring delRacer event.  Invalid parameters.\n")
@@ -2855,7 +2920,6 @@ AddEventHandler("races:autojoin", function(raceIndex)
         return
     end
 
-    removeRacerBlipGT()
     local player = PlayerPedId()
 
     local registerPosition = starts[raceIndex].registerPosition
@@ -3564,8 +3628,7 @@ Citizen.CreateThread(function()
                         end
                     end
                     if true == joinRace then
-                        removeRacerBlipGT()
-                        TriggerServerEvent("races:join", closestIndex, PedToNet(player), nil)
+                        TriggerServerEvent("races:join", closestIndex, PedToNet(player))
                     end
                 end
             else
@@ -3611,8 +3674,7 @@ Citizen.CreateThread(function()
                 for _, racer in pairs(racerBlipGT) do
                     ped = NetToPed(racer.netID)
                     if DoesEntityExist(ped) == 1 then
-                        racer.gamerTag = CreateFakeMpGamerTag(ped, racer.name, false, false, nil, 0)
-                        SetMpGamerTagVisibility(racer.gamerTag, 0, true)
+                        racer.gamerTag = SetupGamerTag(ped, racer.name)
                     end
                 end
                 recreated = true
