@@ -1,6 +1,6 @@
 {
     "ghostingTime": 3000,
-    "raceStartGhostingTime": 3000,
+    "raceStartGhostingTime": 30000,
     "ghosting": {
         "lowGhostingAlpha": 50,
         "highGhostingAlpha": 128,
