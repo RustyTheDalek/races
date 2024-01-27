@@ -1,10 +1,6 @@
 SetManualShutdownLoadingScreenNui(true)
 
-local STATE_IDLE <const> = 0
-local STATE_EDITING <const> = 1
-local STATE_JOINING <const> = 2
-local STATE_RACING <const> = 3
-local raceState = STATE_IDLE -- race state
+raceState = racingStates.Idle
 
 local gridRadius <const> = 5.0
 local gridCheckpoint
@@ -153,7 +149,7 @@ local boost_active = false
 
 AddEventHandler('onClientGameTypeStart', function()
     exports.spawnmanager:setAutoSpawnCallback(function()
-        if STATE_RACING == raceState then
+        if racingStates.Racing == raceState then
             print("In race, spawning at race")
             local coord = startCoord
             if true == startIsFinish then
@@ -639,7 +635,7 @@ local function finishRace(time)
             SetEntityAsNoLongerNeeded(vehicle)
         end
     end
-    raceState = STATE_IDLE
+    raceState = racingStates.Idle
 end
 
 local function editWaypoints(coord, heading)
@@ -930,16 +926,16 @@ local function edit()
         sendMessage("Permission required.\n")
         return
     end
-    if STATE_IDLE == raceState then
-        raceState = STATE_EDITING
+    if racingStates.Idle == raceState then
+        raceState = racingStates.Editing
         SetWaypointOff()
         if(#waypoints > 0) then
             GenerateStartingGrid(waypoints[1].coord, 8)
         end
         setStartToFinishCheckpoints()
         sendMessage("Editing started.\n")
-    elseif STATE_EDITING == raceState then
-        raceState = STATE_IDLE
+    elseif racingStates.Editing == raceState then
+        raceState = racingStates.Idle
         highlightedCheckpoint = 0
         if selectedIndex0 ~= 0 then
             SetBlipColour(waypoints[selectedIndex0].blip, waypoints[selectedIndex0].color)
@@ -958,13 +954,13 @@ local function edit()
 end
 
 local function clear()
-    if STATE_IDLE == raceState then
+    if racingStates.Idle == raceState then
         deleteWaypointBlips()
         waypoints = {}
         startIsFinish = false
         savedTrackName = nil
         sendMessage("Waypoints cleared.\n")
-    elseif STATE_EDITING == raceState then
+    elseif racingStates.Editing == raceState then
         highlightedCheckpoint = 0
         selectedIndex0 = 0
         selectedIndex1 = 0
@@ -986,11 +982,11 @@ local function reverse()
         return
     end
     if #waypoints > 1 then
-        if STATE_IDLE == raceState then
+        if racingStates.Idle == raceState then
             savedTrackName = nil
             loadWaypointBlips(waypointsToCoordsRev())
             sendMessage("Waypoints reversed.\n")
-        elseif STATE_EDITING == raceState then
+        elseif racingStates.Editing == raceState then
             savedTrackName = nil
             highlightedCheckpoint = 0
             selectedIndex0 = 0
@@ -1015,7 +1011,7 @@ local function loadTrack(access, trackName)
     end
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
-            if STATE_IDLE == raceState or STATE_EDITING == raceState then
+            if racingStates.Idle == raceState or racingStates.Editing == raceState then
                 TriggerServerEvent("races:load", "pub" == access, trackName)
             else
                 sendMessage("Cannot load.  Leave race first.\n")
@@ -1117,7 +1113,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
     if laps ~= nil and laps > 0 then
         timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
         if timeout ~= nil and timeout >= 0 then
-            if STATE_IDLE == raceState then
+            if racingStates.Idle == raceState then
                 if #waypoints > 1 then
                     if laps == 1 or (laps > 1 and true == startIsFinish) then
                         if "." == arg7 then
@@ -1209,7 +1205,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                 else
                     sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
                 end
-            elseif STATE_EDITING == raceState then
+            elseif racingStates.Editing == raceState then
                 sendMessage("Cannot register.  Stop editing first.\n")
             else
                 sendMessage("Cannot register.  Leave race first.\n")
@@ -1485,15 +1481,15 @@ end
 
 local function leave()
     local player = PlayerPedId()
-    if STATE_JOINING == raceState then
-        raceState = STATE_IDLE
+    if racingStates.Joining == raceState then
+        raceState = racingStates.Idle
         ResetReady(PedToNet(player))
         ClearLeaderboard()
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
         removeRacerBlipGT()
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
-    elseif STATE_RACING == raceState then
+    elseif racingStates.Racing == raceState then
         if IsPedInAnyVehicle(player, false) == 1 then
             FreezeEntityPosition(GetVehiclePedIsIn(player, false), false)
         end
@@ -1516,7 +1512,7 @@ local function endrace()
 end
 
 local function rivals()
-    if STATE_JOINING == raceState or STATE_RACING == raceState then
+    if racingStates.Joining == raceState or racingStates.Racing == raceState then
         TriggerServerEvent("races:rivals", raceIndex)
     else
         sendMessage("Cannot list competitors.  Not joined to any race.\n")
@@ -1532,7 +1528,7 @@ local function repairVehicle(vehicle)
 end
 
 local function respawn()
-    if STATE_RACING == raceState then
+    if racingStates.Racing == raceState then
         ClearRespawnIndicator()
         if(currentRace.raceType ~= 'ghost') then
             ghosting:StartGhosting(configData['ghostingTime'])
@@ -2309,7 +2305,7 @@ end)
 
 RegisterNetEvent("races:roles")
 AddEventHandler("races:roles", function(roles)
-    if 0 == roles & ROLE_EDIT and STATE_EDITING == raceState then
+    if 0 == roles & ROLE_EDIT and racingStates.Editing == raceState then
         roleBits = roleBits | ROLE_EDIT
         edit()
     end
@@ -2324,12 +2320,12 @@ end)
 RegisterNetEvent("races:load")
 AddEventHandler("races:load", function(isPublic, trackName, waypointCoords)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
-        if STATE_IDLE == raceState then
+        if racingStates.Idle == raceState then
             isPublicTrack = isPublic
             savedTrackName = trackName
             loadWaypointBlips(waypointCoords)
             sendMessage("Loaded " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
-        elseif STATE_EDITING == raceState then
+        elseif racingStates.Editing == raceState then
             isPublicTrack = isPublic
             savedTrackName = trackName
             highlightedCheckpoint = 0
@@ -2472,12 +2468,12 @@ AddEventHandler("races:unregister", function(rIndex)
             removeRegistrationPoint(rIndex)
         end
         if rIndex == raceIndex then
-            if STATE_JOINING == raceState then
-                raceState = STATE_IDLE
+            if racingStates.Joining == raceState then
+                raceState = racingStates.Idle
                 removeRacerBlipGT()
                 notifyPlayer("Race canceled.\n")
-            elseif STATE_RACING == raceState then
-                raceState = STATE_IDLE
+            elseif racingStates.Racing == raceState then
+                raceState = racingStates.Idle
                 DeleteCheckpoint(raceCheckpoint)
                 restoreBlips()
                 SetBlipRoute(waypoints[1].blip, true)
@@ -2510,7 +2506,7 @@ AddEventHandler("races:start", function(rIndex, delay)
             local currentTime = GetGameTimer()
 
             if rIndex == raceIndex then
-                if STATE_JOINING == raceState then
+                if racingStates.Joining == raceState then
 
                     UpdateVehicleName()
                     SendVehicleName()
@@ -2551,7 +2547,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     SetBlipRoute(waypointCoord, true)
                     SetBlipRouteColour(waypointCoord, blipRouteColor)
 
-                    raceState = STATE_RACING
+                    raceState = racingStates.Racing
 
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
@@ -2565,9 +2561,9 @@ AddEventHandler("races:start", function(rIndex, delay)
                     ClearReady();
                     notifyPlayer("Vehicle fixed.\n")
 
-                elseif STATE_RACING == raceState then
+                elseif racingStates.Racing == raceState then
                     notifyPlayer("Ignoring start event.  Already in a race.\n")
-                elseif STATE_EDITING == raceState then
+                elseif racingStates.Editing == raceState then
                     notifyPlayer("Ignoring start event.  Currently editing.\n")
                 else
                     notifyPlayer("Ignoring start event.  Currently idle.\n")
@@ -2640,10 +2636,10 @@ RegisterNetEvent("races:join")
 AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoords)
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
-            if STATE_IDLE == raceState then
+            if racingStates.Idle == raceState then
                 SetJoinMessage('')
                 SendToRaceTier(tier, specialClass)
-                raceState = STATE_JOINING
+                raceState = racingStates.Joining
                 raceIndex = rIndex
                 numLaps = starts[rIndex].laps
                 DNFTimeout = starts[rIndex].timeout * 1000
@@ -2699,7 +2695,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 end
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
-            elseif STATE_EDITING == raceState then
+            elseif racingStates.Editing == raceState then
                 notifyPlayer("Ignoring join event.  Currently editing.\n")
             else
                 notifyPlayer("Ignoring join event.  Already joined to a race.\n")
@@ -2909,7 +2905,7 @@ end)
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
 
-    if raceState ~= STATE_IDLE then
+    if raceState ~= racingStates.Idle then
         notifyPlayer("Cannnot join race. already joined.\n")
         return
     end
@@ -2968,7 +2964,7 @@ end
 function RacesReport()
     while true do
         Citizen.Wait(500)
-        if STATE_RACING == raceState then
+        if racingStates.Racing == raceState then
             local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
             TriggerServerEvent("races:report", raceIndex, PedToNet(player), numWaypointsPassed, distance)
@@ -3145,7 +3141,7 @@ end)
 function VehicleNameUpdate()
     while true do
         Citizen.Wait(1000)
-        if raceState == STATE_RACING or raceState == STATE_JOINING then
+        if raceState == racingStates.Racing or raceState == racingStates.Joining then
             UpdateVehicleName()
             SendVehicleName()
         end
@@ -3370,7 +3366,7 @@ function RaceUpdate(player, playerCoord, currentTime)
             end
         end
 
-        if STATE_RACING == raceState then
+        if racingStates.Racing == raceState then
             if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
                 local waypointPassed = true
                 if restrictedHash ~= nil then
@@ -3437,7 +3433,7 @@ function RaceUpdate(player, playerCoord, currentTime)
 
                     UpdateCurrentCheckpoint()
 
-                    if STATE_RACING == raceState then
+                    if racingStates.Racing == raceState then
                         local prev = currentWaypoint - 1
 
                         local last = currentWaypoint + numVisible - 1
@@ -3636,13 +3632,13 @@ function MainUpdate()
 
         ghosting:Update()
 
-        if STATE_EDITING == raceState then
+        if racingStates.Editing == raceState then
             EditUpdate(playerCoord, heading)
-        elseif STATE_RACING == raceState then
+        elseif racingStates.Racing == raceState then
             RaceUpdate(player, playerCoord, currentTime)
-        elseif STATE_JOINING == raceState then
+        elseif racingStates.Joining == raceState then
             HandleJoinState()
-        elseif STATE_IDLE == raceState then
+        elseif racingStates.Idle == raceState then
             IdleUpdate(player, playerCoord)
         end
 
