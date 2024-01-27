@@ -149,6 +149,8 @@ local ghosting = Ghosting:new()
 
 local configData
 
+local boost_active = false
+
 AddEventHandler('onClientGameTypeStart', function()
     exports.spawnmanager:setAutoSpawnCallback(function()
         if STATE_RACING == raceState then
@@ -2952,28 +2954,18 @@ end)
 
 --#endregion
 
-local boost_active = false
+function LastPlaceBoost()
 
---Race extras
-Citizen.CreateThread(function()
-    while true do
-        if STATE_RACING ~= true then
-            Citizen.Wait(0)
-        end
+    boost_active = position == numRacers and numRacers ~= 1
 
-        boost_active = position == numRacers and numRacers ~= 1
-
-        if(boost_active) then
-            SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.8)
-        else
-            SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.0)
-        end
-
-        Citizen.Wait(0)
+    if(boost_active) then
+        SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.8)
+    else
+        SetVehicleCheatPowerIncrease(GetVehiclePedIsIn(GetPlayerPed(-1), false), 1.0)
     end
-end)
+end
 
-Citizen.CreateThread(function()
+function RacesReport()
     while true do
         Citizen.Wait(500)
         if STATE_RACING == raceState then
@@ -2982,7 +2974,7 @@ Citizen.CreateThread(function()
             TriggerServerEvent("races:report", raceIndex, PedToNet(player), numWaypointsPassed, distance)
         end
     end
-end)
+end
 
 function ResetReady(netID)
     ready = false
@@ -3150,9 +3142,7 @@ AddEventHandler("races:compareTimeSplit", function(racersAhead)
     })
 end)
 
---Update Vehicle Name thread
---TODO: See if you can listen to events when a player enters/exits a vehicle
-Citizen.CreateThread(function()
+function VehicleNameUpdate()
     while true do
         Citizen.Wait(1000)
         if raceState == STATE_RACING or raceState == STATE_JOINING then
@@ -3160,9 +3150,53 @@ Citizen.CreateThread(function()
             SendVehicleName()
         end
     end
-end)
+end
 
-Citizen.CreateThread(function()
+function RaceStartCameraTransition()
+
+    local player = PlayerPedId()
+
+    local entity = IsPedInAnyVehicle(player, false) == 1 and GetVehiclePedIsIn(player, false) or
+    player
+
+    local cam0 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
+    SetCamCoord(cam0, GetOffsetFromEntityInWorldCoords(entity, 0.0, 5.0, 1.0))
+    PointCamAtEntity(cam0, entity, 0.0, 0.0, 0.0, true)
+
+    print("Stage 2")
+
+    local cam1 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
+    SetCamCoord(cam1, GetOffsetFromEntityInWorldCoords(entity, -5.0, 0.0, 1.0))
+    PointCamAtEntity(cam1, entity, 0.0, 0.0, 0.0, true)
+
+    print("Stage 3")
+
+    local cam2 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
+    SetCamCoord(cam2, GetOffsetFromEntityInWorldCoords(entity, 0.0, -5.0, 1.0))
+    PointCamAtEntity(cam2, entity, 0.0, 0.0, 0.0, true)
+
+    print("Stage 4")
+
+    RenderScriptCams(true, false, 0, true, true)
+
+    SetCamActiveWithInterp(cam1, cam0, 1000, 0, 0)
+    Citizen.Wait(2000)
+
+    SetCamActiveWithInterp(cam2, cam1, 1000, 0, 0)
+    Citizen.Wait(2000)
+
+    RenderScriptCams(false, true, 1000, true, true)
+
+    print("Stage 5")
+
+    SetGameplayCamRelativeRotation(GetEntityRotation(entity))
+
+    DestroyAllCams(true)
+
+    print("Stage 6")
+end
+
+function RaceUpdate()
     while true do
         Citizen.Wait(0)
 
@@ -3279,36 +3313,7 @@ Citizen.CreateThread(function()
 
                 if false == camTransStarted then
                     camTransStarted = true
-                    Citizen.CreateThread(function()
-                        local entity = IsPedInAnyVehicle(player, false) == 1 and GetVehiclePedIsIn(player, false) or
-                        player
-
-                        local cam0 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
-                        SetCamCoord(cam0, GetOffsetFromEntityInWorldCoords(entity, 0.0, 5.0, 1.0))
-                        PointCamAtEntity(cam0, entity, 0.0, 0.0, 0.0, true)
-
-                        local cam1 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
-                        SetCamCoord(cam1, GetOffsetFromEntityInWorldCoords(entity, -5.0, 0.0, 1.0))
-                        PointCamAtEntity(cam1, entity, 0.0, 0.0, 0.0, true)
-
-                        local cam2 = CreateCam("DEFAULT_SCRIPTED_CAMERA", true)
-                        SetCamCoord(cam2, GetOffsetFromEntityInWorldCoords(entity, 0.0, -5.0, 1.0))
-                        PointCamAtEntity(cam2, entity, 0.0, 0.0, 0.0, true)
-
-                        RenderScriptCams(true, false, 0, true, true)
-
-                        SetCamActiveWithInterp(cam1, cam0, 1000, 0, 0)
-                        Citizen.Wait(2000)
-
-                        SetCamActiveWithInterp(cam2, cam1, 1000, 0, 0)
-                        Citizen.Wait(2000)
-
-                        RenderScriptCams(false, true, 1000, true, true)
-
-                        SetGameplayCamRelativeRotation(GetEntityRotation(entity))
-
-                        DestroyAllCams(true)
-                    end)
+                    Citizen.CreateThread(RaceStartCameraTransition)
                 end
 
                 if elapsedTime > -countdown * 1000 then
@@ -3365,6 +3370,7 @@ Citizen.CreateThread(function()
                 local minutes, seconds = minutesSeconds(lapTime)
                 SendCurrentLapTime(minutes, seconds)
 
+                LastPlaceBoost()
                 HandleRaceType()
 
                 if true == beginDNFTimeout then
@@ -3655,9 +3661,9 @@ Citizen.CreateThread(function()
             DisableControlAction(0, 106, true)
         end
     end
-end)
+end
 
-Citizen.CreateThread(function()
+function PlayerNamesUpdate()
     local recreated = false
     while true do
         Citizen.Wait(0)
@@ -3675,4 +3681,9 @@ Citizen.CreateThread(function()
             recreated = false
         end
     end
-end)
+end
+
+Citizen.CreateThread(VehicleNameUpdate)
+Citizen.CreateThread(RaceUpdate)
+Citizen.CreateThread(PlayerNamesUpdate)
+Citizen.CreateThread(RacesReport)

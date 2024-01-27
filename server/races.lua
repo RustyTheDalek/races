@@ -2095,8 +2095,7 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
     end
 end)
 
-
-Citizen.CreateThread(function()
+function RaceServerUpdate()
     while true do
         Citizen.Wait(500)
 
@@ -2146,4 +2145,6 @@ Citizen.CreateThread(function()
             end
         end
     end
-end)
+end
+
+Citizen.CreateThread(RaceServerUpdate)
