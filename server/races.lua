@@ -77,7 +77,7 @@ local function SaveRacesFile(filename, data, length)
 end
 
 local function SaveRacesFileJson(filename, data, length)
-    return SaveResourceFile(GetCurrentResourceName(), filename, json.encode(data), length)
+    return SaveRacesFile(filename, json.encode(data), length)
 end
 
 local function LoadRacesFile(filename)
@@ -564,7 +564,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            if true == SaveRacesFileJson('raceData.json', raceData) then
+            if SaveRacesFileJson('raceData.json', raceData) == 1 then
                 return true
             else
                 notifyPlayer(source, "saveTrack: Could not write race data.\n")
