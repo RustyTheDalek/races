@@ -1838,11 +1838,10 @@ AddEventHandler("races:join", function(rIndex, netID)
         if races[rIndex] ~= nil then
             if STATE_REGISTERING == races[rIndex].state then
                 local playerName = GetPlayerName(source)
-                for nID, player in pairs(races[rIndex].players) do
-                    TriggerClientEvent("races:addRacer", player.source, netID, playerName)
-                end
+                TriggerClientEvent("races:addRacer", -1, netID, source, playerName)
                 races[rIndex].numRacing = races[rIndex].numRacing + 1
                 races[rIndex].players[netID] = {
+                    netID = netID,
                     source = source,
                     playerName = playerName,
                     numWaypointsPassed = -1,
@@ -1895,7 +1894,7 @@ AddEventHandler("races:finish",
                             TriggerClientEvent("races:finish", player.source, rIndex, race.players[netID].playerName,
                                 finishTime, bestLapTime, vehicleName)
                             if nID ~= netID then
-                                TriggerClientEvent("races:delRacer", player.source, netID)
+                                TriggerClientEvent("races:delRacer", player.source, source)
                             end
                         end
 
