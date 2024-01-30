@@ -453,11 +453,6 @@ local function drawMsg(x, y, msg, scale, justify)
     EndTextCommandDisplayText(x, y)
 end
 
-local function drawRect(x, y, w, h, r, g, b, a)
-    DrawRect(x + w / 2.0, y + h / 2.0, w, h, r, g, b, a)
-end
-
-
 local function waypointsToCoords()
     local waypointCoords = {}
     for i = 1, #waypoints do
