@@ -1,6 +1,3 @@
-local STATE_REGISTERING <const> = 0 -- registering race status
-local STATE_RACING <const> = 1      -- racing race status
-
 local ROLE_EDIT <const> = 1         -- edit tracks role
 local ROLE_REGISTER <const> = 2     -- register races role
 local ROLE_SPAWN <const> = 4        -- spawn vehicles role
@@ -399,7 +396,7 @@ local function removeRole(playerName, roleName)
                         if license ~= nil then
                             if string.sub(license, 9) == lic then
                                 rIndex = tonumber(rIndex)
-                                if races[rIndex] ~= nil and STATE_REGISTERING == races[rIndex].state then
+                                if races[rIndex] ~= nil and racingStates.Registering == races[rIndex].state then
                                     races[rIndex] = nil
                                     TriggerClientEvent("races:unregister", -1, rIndex)
                                 end
@@ -1057,7 +1054,7 @@ AddEventHandler("playerDropped", function()
     local source = source
 
     -- unregister race registered by dropped player that has not started
-    if races[source] ~= nil and STATE_REGISTERING == races[source].state then
+    if races[source] ~= nil and racingStates.Registering == races[source].state then
         races[source] = nil
         TriggerClientEvent("races:unregister", -1, source)
     end
@@ -1075,7 +1072,7 @@ AddEventHandler("playerDropped", function()
                     end
                 end
 
-                if STATE_REGISTERING == race.state then
+                if racingStates.Registering == race.state then
                     print("removing racer from race")
 
                     OnPlayerLeave(race, i, netID, source)
@@ -1098,7 +1095,7 @@ AddEventHandler("races:init", function()
 
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
-        if STATE_REGISTERING == race.state then
+        if racingStates.Registering == race.state then
             local rdata = {
                 rtype = race.rtype,
                 restrict = race.restrict,
@@ -1415,7 +1412,7 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                     end
                     sendMessage(source, msg)
                     races[source] = {
-                        state = STATE_REGISTERING,
+                        state = racingStates.Registering,
                         waypointCoords = waypointCoords,
                         isPublic = isPublic,
                         trackName = trackName,
@@ -1440,7 +1437,7 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                     TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
                         owner, tier, laps, timeout, rdata)
                 else
-                    if STATE_RACING == races[source].state then
+                    if racingStates.Racing == races[source].state then
                         sendMessage(source, "Cannot register.  Previous race in progress.\n")
                     else
                         sendMessage(source, "Cannot register.  Previous race registered.  Unregister first.\n")
@@ -1498,7 +1495,7 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid. Race does not exist.\n")
     end
 
-    if STATE_REGISTERING ~= races[source].state then
+    if racingStates.Registering ~= races[source].state then
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
@@ -1524,7 +1521,7 @@ AddEventHandler("races:autojoin", function()
         sendMessage(source, "Cannot setup grid. Race does not exist.\n")
     end
 
-    if STATE_REGISTERING ~= races[source].state then
+    if racingStates.Registering ~= races[source].state then
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
@@ -1566,7 +1563,7 @@ end)
 function StartRace(race, source, delay)
     race.countdown = false
     race.countdownTimeStart = 0
-    race.state = STATE_RACING
+    race.state = racingStates.Racing
     TriggerClientEvent("races:start", -1, source, delay)
     TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
     sendMessage(source, "Race started.\n")
@@ -1584,7 +1581,7 @@ AddEventHandler("races:start", function(delay, override)
 
     if delay ~= nil then
         if race ~= nil then
-            if STATE_REGISTERING == race.state then
+            if racingStates.Registering == race.state then
                 if delay >= 5 then
                     if race.numRacing > 0 then
                         if (race.numReady ~= race.numRacing and override == false) then
@@ -1596,7 +1593,7 @@ AddEventHandler("races:start", function(delay, override)
                             StopRaceCountdown(source)
                         end
 
-                        race.state = STATE_RACING
+                        race.state = racingStates.Racing
 
                         local sourceJoined = false
                         for _, player in pairs(race.players) do
@@ -1783,7 +1780,7 @@ AddEventHandler("races:leave", function(rIndex, netID)
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
-            if STATE_REGISTERING == races[rIndex].state then
+            if racingStates.Registering == races[rIndex].state then
                 if races[rIndex].players[netID] ~= nil then
                     for i = 1, #gridLineup do
                         if gridLineup[i] == races[rIndex].players[netID].source then
@@ -1842,7 +1839,7 @@ AddEventHandler("races:join", function(rIndex, netID)
     local source = source
     if rIndex ~= nil and netID ~= nil then
         if races[rIndex] ~= nil then
-            if STATE_REGISTERING == races[rIndex].state then
+            if racingStates.Registering == races[rIndex].state then
                 local playerName = GetPlayerName(source)
                 TriggerClientEvent("races:addRacer", -1, netID, source, playerName)
                 races[rIndex].numRacing = races[rIndex].numRacing + 1
@@ -1891,7 +1888,7 @@ AddEventHandler("races:finish",
         if rIndex ~= nil and netID ~= nil and numWaypointsPassed ~= nil and finishTime ~= nil and bestLapTime ~= nil and vehicleName ~= nil then
             local race = races[rIndex]
             if race ~= nil then
-                if STATE_RACING == race.state then
+                if racingStates.Racing == race.state then
                     if race.players[netID] ~= nil then
                         race.players[netID].numWaypointsPassed = numWaypointsPassed
                         race.players[netID].data = finishTime
@@ -2095,18 +2092,17 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
     end
 end)
 
-
-Citizen.CreateThread(function()
+function RaceServerUpdate()
     while true do
         Citizen.Wait(500)
 
         for rIndex, race in pairs(races) do
-            if STATE_REGISTERING == race.state then
+            if racingStates.Registering == race.state then
                 CheckReady(race, rIndex)
                 if race.countdown == true then
                     ProcessReadyCountdown(rIndex)
                 end
-            elseif STATE_RACING == race.state then
+            elseif racingStates.Racing == race.state then
                 local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
                 local complete = true
 
@@ -2146,4 +2142,6 @@ Citizen.CreateThread(function()
             end
         end
     end
-end)
+end
+
+Citizen.CreateThread(RaceServerUpdate)
