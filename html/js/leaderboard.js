@@ -88,7 +88,41 @@ function readLeaderBoardEvents(event) {
     case "bulk_update_time_splits":
       BulkUpdateTimeSplits(data.racersAhead);
       break;
+    case "start_lights_countdown":
+      StartLightsCountdown(data.time);
+      break;
   }
+}
+
+function StartLightsCountdown(seconds) {
+
+  let raceLightsContainer = $('#race-lights');
+  let raceLightsList = raceLightsContainer.find('ul');
+
+  raceLightsList.empty();
+
+  for (i = 0; i < seconds; i++) {
+    raceLightsList.append('<li class="red"></li>');
+  }
+
+  raceLightsContainer.addClass('visible');
+
+  let raceLights = raceLightsContainer.find("li");
+
+  raceLights.each(function (index) {
+    setTimeout(() => {
+      $(this).addClass('on');
+    }, index * 1000);
+  });
+
+  setTimeout(() => {
+    raceLights.addClass('green');
+  }, seconds * 1000);
+
+  setTimeout(() => {
+    raceLightsContainer.removeClass('visible');
+  }, (seconds + 0.5) * 1000);
+
 }
 
 function BulkUpdateTimeSplits(racersAhead) {
@@ -108,10 +142,10 @@ function UpdateTimeSplit(source, timeDifference) {
 
   let deltaTimeDifference = parseFloat(racerTimeSplit.html());
 
-  if(timeDifference > 0) { //Racers is behind you
+  if (timeDifference > 0) { //Racers is behind you
     timeDifferenceFormatted = "+";
-    if(deltaTimeDifference > 0) {//Racer was behind you last time
-      if(timeDifference > deltaTimeDifference) { //They're further away
+    if (deltaTimeDifference > 0) {//Racer was behind you last time
+      if (timeDifference > deltaTimeDifference) { //They're further away
         setBetterTimeColours(racerTimeSplit);
       } else { //They're gaining on you
         setWorseTimeColours(racerTimeSplit);
@@ -120,8 +154,8 @@ function UpdateTimeSplit(source, timeDifference) {
       setBetterTimeColours(racerTimeSplit);
     }
   } else { //Racer is in front
-    if(deltaTimeDifference < 0) { //They were in front last time 
-      if(timeDifference < deltaTimeDifference) { //They're further away
+    if (deltaTimeDifference < 0) { //They were in front last time 
+      if (timeDifference < deltaTimeDifference) { //They're further away
         setWorseTimeColours(racerTimeSplit);
       } else {
         setBetterTimeColours(racerTimeSplit);
@@ -131,14 +165,14 @@ function UpdateTimeSplit(source, timeDifference) {
     }
   }
 
-  if(timeDifference < deltaTimeDifference && deltaTimeDifference != 0) {
+  if (timeDifference < deltaTimeDifference && deltaTimeDifference != 0) {
 
-  } else if(deltaTimeDifference != 0) {
+  } else if (deltaTimeDifference != 0) {
     racerTimeSplit.removeClass("red-text");
     racerTimeSplit.addClass("green-text");
   }
 
-  if(timeDifference > 0) {
+  if (timeDifference > 0) {
 
   }
 
@@ -181,12 +215,12 @@ function SetGhostingIndicator(source, time = null) {
   ghosting_indicator.removeAttr('style');
 
   ghosting_indicator.show();
-  if(time) {
-      ghosting_indicator.css('transition', `width ${time}s linear`);
+  if (time) {
+    ghosting_indicator.css('transition', `width ${time}s linear`);
   }
   ghosting_indicator.width('100%');
 
-  if(time){
+  if (time) {
     setTimeout(ClearGhostingIndicator(ghosting_indicator), time * 1000);
   }
 }
@@ -370,9 +404,9 @@ function AddRacerToleaderboard(racers, source) {
     racer_element.append(lap_times);
     leaderboard.append(racer_element);
 
-      setTimeout(() => {
-        racer_element.addClass('right-visible');
-      }, 250)
+    setTimeout(() => {
+      racer_element.addClass('right-visible');
+    }, 250)
   });
 }
 

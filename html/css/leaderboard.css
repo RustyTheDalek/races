@@ -223,3 +223,73 @@ ul#leaderboard li > span {
   /* transition: stroke-dasharray 0.7s linear 0s; */
 }
 /*#endregion*/
+
+/*#region Race lights */
+
+#race-lights{
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  padding: 25px;
+
+  box-shadow: 5px 5px inset rgba(0,0,0,0.6);
+  background: linear-gradient(315deg, rgb(0, 0, 0) 0%, rgb(50, 50, 50) 93%, rgb(0, 0, 0) 100%);
+  border-radius: 100px;
+  border: solid 5px #333;
+  
+  transition: top 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+}
+
+#race-lights.visible {
+  top: 30%;
+}
+
+#race-lights ul {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  flex-wrap: wrap;
+
+  height: 100%;
+  grid-gap: 25px
+}
+
+#race-lights li {
+  height: 100px;
+  width: 100px;
+  border-radius: 50%;
+
+  opacity: 50%;
+  transition: all 0.25s ease-in-out;
+}
+
+#race-lights li.on {
+  opacity: 100%;
+}
+
+#race-lights li.red {
+  background-color: red;
+  background-image: radial-gradient(brown, transparent);
+  background-size: 5px 5px;
+  border: dotted 2px red;
+  box-shadow: 
+  0 0 20px #111 inset,
+  0 0 10px red, 
+  5px 5px inset rgba(0,0,0,0.6);
+}
+
+#race-lights li.green {
+  background-color: green;
+  background-image: radial-gradient(lime, transparent);
+  background-size: 5px 5px;
+  border: dotted 2px green;
+  box-shadow: 
+  0 0 20px #111 inset,
+  0 0 10px green,
+  5px 5px inset rgba(0,0,0,0.6);
+}
+
+/*#endregion */
