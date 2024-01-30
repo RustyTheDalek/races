@@ -3015,6 +3015,14 @@ function SetLeaderboardLower(lower)
     })
 end
 
+function StartCountdownLights(countdown)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'start_lights_countdown',
+        time = countdown
+    })
+end
+
 function HandleJoinState()
     --Down
     if IsControlJustReleased(0, 173) then
@@ -3289,9 +3297,6 @@ function RaceUpdate(player, playerCoord, currentTime)
     SetLeaderboardLower(false)
 
     if elapsedTime < 0 then
-        drawMsg(0.50, 0.46, "Race starting in", 0.7, 0)
-        drawMsg(0.50, 0.50, ("%05.2f"):format(-elapsedTime / 1000.0), 0.7, 0)
-        drawMsg(0.50, 0.54, "seconds", 0.7, 0)
 
         if false == camTransStarted then
             camTransStarted = true
@@ -3299,15 +3304,12 @@ function RaceUpdate(player, playerCoord, currentTime)
         end
 
         if elapsedTime > -countdown * 1000 then
+            if(drawLights == false) then
+                StartCountdownLights(countdown)
+            end
             drawLights = true
             countdown = countdown - 1
             PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-        end
-
-        if true == drawLights then
-            for i = 0, 4 - countdown do
-                drawRect(i * 0.2 + 0.05, 0.15, 0.1, 0.1, 255, 0, 0, 255)
-            end
         end
 
         if IsPedInAnyVehicle(player, false) == 1 then
