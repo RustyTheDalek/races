@@ -67,6 +67,9 @@ function readLeaderBoardEvents(event) {
     case "update_dnf_time":
       UpdateDNFTime(data.minutes, data.seconds);
       break;
+    case "clear_dnf_time":
+      ClearDNFTime();
+      break;
     case "set_leaderboard_lower":
       SetLeaderboardLower(data.lower);
       break;
@@ -256,6 +259,15 @@ function UpdateDNFTime(minutes, seconds) {
 
   let seconds_formatted = seconds.toFixed(2).toString().padStart(5, '0');
   dnf_time.html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
+}
+
+function ClearDNFTime() {
+  let dnf_containter = $('#dnf_timer_container');
+  dnf_containter.removeClass('top-visible');
+
+  let dnf_time = dnf_containter.find(`#dnf_timer`);
+
+  dnf_time.html(`00:00.00`);
 }
 
 function UpdateVehicleName(source, vehicleName) {
