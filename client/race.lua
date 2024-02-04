@@ -2921,7 +2921,7 @@ AddEventHandler("races:autojoin", function(raceIndex)
     local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
     TeleportPlayer(startPoint, registerPosition.heading)
 
-    TriggerServerEvent("races:join", raceIndex, PedToNet(player), nil)
+    TriggerServerEvent("races:join", raceIndex, PedToNet(player))
 end)
 
 RegisterNetEvent("races:setupgrid")
