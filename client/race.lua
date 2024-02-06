@@ -142,6 +142,7 @@ local currentRace = {
 }
 
 local ghosting = Ghosting:new()
+local playerDisplay = PlayerDisplay:new()
 
 local configData
 
@@ -2829,6 +2830,26 @@ AddEventHandler("races:addRacer", function(netID, source, name)
     else
         notifyPlayer("Ignoring addRacer event.  Invalid parameters.\n")
     end
+end)
+
+RegisterNetEvent("races:addplayerdisplay")
+AddEventHandler("races:addplayerdisplay", function(source, playerName)
+
+    if (source == nil or source == GetPlayerServerId(PlayerId())) then
+        return
+    end
+
+    playerDisplay:AddDisplay(source, playerName)
+end)
+
+RegisterNetEvent("races:removeplayerdisplay")
+AddEventHandler("races:removeplayerdisplay", function(source)
+
+    if (source == nil or source == GetPlayerServerId(PlayerId())) then
+        return
+    end
+
+    playerDisplay:RemoveDisplay(source)
 end)
 
 RegisterNetEvent("races:delRacer")

@@ -1036,6 +1036,30 @@ RegisterCommand("races", function(_, args)
     end
 end, true)
 
+function ProcessPlayers(source)
+    local playerName = GetPlayerName(source)
+
+    for _, otherPlayerSource in pairs(GetPlayers()) do
+        local otherPlayerName = GetPlayerName(otherPlayerSource)
+
+        if (source ~= tonumber(otherPlayerSource)) then
+            TriggerClientEvent("races:addplayerdisplay", tonumber(otherPlayerSource), tonumber(source), playerName)
+
+            TriggerClientEvent("races:addplayerdisplay", tonumber(source), tonumber(otherPlayerSource), otherPlayerName)
+        end
+    end
+end
+
+AddEventHandler("playerJoining", function()
+    local source = source
+
+    --Players are sometimes given a temporary source when they first join ignore that 
+    if (source < 100) then
+        print("Adding players from connecting event")
+        ProcessPlayers(source)
+    end
+end)
+
 AddEventHandler("playerDropped", function()
     print("playerDropped")
     local source = source
@@ -1045,6 +1069,8 @@ AddEventHandler("playerDropped", function()
         races[source] = nil
         TriggerClientEvent("races:unregister", -1, source)
     end
+
+    TriggerClientEvent("races:removeplayerdisplay", -1, source)
 
     -- make sure this is last code block in function because of early return if player found in race
     -- remove dropped player from the race they are joined to
@@ -1074,11 +1100,22 @@ AddEventHandler("playerDropped", function()
     end
 end)
 
+AddEventHandler("playerEnteredScope", function(data)
+    local playerName = GetPlayerName(data.player)
+    TriggerClientEvent("races:addplayerdisplay", tonumber(data['for']), tonumber(data.player), playerName)
+end)
+
+AddEventHandler("playerLeftScope", function(data)
+    TriggerClientEvent("races:removeplayerdisplay",tonumber(data['for']), tonumber(data.player))
+end)
+
 RegisterNetEvent("races:init")
 AddEventHandler("races:init", function()
     local source = source
 
     TriggerClientEvent("races:roles", source, getRoleBits(source))
+
+    ProcessPlayers(source)
 
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
