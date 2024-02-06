@@ -16,16 +16,11 @@ local blue <const> = { r = 0, g = 0, b = 255 }
 local yellow <const> = { r = 255, g = 255, b = 0 }
 local purple <const> = { r = 255, g = 0, b = 255 }
 
-local defaultPlayerBlip <const> = 6
-
 local startFinishBlipColor <const> = 5    -- yellow
 local startBlipColor <const> = 2          -- green
 local finishBlipColor <const> = 0         -- white
 local midBlipColor <const> = 38           -- dark blue
 local registerBlipColor <const> = 83      -- purple
-local racerAheadBlipColor <const> = 2     -- green
-local racerBehindBlipColor <const> = 1    -- red
-local defaultRacerBlipColor <const> = 0   -- white
 
 local selectedBlipColor <const> = 1       -- red
 
@@ -82,7 +77,6 @@ local drawLights = false                  -- draw start lights
 
 local position = -1                       -- position in race out of numRacers players
 local numRacers = -1                      -- number of players in race - no DNF players included
-local racerBlipGT = {}                    -- blips and gamer tags for all racers participating in race
 
 local lapTimeStart = -1                   -- start time of current lap
 local bestLapTime = -1                    -- best lap time
@@ -877,15 +871,6 @@ local function editWaypoints(coord, heading)
     end
 end
 
-local function removeRacerBlipGT()
-    RemoveRaceBlip()
-    for _, racer in pairs(racerBlipGT) do
-        RemoveBlip(racer.blip)
-        RemoveMpGamerTag(racer.gamerTag)
-    end
-    racerBlipGT = {}
-end
-
 local function updateList()
     table.sort(vehicleList)
     local html = ""
@@ -1483,7 +1468,7 @@ local function leave()
         ResetReady(PedToNet(player))
         ClearLeaderboard()
         TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
-        removeRacerBlipGT()
+        playerDisplay:ResetRaceBlips()
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     elseif racingStates.Racing == raceState then
@@ -1493,7 +1478,7 @@ local function leave()
         RenderScriptCams(false, false, 0, true, true)
         DeleteCheckpoint(raceCheckpoint)
         finishRace(-1)
-        removeRacerBlipGT()
+        playerDisplay:ResetRaceBlips()
         ResetReady(PedToNet(player))
         ClearLeaderboard()
         TriggerServerEvent("races:removeFromLeaderboard", raceIndex, PedToNet(player))
@@ -1789,51 +1774,6 @@ function SetJoinMessage(message)
         action = "set_join_text",
         value = message
     })
-end
-
-function SetOwnRacerBlip()
-    SetBlipSprite(GetMainPlayerBlipId(), racerSprite)
-    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
-
-    if(position ~= -1) then
-        ShowNumberOnBlip(GetMainPlayerBlipId(), position)
-    end
-end
-
-function RemoveRaceBlip()
-    SetBlipSprite(GetMainPlayerBlipId(), defaultPlayerBlip)
-    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
-    HideNumberOnBlip(GetMainPlayerBlipId())
-end
-
-function SetOtherRacerBlip(racerPosition, source)
-    local blip = racerBlipGT[source].blip
-    SetBlipSprite(blip, racerSprite)
-    local blipColour = defaultRacerBlipColor
-
-    if(source ~= GetPlayerServerId(PlayerId())) then
-        if(racerPosition < position) then
-            blipColour = racerAheadBlipColor
-        else
-            blipColour = racerBehindBlipColor
-        end
-    end
-
-    SetBlipColour(blip, blipColour)
-    ShowNumberOnBlip(blip, racerPosition)
-    racerBlipGT[source].blip = blip
-end
-
-function SetupGamerTag(ped, name)
-    local hudColour = 0
-    if(name == 'Rusty') then
-        hudColour = 49
-    end
-
-    local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
-    SetMpGamerTagColour(gamerTag, 0, hudColour)
-    SetMpGamerTagVisibility(gamerTag, 0, true)
-    return gamerTag
 end
 
 --#region NUI callbacks
@@ -2474,7 +2414,8 @@ AddEventHandler("races:unregister", function(rIndex)
         if rIndex == raceIndex then
             if racingStates.Joining == raceState then
                 raceState = racingStates.Idle
-                removeRacerBlipGT()
+                --Shouldn't need to reset here, but just incase
+                playerDisplay:ResetRaceBlips()
                 notifyPlayer("Race canceled.\n")
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
@@ -2482,7 +2423,8 @@ AddEventHandler("races:unregister", function(rIndex)
                 restoreBlips()
                 SetBlipRoute(waypoints[1].blip, true)
                 SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-                removeRacerBlipGT()
+                --Shouldn't need to reset here, but just incase
+                playerDisplay:ResetRaceBlips()
                 RenderScriptCams(false, false, 0, true, true)
                 local player = PlayerPedId()
                 if IsPedInAnyVehicle(player, false) == 1 then
@@ -2653,7 +2595,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
                 loadWaypointBlips(waypointCoords)
-                SetOwnRacerBlip()
+                playerDisplay:SetOwnRacerBlip()
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -2744,7 +2686,7 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
-            removeRacerBlipGT()
+            playerDisplay:ResetRaceBlips()
         end
     else
         notifyPlayer("Ignoring finish event.  Invalid parameters.\n")
@@ -2794,42 +2736,13 @@ end)
 --racePositions index is the position of the racer in the race, the value at the index is the source of the player at that position
 RegisterNetEvent("races:racerPositions")
 AddEventHandler("races:racerPositions", function(racePositions)
-
-    for racerPosition, source in ipairs(racePositions) do
-        if source == GetPlayerServerId(PlayerId()) then
-            SetOwnRacerBlip()
-        else
-            SetOtherRacerBlip(racerPosition, source)
-        end
-    end
+    playerDisplay:UpdateRacerDisplay(racePositions, position)
 
     SendNUIMessage({
         type = "leaderboard",
         action = "update_positions",
         racePositions = racePositions
     })
-end)
-
-RegisterNetEvent("races:addRacer")
-AddEventHandler("races:addRacer", function(netID, source, name)
-    if netID ~= nil and name ~= nil and source ~= GetPlayerServerId(PlayerId()) then
-        if racerBlipGT[source] ~= nil then
-            RemoveBlip(racerBlipGT[source].blip)
-            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
-        end
-        local ped = NetToPed(netID)
-        if DoesEntityExist(ped) == 1 then
-            local blip = AddBlipForEntity(ped)
-            SetBlipSprite(blip, racerSprite)
-            SetBlipColour(blip, defaultRacerBlipColor)
-            SetBlipAsShortRange(blip, false)
-            SetBlipDisplay(blip, 8)
-            local gamerTag = SetupGamerTag(ped, name)
-            racerBlipGT[source] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
-        end
-    else
-        notifyPlayer("Ignoring addRacer event.  Invalid parameters.\n")
-    end
 end)
 
 RegisterNetEvent("races:addplayerdisplay")
@@ -2850,20 +2763,6 @@ AddEventHandler("races:removeplayerdisplay", function(source)
     end
 
     playerDisplay:RemoveDisplay(source)
-end)
-
-RegisterNetEvent("races:delRacer")
-AddEventHandler("races:delRacer", function(source)
-    if source ~= nil then
-        if racerBlipGT[source] ~= nil then
-            DeleteCheckpoint(gridCheckpoint)
-            RemoveBlip(racerBlipGT[source].blip)
-            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
-            racerBlipGT[source] = nil
-        end
-    else
-        notifyPlayer("Ignoring delRacer event.  Invalid parameters.\n")
-    end
 end)
 
 RegisterNetEvent("races:allVehicles")
@@ -3677,27 +3576,6 @@ function MainUpdate()
     end
 end
 
-function PlayerNamesUpdate()
-    local recreated = false
-    while true do
-        Citizen.Wait(0)
-        if IsPauseMenuActive() == false then
-            if false == recreated then
-                for _, racer in pairs(racerBlipGT) do
-                    ped = NetToPed(racer.netID)
-                    if DoesEntityExist(ped) == 1 then
-                        racer.gamerTag = SetupGamerTag(ped, racer.name)
-                    end
-                end
-                recreated = true
-            end
-        else
-            recreated = false
-        end
-    end
-end
-
 Citizen.CreateThread(VehicleNameUpdate)
 Citizen.CreateThread(MainUpdate)
-Citizen.CreateThread(PlayerNamesUpdate)
 Citizen.CreateThread(RacesReport)
