@@ -116,6 +116,7 @@ function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
         end
     end
 
+    SetMpGamerTagName(self.players[source].nameTag, ("%i.%s"):format(racerPosition, self.players[source].playerName))
     SetBlipColour(blip, blipColour)
     ShowNumberOnBlip(blip, racerPosition)
     self.players[source].blip = blip
