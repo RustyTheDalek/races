@@ -1,4 +1,9 @@
+local defaultBlip <const> = 2
+local defaultPlayerBlip <const> = 6
+
 local defaultRacerBlipColor <const> = 0   -- white
+local racerBehindBlipColor  <const> = 1   -- red
+local racerAheadBlipColor   <const> = 2    -- green
 
 local racerSprite <const> = 1 -- circle
 
@@ -36,7 +41,6 @@ function PlayerDisplay:AddNameTag(ped, playerName)
     if(playerName == 'Rusty') then
         hudColour = 49
     end
-
     local gamerTag = CreateFakeMpGamerTag(ped, playerName, false, false, nil, 0)
     SetMpGamerTagColour(gamerTag, 0, hudColour)
     SetMpGamerTagVisibility(gamerTag, 0, true)
@@ -62,6 +66,59 @@ function PlayerDisplay:GetPedFromPlayer(source)
     end
 
     return ped
+end
+
+function PlayerDisplay:UpdateRacerDisplay(racePositions, position)
+    for racerPosition, source in ipairs(racePositions) do
+        if source == GetPlayerServerId(PlayerId()) then
+            PlayerDisplay:SetOwnRacerBlip(position)
+        else
+            PlayerDisplay:SetOtherRacerBlip(racerPosition, source, position)
+        end
+    end
+end
+
+function PlayerDisplay:SetOwnRacerBlip(position)
+    SetBlipSprite(GetMainPlayerBlipId(), racerSprite)
+    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
+
+    if(position ~= nil and position ~= -1) then
+        ShowNumberOnBlip(GetMainPlayerBlipId(), position)
+    end
+end
+
+function PlayerDisplay:ResetOwnRaceBlip()
+    SetBlipSprite(GetMainPlayerBlipId(), defaultPlayerBlip)
+    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
+    HideNumberOnBlip(GetMainPlayerBlipId())
+end
+
+function PlayerDisplay:ResetRaceBlips()
+    self:ResetOwnRaceBlip()
+
+    for _, playerDisplay in pairs(self.players) do
+        SetBlipSprite(playerDisplay.blip, defaultBlip)
+        SetBlipColour(playerDisplay.blip, defaultRacerBlipColor)
+        HideNumberOnBlip(playerDisplay.blip)
+    end
+end
+
+function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
+    local blip = self.players[source].blip
+    SetBlipSprite(blip, racerSprite)
+    local blipColour = defaultRacerBlipColor
+
+    if(source ~= GetPlayerServerId(PlayerId())) then
+        if(racerPosition <= racePosition) then
+            blipColour = racerAheadBlipColor
+        else
+            blipColour = racerBehindBlipColor
+        end
+    end
+
+    SetBlipColour(blip, blipColour)
+    ShowNumberOnBlip(blip, racerPosition)
+    self.players[source].blip = blip
 end
 
 function PlayerDisplay:AddDisplay(source, playerName)
