@@ -30,19 +30,6 @@ local races = {} -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, i
 --2nd dimension is rcers
 local checkpointTimes = {}
 
-function dump(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k, v in pairs(o) do
-            if type(k) ~= 'number' then k = '"' .. k .. '"' end
-            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
-end
-
 function explode(inputstr, sep)
     if sep == nil then
         sep = "%s"
