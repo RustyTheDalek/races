@@ -100,6 +100,7 @@ function PlayerDisplay:ResetRaceBlips()
         SetBlipSprite(playerDisplay.blip, defaultBlip)
         SetBlipColour(playerDisplay.blip, defaultRacerBlipColor)
         HideNumberOnBlip(playerDisplay.blip)
+        SetMpGamerTagName(playerDisplay.nameTag, playerDisplay.playerName)
     end
 end
 
@@ -116,7 +117,7 @@ function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
         end
     end
 
-    SetMpGamerTagName(self.players[source].nameTag, ("%i.%s"):format(racerPosition, self.players[source].playerName))
+    SetMpGamerTagName(self.players[source].nameTag, ("%i|%s"):format(racerPosition, self.players[source].playerName))
     SetBlipColour(blip, blipColour)
     ShowNumberOnBlip(blip, racerPosition)
     self.players[source].blip = blip
