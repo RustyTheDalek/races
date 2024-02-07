@@ -64,7 +64,7 @@ function PlayerDisplay:GetPedFromPlayer(source)
         return -1
     end
 
-    Citizen.Wait(1000)
+    Citizen.Wait(2000)
 
     local ped = GetPlayerPed(player)
 
