@@ -1,10 +1,15 @@
 {
     "ghostingTime": 3000,
     "raceStartGhostingTime": 30000,
-    "ghosting": {
+    "ghosting" : {
         "lowGhostingAlpha": 50,
         "highGhostingAlpha": 128,
         "flickerInterval": 1000,
         "ghostingTimeoutStart": 5000
+    },
+    "playerDisplay" : {
+        "raceDisplay" : {
+            "gamerTagInfix" : " | "
+        }
     }
 }

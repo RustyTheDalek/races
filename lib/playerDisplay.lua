@@ -7,6 +7,8 @@ local racerAheadBlipColor   <const> = 2    -- green
 
 local racerSprite <const> = 1 -- circle
 
+local gamerTagInfix = ""
+
 PlayerDisplay = {
     players = {}    -- players[netId] = { blip, nameTag, playerName } 
 }
@@ -16,6 +18,12 @@ function PlayerDisplay:New(o)
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+function PlayerDisplay:LoadConfig(configData)
+    if(configData~= nil) then
+        gamerTagInfix = configData['raceDisplay']['gamerTagInfix']
+    end
 end
 
 function PlayerDisplay:AddBlip(ped, playerName)
@@ -117,7 +125,7 @@ function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
         end
     end
 
-    SetMpGamerTagName(self.players[source].nameTag, ("%i|%s"):format(racerPosition, self.players[source].playerName))
+    SetMpGamerTagName(self.players[source].nameTag, ("%i".. gamerTagInfix .. "%s"):format(racerPosition, self.players[source].playerName))
     SetBlipColour(blip, blipColour)
     ShowNumberOnBlip(blip, racerPosition)
     self.players[source].blip = blip
