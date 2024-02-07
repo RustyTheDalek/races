@@ -3036,6 +3036,7 @@ RegisterNetEvent("races:config")
 AddEventHandler("races:config", function(_configData)
     configData = _configData
 
+    ghosting:LoadConfig(configData['ghosting'])
     playerDisplay:LoadConfig(configData['playerDisplay'])
 
 end)

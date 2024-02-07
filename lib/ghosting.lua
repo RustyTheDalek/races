@@ -14,16 +14,17 @@ Ghosting = {
 function Ghosting:New(o)
     o = o or {}
     setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
+function Ghosting:LoadConfig(configData)
     if(configData~= nil) then
         lowGhostingAlpha = configData['lowGhostingAlpha']
         highGhostingAlpha = configData['highGhostingAlpha']
         ghostingTimeoutStart = configData['ghostingTimeoutStart']
         flickerInterval = configData['flickerInterval']
     end
-
-    self.__index = self
-    return o
 end
 
 function Ghosting:StartGhostingNoTimer()
@@ -88,7 +89,7 @@ function Ghosting:StopGhosting()
 end
 
 function Ghosting:Update()
-    
+
     if(self.active ~= true or self.length == 0) then
         return
     end
