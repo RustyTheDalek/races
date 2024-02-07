@@ -11,7 +11,7 @@ PlayerDisplay = {
     players = {}    -- players[netId] = { blip, nameTag, playerName } 
 }
 
-function PlayerDisplay:new (o)
+function PlayerDisplay:New(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self

@@ -7,11 +7,11 @@ Ghosting = {
     active = false,
     length = 0,
     currentGhostedAlpha = 0,
-    timer = Timer:new(),
-    flickerTimer = Timer:new()
+    timer = Timer:New(),
+    flickerTimer = Timer:New()
 }
 
-function Ghosting:new (o, configData)
+function Ghosting:New(o)
     o = o or {}
     setmetatable(o, self)
 

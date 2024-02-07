@@ -135,8 +135,8 @@ local currentRace = {
     raceType = ""
 }
 
-local ghosting = Ghosting:new()
-local playerDisplay = PlayerDisplay:new()
+local ghosting = Ghosting:New()
+local playerDisplay = PlayerDisplay:New()
 
 local configData
 

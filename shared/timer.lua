@@ -6,7 +6,7 @@ Timer = {
 }
 
 -- Derived class method new
-function Timer:new (o)
+function Timer:New(o)
     o = o or {}
     setmetatable(o, self)
     self.__index = self
