@@ -1,4 +1,4 @@
-function lerp(a,b,t) return a * (1-t) + b * t end
+function lerp(a, b, t) return a * (1 - t) + b * t end
 
 function round(f)
     return (f - math.floor(f) >= 0.5) and math.ceil(f) or math.floor(f)
@@ -30,3 +30,11 @@ function idump(o)
     end
 end
 
+function contains(table, val)
+    for i = 1, #table do
+        if table[i] == val then
+            return true
+        end
+    end
+    return false
+end
