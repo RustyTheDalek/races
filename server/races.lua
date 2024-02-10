@@ -2095,6 +2095,8 @@ end)
 
 RegisterNetEvent("races:sendCheckpointTime")
 AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
+    local source = source
+
     if (races[raceIndex] == nil) then
         print("No race by that index")
         return
@@ -2103,9 +2105,8 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     local race = races[raceIndex]
     local raceTime = race.raceTime
 
-    local source = source
-
     local racersAhead = {}
+    local racersAheadSources = {}
     local racersBehind = {}
 
     print("Sending Checkpoint Time")
@@ -2114,16 +2115,31 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
 
     table.insert(checkpointTimes, {})
 
-    for racerAheadSource, racerAheadLapTime in pairs(checkpointTimes[waypointsPassed]) do
+    for racerAheadSource, racerAheadTime in pairs(checkpointTimes[waypointsPassed]) do
         if (racerAheadSource ~= source) then
             print("checkpointTimes at [" .. waypointsPassed .. "][" .. racerAheadSource .. "] has values")
             print("Updating time split for " ..
                 racerAheadSource ..
-                " with my source " .. source .. " and a difference of " .. raceTime - racerAheadLapTime)
-            TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, raceTime - racerAheadLapTime)
+                " with my source " .. source .. " and a difference of " .. raceTime - racerAheadTime)
+            TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, raceTime - racerAheadTime)
 
-            table.insert(racersAhead, { source = racerAheadSource, timeSplit = (racerAheadLapTime - raceTime) })
+            table.insert(racersAhead, { source = racerAheadSource, timeSplit = (racerAheadTime - raceTime) })
+            table.insert(racersAheadSources, racerAheadSource)
         end
+    end
+
+    if(waypointsPassed - 1 > 0) then
+        for racerBehindSource, racerBehindTime in pairs(checkpointTimes[waypointsPassed-1]) do
+            if ((not contains(racersAheadSources, racerBehindSource)) and 
+                racerBehindSource ~= source) then
+                TriggerClientEvent("races:updateTimeSplit", racerBehindSource, source, raceTime - racerBehindTime)
+                table.insert(racersBehind, { source = racerBehindSource, timeSplit = ( raceTime - racerBehindTime) })
+            end
+        end
+    end
+
+    if (#racersBehind > 0) then
+        TriggerClientEvent("races:compareTimeSplit", source, racersBehind)
     end
 
     checkpointTimes[waypointsPassed][source] = raceTime
