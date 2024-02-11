@@ -1842,9 +1842,9 @@ AddEventHandler("races:leave", function(rIndex)
 end)
 
 RegisterNetEvent("races:removeFromLeaderboard")
-AddEventHandler("races:removeFromLeaderboard", function(source)
-    --Make this less gloabl
-    TriggerClientEvent("races:removeFromLeaderboard", -1, source)
+AddEventHandler("races:removeFromLeaderboard", function(raceIndex)
+    local source = source
+    TriggerEventForRacers(raceIndex, "races:removeFromLeaderboard", source)
 end)
 
 RegisterNetEvent("races:rivals")
