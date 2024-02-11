@@ -2992,7 +2992,7 @@ function HandleJoinState()
 end
 
 function SendVehicleName()
-    TriggerServerEvent("races:sendvehiclename", currentVehicleName or 'N/A' )
+    TriggerServerEvent("races:sendvehiclename", raceIndex, currentVehicleName or 'N/A' )
 end
 
 RegisterNetEvent("races:sendvehiclename")

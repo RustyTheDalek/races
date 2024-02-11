@@ -2098,9 +2098,9 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 end)
 
 RegisterNetEvent("races:sendvehiclename")
-AddEventHandler("races:sendvehiclename", function(currentVehicleName)
+AddEventHandler("races:sendvehiclename", function(raceIndex, currentVehicleName)
     local source = source
-    TriggerClientEvent("races:sendvehiclename", -1, source, currentVehicleName)
+    TriggerEventForRacers(raceIndex, "races:sendvehiclename", source, currentVehicleName)
 end)
 
 RegisterNetEvent("races:sendCheckpointTime")
