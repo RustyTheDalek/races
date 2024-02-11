@@ -2553,8 +2553,16 @@ AddEventHandler("races:hide", function(rIndex)
 end)
 
 RegisterNetEvent("races:joinnotification")
-AddEventHandler("races:joinnotification", function(playerName, racerDictionary, rIndex, trackName, numReady, numRacing, registrationCoords)
-    UpdateRegistrationCheckpoint(rIndex, registrationCoords, numRacing)
+AddEventHandler("races:joinnotification", function(joinNotificationData)
+
+    local raceIndex = joinNotificationData.raceIndex
+    local registrationCoords = joinNotificationData.waypointCoords
+    local numRacing = joinNotificationData.numRacing
+    local playerName = joinNotificationData.playerName
+    local trackName = joinNotificationData.trackName
+    local racerDictionary = joinNotificationData.racerDictionary
+
+    UpdateRegistrationCheckpoint(raceIndex, registrationCoords, numRacing)
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
     AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 end)
@@ -2680,7 +2688,15 @@ end)
 -- only accept finish events from current race
 -- do not accept finish events from previous race
 RegisterNetEvent("races:finish")
-AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, raceBestLapTime, raceVehicleName)
+AddEventHandler("races:finish", function(finishData)
+
+    local rIndex = finishData.raceIndex
+    local playerName = finishData.playerName
+    local raceFinishTime = finishData.data
+    local raceBestLapTime = finishData.bestLapTime
+    local raceVehicleName = finishData.bestLapVehicleName
+
+
     if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
         if rIndex == raceIndex then
             if -1 == raceFinishTime then

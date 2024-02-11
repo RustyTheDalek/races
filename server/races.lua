@@ -775,6 +775,18 @@ local function saveResults(race)
     end
 end
 
+--In cases where you need to trigger a simple event for all players in a race
+local function TriggerEventForRacers(raceIndex, event, arg1, arg2)
+    if(races[raceIndex] == nil) then
+        print(("Ignoring event, no race with index %i"):format(raceIndex))
+    end
+
+    for racerSource,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent(event, racerSource, arg1, arg2)
+    end
+
+end
+
 local function SetNextGridLineup(results)
     UseRaceResults = true
     for k in next, gridLineup do rawset(gridLineup, k, nil) end
@@ -879,9 +891,8 @@ local function OnPlayerLeave(race, rIndex, source)
 
     races[rIndex].players[source] = nil
 
-    for racerSource,_ in pairs(race.players) do
-        TriggerClientEvent("races:onplayerleave", racerSource, source)
-    end
+    TriggerEventForRacers(rIndex, "races:onplayerleave", source)
+
 end
 
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
@@ -1496,7 +1507,7 @@ RegisterNetEvent("races:endrace")
 AddEventHandler("races:endrace", function()
     local source = source
     if races[source] ~= nil then
-        TriggerClientEvent("races:leave", -1)
+        TriggerEventForRacers(source, "races:leave")
         sendMessage(source, "Race Ended.\n")
     else
         sendMessage(source, "Cannot End race.  You have no active race.\n")
@@ -1624,13 +1635,8 @@ AddEventHandler("races:start", function(delay, override)
 
                         StartRaceDelay(race, delay)
 
-                        local sourceJoined = false
-                        for _, player in pairs(race.players) do
-                            TriggerClientEvent("races:start", player.source, source, delay)
-                            if player.source == source then
-                                sourceJoined = true
-                            end
-                        end
+                        TriggerEventForRacers(source, "races:start", source, delay)
+
                         TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
                         sendMessage(source, "Race started.\n")
                     else
@@ -1896,11 +1902,16 @@ AddEventHandler("races:join", function(rIndex)
                     table.insert(gridLineup, source)
                 end
 
-                for racerSource,_ in pairs(races[rIndex].players) do
-                    TriggerClientEvent("races:joinnotification", racerSource, playerName, racerDictionary, rIndex,
-                    races[rIndex].trackName,
-                    races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
-                end
+                local joinNotificationData = {
+                    playerName = playerName,
+                    racerDictionary = racerDictionary,
+                    raceIndex = rIndex,
+                    trackName = races[rIndex].trackName,
+                    numRacing = races[rIndex].numRacing,
+                    waypointCoords = races[rIndex].waypointCoords[1]
+                }
+
+                TriggerClientEvent("races:joinnotification", -1, joinNotificationData)
 
                 TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
                 races[rIndex].waypointCoords)
@@ -1935,10 +1946,15 @@ AddEventHandler("races:finish",
 
                         print(("Finish Time: %i"):format(finishedRacer.data))
 
-                        for nID, player in pairs(race.players) do
-                            TriggerClientEvent("races:finish", player.source, rIndex, finishedRacer.playerName,
-                            finishedRacer.data, finishedRacer.bestLapTime, finishedRacer.bestLapVehicleName)
-                        end
+                        local finishData = {
+                            raceIndex = rIndex,
+                            playerName = finishedRacer.playerName,
+                            finishTime = finishedRacer.data,
+                            bestLapTime = finishedRacer.bestLapTime,
+                            bestLapVehicleName = finishedRacer.bestLapVehicleName
+                        }
+
+                        TriggerEventForRacers(rIndex, "races:finish", finishData)
 
                         race.results[#race.results + 1] = {
                             source = source,
@@ -1968,9 +1984,7 @@ AddEventHandler("races:finish",
                                 end
                             end
 
-                            for _, player in pairs(race.players) do
-                                TriggerClientEvent("races:results", player.source, rIndex, race.results)
-                            end
+                            TriggerEventForRacers(rIndex, "races:results", rIndex, race.results)
 
                             TriggerClientEvent("races:clearLeaderboard", -1)
 
@@ -2237,9 +2251,8 @@ function MainServerUpdate()
                 if (race.delayTimer.length <= 5000 and race.fiveSecondWarning == false) then
                     race.fiveSecondWarning = true
                     print("Five second warning")
-                    for _, player in pairs(race.players) do
-                        TriggerClientEvent("races:fivesecondwarning", player.source)
-                    end
+
+                    TriggerEventForRacers(rIndex, "races:fivesecondwarning")
                 end
                 if (race.delayTimer.complete) then
 
