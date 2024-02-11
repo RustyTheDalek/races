@@ -2216,7 +2216,7 @@ function RaceServerUpdate()
 
                     local racePositions = map(sortedPlayers, function(item) return item.source end)
 
-                    TriggerClientEvent("races:racerPositions", -1, racePositions)
+                    TriggerEventForRacers(rIndex, "races:racerPositions", racePositions)
 
                     -- players sorted into sortedPlayers table
                     for position, sortedPlayer in pairs(sortedPlayers) do
