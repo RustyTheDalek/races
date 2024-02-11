@@ -818,7 +818,7 @@ end
 
 local gridSeparation <const> = 5
 
-local function GenerateStartingGrid(startWaypoint, totalGridPositions)
+local function GenerateStartingGrid(startWaypoint, racers)
     -- print("Generating starting grid")
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
@@ -844,7 +844,7 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
 
     local gridPositions = {}
 
-    for i = 1, totalGridPositions do
+    for i = 1, #racers do
         local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
 
         -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
@@ -857,9 +857,11 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
             gridPosition = gridPosition + leftVector * 3
         end
 
-        TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
-
         table.insert(gridPositions, gridPosition)
+    end
+
+    for source,_ in pairs(racers) do
+        TriggerClientEvent("races:spawncheckpoints", source, gridPositions)
     end
 
     return gridPositions
@@ -1523,7 +1525,7 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
+    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].players)
 
     if (gridPositions ~= nil) then
         PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players,

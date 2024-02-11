@@ -2837,6 +2837,14 @@ AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
     table.insert(gridCheckpoints, CreateGridCheckpoint(position, gridNumber))
 end)
 
+RegisterNetEvent("races:spawncheckpoints")
+AddEventHandler("races:spawncheckpoints", function(gridPositions)
+    print("Spawn Checkpoints called")
+    for index, gridPosition in ipairs(gridPositions) do
+        table.insert(gridCheckpoints, CreateGridCheckpoint(gridPosition, index))
+    end
+end)
+
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
 
