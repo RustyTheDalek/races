@@ -3232,9 +3232,7 @@ function EditUpdate(playerCoord, heading)
     end
 end
 
-function RaceUpdate(player, playerCoord, currentTime)
-    local vehicle = GetVehiclePedIsIn(player, false)
-
+function HandleRespawn(currentTime)
     if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
         if true == respawnCtrlPressed then
             if currentTime - respawnTime > respawnTimer then
@@ -3255,6 +3253,123 @@ function RaceUpdate(player, playerCoord, currentTime)
     if IsControlReleased(0, 19) == 1 then
         respawnLock = false
     end
+end
+
+--Returns true when the race is finished
+function OnNewLap(player)
+    currentWaypoint = 1
+    currentLapTimer:Reset()
+    TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
+
+    if currentLap < numLaps then
+        currentLap = currentLap + 1
+        PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
+        --Last lap gets a unique sound to signify it's end
+        if(currentLap == numLaps) then
+            PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
+        end
+        UpdateCurrentLap()
+        if #randVehicles > 0 then
+            local randIndex = math.random(#randVehicles)
+            sendMessage("Random Index: " .. randIndex)
+            local randVehicle = switchVehicle(player,
+            randVehicles[randIndex])
+            if randVehicle ~= nil then
+                SetEntityAsNoLongerNeeded(randVehicle)
+            end
+            PlaySoundFrontend(-1, "CHARACTER_SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+        end
+    else
+        finishRace(false)
+        return true
+    end
+end
+
+function OnHitCheckpoint(player)
+    local vehicle = GetVehiclePedIsIn(player, false)
+
+    if restrictedHash ~= nil then
+        if nil == vehicle or currentVehicleHash ~= restrictedHash then
+            return
+        end
+    elseif restrictedClass ~= nil then
+        if vehicle ~= nil then
+            if -1 == restrictedClass then
+                if vehicleInList(vehicle, customClassVehicleList) == false then
+                    return
+                end
+            elseif GetVehicleClass(vehicle) ~= restrictedClass then
+                return
+            end
+        else
+            return
+        end
+    end
+
+
+    resetupgrades(vehicle)
+    DeleteCheckpoint(raceCheckpoint)
+
+    numWaypointsPassed = numWaypointsPassed + 1
+
+    SendCheckpointTime(numWaypointsPassed)
+
+    if currentWaypoint < #waypoints then
+        PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
+        currentWaypoint = currentWaypoint + 1
+    else
+        if (OnNewLap(player)) then
+            return
+        end
+    end
+
+    UpdateCurrentCheckpoint()
+
+    local prev = currentWaypoint - 1
+    local last = currentWaypoint + numVisible - 1
+    local addLast = true
+    local curr = currentWaypoint
+    local checkpointType = -1
+
+    if true == startIsFinish then
+        prev = currentWaypoint
+        if currentLap ~= numLaps then
+            last = last % #waypoints + 1
+        elseif last < #waypoints then
+            last = last + 1
+        elseif #waypoints == last then
+            last = 1
+        else
+            addLast = false
+        end
+        curr = curr % #waypoints + 1
+        checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or
+        arrow3Checkpoint
+    else
+        if last > #waypoints then
+            addLast = false
+        end
+        checkpointType = #waypoints == curr and finishCheckpoint or arrow3Checkpoint
+    end
+
+    SetBlipDisplay(waypoints[prev].blip, 0)
+
+    if true == addLast then
+        SetBlipDisplay(waypoints[last].blip, 2)
+    end
+
+    SetBlipRoute(waypoints[curr].blip, true)
+    SetBlipRouteColour(waypoints[curr].blip, blipRouteColor)
+    waypointCoord = waypoints[curr].coord
+    local nextCoord = waypointCoord
+    if arrow3Checkpoint == checkpointType then
+        nextCoord = curr < #waypoints and waypoints[curr + 1].coord or waypoints[1].coord
+    end
+    raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, yellow, 127, 0)
+end
+
+function RaceUpdate(player, playerCoord, currentTime)
+    HandleRespawn(currentTime)
 
     currentLapTimer:Update()
     local minutes, seconds = minutesSeconds(currentLapTimer.length)
@@ -3271,120 +3386,12 @@ function RaceUpdate(player, playerCoord, currentTime)
         else -- DNF
             DeleteCheckpoint(raceCheckpoint)
             finishRace(true)
+            return
         end
     end
 
-    if racingStates.Racing == raceState then
-        if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
-            local waypointPassed = true
-            if restrictedHash ~= nil then
-                if nil == vehicle or currentVehicleHash ~= restrictedHash then
-                    waypointPassed = false
-                end
-            elseif restrictedClass ~= nil then
-                if vehicle ~= nil then
-                    if -1 == restrictedClass then
-                        if vehicleInList(vehicle, customClassVehicleList) == false then
-                            waypointPassed = false
-                        end
-                    elseif GetVehicleClass(vehicle) ~= restrictedClass then
-                        waypointPassed = false
-                    end
-                else
-                    waypointPassed = false
-                end
-            end
-
-            if true == waypointPassed then
-
-                resetupgrades(vehicle)
-                DeleteCheckpoint(raceCheckpoint)
-
-                numWaypointsPassed = numWaypointsPassed + 1
-
-                SendCheckpointTime(numWaypointsPassed)
-
-                if currentWaypoint < #waypoints then
-                    PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
-                    currentWaypoint = currentWaypoint + 1
-                else
-                    --New Lap
-                    currentWaypoint = 1
-                    currentLapTimer:Reset()
-                    TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
-
-                    if currentLap < numLaps then
-                        currentLap = currentLap + 1
-                        PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
-                        --Last lap gets a unique sound to signify it's end
-                        if(currentLap == numLaps) then
-                            PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
-                        end
-                        UpdateCurrentLap()
-                        if #randVehicles > 0 then
-                            local randIndex = math.random(#randVehicles)
-                            sendMessage("Random Index: " .. randIndex)
-                            local randVehicle = switchVehicle(player,
-                            randVehicles[randIndex])
-                            if randVehicle ~= nil then
-                                SetEntityAsNoLongerNeeded(randVehicle)
-                            end
-                            PlaySoundFrontend(-1, "CHARACTER_SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-                        end
-                    else
-                        finishRace(false)
-                    end
-                end
-
-                UpdateCurrentCheckpoint()
-
-                if racingStates.Racing == raceState then
-                    local prev = currentWaypoint - 1
-
-                    local last = currentWaypoint + numVisible - 1
-                    local addLast = true
-
-                    local curr = currentWaypoint
-                    local checkpointType = -1
-
-                    if true == startIsFinish then
-                        prev = currentWaypoint
-                        if currentLap ~= numLaps then
-                            last = last % #waypoints + 1
-                        elseif last < #waypoints then
-                            last = last + 1
-                        elseif #waypoints == last then
-                            last = 1
-                        else
-                            addLast = false
-                        end
-                        curr = curr % #waypoints + 1
-                        checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or
-                        arrow3Checkpoint
-                    else
-                        if last > #waypoints then
-                            addLast = false
-                        end
-                        checkpointType = #waypoints == curr and finishCheckpoint or arrow3Checkpoint
-                    end
-
-                    SetBlipDisplay(waypoints[prev].blip, 0)
-
-                    if true == addLast then
-                        SetBlipDisplay(waypoints[last].blip, 2)
-                    end
-
-                    SetBlipRoute(waypoints[curr].blip, true)
-                    SetBlipRouteColour(waypoints[curr].blip, blipRouteColor)
-                    waypointCoord = waypoints[curr].coord
-                    local nextCoord = waypointCoord
-                    if arrow3Checkpoint == checkpointType then
-                        nextCoord = curr < #waypoints and waypoints[curr + 1].coord or waypoints[1].coord
-                    end
-                    raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, yellow, 127, 0)
-                end
-            end
-        end
+    if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
+        OnHitCheckpoint(player)
     end
 end
 
