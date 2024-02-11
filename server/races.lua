@@ -1986,8 +1986,7 @@ AddEventHandler("races:finish",
                             end
 
                             TriggerEventForRacers(rIndex, "races:results", rIndex, race.results)
-
-                            TriggerClientEvent("races:clearLeaderboard", -1)
+                            TriggerEventForRacers(rIndex, "races:clearLeaderboard")
 
                             saveResults(race)
 
