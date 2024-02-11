@@ -33,10 +33,10 @@ local midSprite <const> = 1               -- numbered circle
 local registerSprite <const> = 58         -- circled star
 local racerSprite <const> = 1             -- circle
 
-local finishCheckpoint <const> = 9        -- cylinder checkered flag
+local finishCheckpoint <const> = 4        -- cylinder checkered flag
 local midCheckpoint <const> = 42          -- cylinder with number
 local plainCheckpoint <const> = 45        -- cylinder
-local arrow3Checkpoint <const> = 7        -- cylinder with 3 arrows
+local arrow3Checkpoint <const> = 0        -- cylinder with 3 arrows
 
 local defaultTier <const> = "none"        -- default race Tier
 local defaultSpecialClass <const> = "none"-- default race Tier
@@ -205,7 +205,7 @@ local sologridCheckpoint = {}
 local function CreateGridCheckpoint(position, gridNumber)
 
     gridCheckpoint = CreateCheckpoint(45,
-        position.x, position.y, position.z - gridRadius / 2.0,
+        position.x, position.y, position.z - 1,
         position.x, position.y, position.z,
         gridRadius,
         0, 255, 0,
@@ -309,15 +309,14 @@ local function getCheckpointColor(blipColor)
 end
 
 local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, num)
-    local zCoord = coord.z
-    if 42 == checkpointType or 45 == checkpointType then
-        zCoord = zCoord - coord.r / 2.0
-    else
-        zCoord = zCoord + coord.r / 2.0
-    end
-    local checkpoint = CreateCheckpoint(checkpointType, coord.x, coord.y, zCoord, nextCoord.x, nextCoord.y, nextCoord.z,
+    --The -1 represents the roughly half the height of the ped
+    --It's divided by the radius of the coord which is in turn divied by 2
+    --Because it's actually the diameter or because 2 is actually the ped height?
+    local checkpoint = CreateCheckpoint(checkpointType,
+    coord.x, coord.y, coord.z -1 / (coord.r / 2),
+    nextCoord.x, nextCoord.y, nextCoord.z -1 / (coord.r / 2) ,
     coord.r * 2.0, color.r, color.g, color.b, alpha, num)
-    SetCheckpointCylinderHeight(checkpoint, 10.0, 10.0, coord.r * 2.0)
+    SetCheckpointIconHeight(checkpoint, 0.3)
     return checkpoint
 end
 
