@@ -864,21 +864,24 @@ local function OnPlayerLeave(race, rIndex, source)
         race.numReady = race.numReady - 1
     end
 
-    TriggerClientEvent("races:onplayerleave", source)
     TriggerClientEvent("races:leavenotification", -1,
-        string.format(
-            "%s has left Race %s",
-            race.players[source].playerName,
-            race.trackName
-        ),
-        race.players[source].source,
-        rIndex,
-        race.numReady,
-        race.numRacing,
-        race.waypointCoords[1]
-    )
+    string.format(
+        "%s has left Race %s",
+        race.players[source].playerName,
+        race.trackName
+    ),
+    rIndex,
+    race.numRacing,
+    race.waypointCoords[1]
+)
+
+    TriggerClientEvent("races:onleave", source)
 
     races[rIndex].players[source] = nil
+
+    for racerSource,_ in pairs(race.players) do
+        TriggerClientEvent("races:onplayerleave", racerSource, source)
+    end
 end
 
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
@@ -1888,11 +1891,15 @@ AddEventHandler("races:join", function(rIndex)
                     print("No race results, adding racer")
                     table.insert(gridLineup, source)
                 end
-                TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
+
+                for racerSource,_ in pairs(races[rIndex].players) do
+                    TriggerClientEvent("races:joinnotification", racerSource, playerName, racerDictionary, rIndex,
                     races[rIndex].trackName,
                     races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+                end
+
                 TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
-                    races[rIndex].waypointCoords)
+                races[rIndex].waypointCoords)
             else
                 notifyPlayer(source, "Cannot join.  Race in progress.\n")
             end

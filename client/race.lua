@@ -2554,17 +2554,21 @@ end)
 
 RegisterNetEvent("races:joinnotification")
 AddEventHandler("races:joinnotification", function(playerName, racerDictionary, rIndex, trackName, numReady, numRacing, registrationCoords)
-    DeleteCheckpoint(starts[rIndex].checkpoint);
-    registrationCoords.r = defaultRadius
-    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
-    starts[rIndex].checkpoint = checkpoint
+    UpdateRegistrationCheckpoint(rIndex, registrationCoords, numRacing)
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
     AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 end)
 
+RegisterNetEvent("races:onleave")
+AddEventHandler("races:onleave", function()
+    ClearLeaderboard()
+end)
+
 RegisterNetEvent("races:onplayerleave")
-AddEventHandler("races:onplayerleave", function()
-    ClearReady()
+AddEventHandler("races:onplayerleave", function(otherRaceSource)
+    ready = false
+    SendReadyData({ source = GetPlayerServerId(PlayerId()), ready = ready})
+    RemoveRacerFromLeaderboard(otherRaceSource)
 end)
 
 RegisterNetEvent("races:leave")
@@ -2572,15 +2576,16 @@ AddEventHandler("races:leave", function()
     leave()
 end)
 
+function UpdateRegistrationCheckpoint(raceIndex, coords, numRacing)
+    DeleteCheckpoint(starts[raceIndex].checkpoint);
+    coords.r = defaultRadius
+    local checkpoint = makeCheckpoint(plainCheckpoint, coords, coords, purple, 127, numRacing)
+    starts[raceIndex].checkpoint = checkpoint
+end
+
 RegisterNetEvent("races:leavenotification")
-AddEventHandler("races:leavenotification", function(message, source, rIndex, numReady, numRacing, registrationCoords)
-    print("Leave race notification")
-    DeleteCheckpoint(starts[rIndex].checkpoint);
-    registrationCoords.r = defaultRadius
-    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
-    starts[rIndex].checkpoint = checkpoint
-    print(string.format("NumberRacing: %i", numRacing))
-    RemoveRacerFromLeaderboard(source)
+AddEventHandler("races:leavenotification", function(message, rIndex, numRacing, registrationCoords)
+    UpdateRegistrationCheckpoint(rIndex, registrationCoords, numRacing)
     sendMessage(message)
 end)
 
@@ -2917,13 +2922,6 @@ end
 function ResetReady()
     ready = false
     TriggerServerEvent("races:readyState", raceIndex, ready)
-end
-
-function ClearReady()
-    SendNUIMessage({
-        type = 'ready',
-        action = 'clear_ready'
-    })
 end
 
 function SetRaceLeaderboard(enabled)
