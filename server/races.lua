@@ -1593,11 +1593,12 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
     TriggerEventForRacers(raceIndex, "races:sendReadyData", ready, source, GetPlayerName(source))
 end)
 
+--source is the source of racerOwner which is also the race's index
 function StartRace(race, source, delay)
     race.countdown = false
     race.countdownTimeStart = 0
     StartRaceDelay(race, delay)
-    TriggerClientEvent("races:start", -1, source, delay)
+    TriggerEventForRacers(source, "races:start", source, delay)
     TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
     sendMessage(source, "Race started.\n")
 end
