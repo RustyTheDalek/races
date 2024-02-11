@@ -130,42 +130,31 @@ local configData
 
 local boost_active = false
 
-AddEventHandler('onClientGameTypeStart', function()
-    exports.spawnmanager:setAutoSpawnCallback(function()
-        if racingStates.Racing == raceState then
-            print("In race, spawning at race")
-            local coord = startCoord
-            if true == startIsFinish then
-                if currentWaypoint > 0 then
-                    coord = waypoints[currentWaypoint].coord
-                end
-            else
-                if currentWaypoint > 1 then
-                    coord = waypoints[currentWaypoint - 1].coord
-                end
+exports.spawnmanager:setAutoSpawnCallback(function()
+
+    local coord = { x = -1437.03, y = -2993.15 , z = 13.94, heading = 222.93 }
+
+    if racingStates.Racing == raceState then
+        print("In race, spawning at race")
+        coord = startCoord
+        if true == startIsFinish then
+            if currentWaypoint > 0 then
+                coord = waypoints[currentWaypoint].coord
             end
-
-            exports.spawnmanager:spawnPlayer({
-                x = coord.x,
-                y = coord.y,
-                z = coord.z,
-                heading = coord.heading,
-                skipFade = true
-            })
         else
-
-            print("Not in Race, spawning at airport")
-            exports.spawnmanager:spawnPlayer({
-                x = -1437.03,
-                y = -2993.15,
-                z = 13.94,
-                heading = 222.93,
-                skipFade = true
-            })
-
+            if currentWaypoint > 1 then
+                coord = waypoints[currentWaypoint - 1].coord
+            end
         end
-    end)
+    end
 
+    exports.spawnmanager:spawnPlayer({
+        x = coord.x,
+        y = coord.y,
+        z = coord.z,
+        heading = coord.heading,
+        skipFade = true
+    })
     exports.spawnmanager:setAutoSpawn(true)
     exports.spawnmanager:forceRespawn()
 end)

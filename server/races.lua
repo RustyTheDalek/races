@@ -989,10 +989,6 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
     }
 end
 
-AddEventHandler("respawnPlayerPedEvent", function(player, content)
-    TriggerClientEvent('races:respawn', player)
-end)
-
 RegisterNetEvent("ghosting:setplayeralpha")
 AddEventHandler('ghosting:setplayeralpha', function(alphaValue)
     TriggerClientEvent('ghosting:setplayeralpha', -1, alphaValue)
