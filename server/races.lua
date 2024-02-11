@@ -1125,7 +1125,16 @@ AddEventHandler("playerDropped", function()
                 --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
             else
                 TriggerEvent("races:removeFromLeaderboard", source)
-                TriggerEvent("races:finish", i, source, nil, 0, -1, -1, "")
+
+                local finishData = {
+                    raceIndex = source,
+                    playerName = nil,
+                    data = 0,
+                    bestLapTime = -1,
+                    bestLapVehicleName = ""
+                }
+
+                TriggerEvent("races:finish", i, finishData)
             end
             return
         end
