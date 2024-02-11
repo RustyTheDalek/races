@@ -819,13 +819,7 @@ end
 local gridSeparation <const> = 5
 
 local function GenerateStartingGrid(startWaypoint, racers)
-    -- print("Generating starting grid")
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
-
-    -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
-    -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
-
-    --TriggerClientEvent("races:spawncheckpoint", -1, startWaypoint, i)
 
     --Calculate the forwardVector of the starting Waypoint
     local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
@@ -839,15 +833,10 @@ local function GenerateStartingGrid(startWaypoint, racers)
         0.0
     )
 
-    -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
-    -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
-
     local gridPositions = {}
 
     for i = 1, #racers do
         local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
-
-        -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
 
         if math.fmod(i, 2) == 0 then
             -- print("Right Grid")
