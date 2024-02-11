@@ -1876,7 +1876,7 @@ AddEventHandler("races:join", function(rIndex)
                 races[rIndex].players[source] = {
                     source = source,
                     playerName = playerName,
-                    numWaypointsPassed = -1,
+                    waypointsPassed = -1,
                     data = -1,
                     ready = false,
                     bestLapTime = -1,
@@ -2105,54 +2105,35 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     local race = races[raceIndex]
     local raceTime = race.raceTime
 
-    local racersAhead = {}
-    local racersAheadSources = {}
-    local racersBehind = {}
-
-    print("Sending Checkpoint Time")
-    print(waypointsPassed)
-    print(source)
-
     table.insert(checkpointTimes, {})
 
-    for racerAheadSource, racerAheadTime in pairs(checkpointTimes[waypointsPassed]) do
-        if (racerAheadSource ~= source) then
-            print("checkpointTimes at [" .. waypointsPassed .. "][" .. racerAheadSource .. "] has values")
-            print("Updating time split for " ..
-                racerAheadSource ..
-                " with my source " .. source .. " and a difference of " .. raceTime - racerAheadTime)
-            TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, raceTime - racerAheadTime)
+    local racerTimeSplit = -1
+    local otherRacerTimeSplit = -1
 
-            table.insert(racersAhead, { source = racerAheadSource, timeSplit = (racerAheadTime - raceTime) })
-            table.insert(racersAheadSources, racerAheadSource)
-        end
-    end
-
-    if(waypointsPassed - 1 > 0) then
-        for racerBehindSource, racerBehindTime in pairs(checkpointTimes[waypointsPassed-1]) do
-            if ((not contains(racersAheadSources, racerBehindSource)) and 
-                racerBehindSource ~= source) then
-                TriggerClientEvent("races:updateTimeSplit", racerBehindSource, source, raceTime - racerBehindTime)
-                table.insert(racersBehind, { source = racerBehindSource, timeSplit = ( raceTime - racerBehindTime) })
+    for otherRacerSource, racer in pairs(race.players) do
+        if (otherRacerSource ~= source) then
+            print(("Comparing to Racer with source %i"):format(otherRacerSource))
+            if (racer.waypointsPassed >= waypointsPassed and racer.waypointsPassed > 0) then
+                --Racer is ahead so get their time at this checkpoint
+                racerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
+                otherRacerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
+            elseif (racer.waypointsPassed < 1) then
+                --Other Racer hasn't hit a checkpoint use race Start time
+                racerTimeSplit = raceTime - race.raceStart
+                otherRacerTimeSplit = race.raceStart - raceTime
+            else
+                --Racer is behind compare times at their waypoint
+                racerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
+                otherRacerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
             end
+            TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
+            TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
+        else
+            racer.waypointsPassed = waypointsPassed
         end
-    end
-
-    if (#racersBehind > 0) then
-        TriggerClientEvent("races:compareTimeSplit", source, racersBehind)
     end
 
     checkpointTimes[waypointsPassed][source] = raceTime
-
-    print(#checkpointTimes)
-    print(checkpointTimes)
-    print(#checkpointTimes[waypointsPassed])
-    print(checkpointTimes[waypointsPassed])
-    print(checkpointTimes[waypointsPassed][source])
-
-    if (#racersAhead > 0) then
-        TriggerClientEvent("races:compareTimeSplit", source, racersAhead)
-    end
 end)
 
 RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
