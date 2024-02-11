@@ -2097,12 +2097,6 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
     end
 end)
 
-RegisterNetEvent("races:update_best_lap_time")
-AddEventHandler("races:update_best_lap_time", function(minutes, seconds)
-    local source = source
-    TriggerClientEvent("races:update_best_lap_time", -1, source, minutes, seconds)
-end)
-
 RegisterNetEvent("races:sendvehiclename")
 AddEventHandler("races:sendvehiclename", function(currentVehicleName)
     local source = source
@@ -2183,7 +2177,7 @@ RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
 
         race.players[source] = racer
 
-        TriggerClientEvent("races:newbestlap", source, racer.bestLapTime)
+        TriggerEventForRacers(raceIndex, "races:updatebestlaptime", source, racer.bestLapTime)
     end
 
 end)

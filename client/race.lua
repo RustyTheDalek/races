@@ -1739,12 +1739,9 @@ function ClearDNFTime()
     })
 end
 
-function SendBestLapTime(minutes, seconds)
-    TriggerServerEvent("races:update_best_lap_time", minutes, seconds)
-end
-
-RegisterNetEvent("races:update_best_lap_time")
-AddEventHandler("races:update_best_lap_time", function(source, minutes, seconds)
+RegisterNetEvent("races:updatebestlaptime")
+AddEventHandler("races:updatebestlaptime", function(source, bestLapTime)
+    local minutes, seconds = minutesSeconds(bestLapTime)
     SendNUIMessage({
         type = "leaderboard",
         action = "updatebestlaptime",
@@ -3108,12 +3105,6 @@ AddEventHandler("races:compareTimeSplit", function(racersAhead)
         action = 'bulk_update_time_splits',
         racersAhead = racersAhead
     })
-end)
-
-RegisterNetEvent("races:newbestlap")
-AddEventHandler("races:newbestlap", function(bestLapTime)
-    local minutes, seconds = minutesSeconds(bestLapTime)
-    SendBestLapTime(minutes, seconds)
 end)
 
 function VehicleNameUpdate()
