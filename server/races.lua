@@ -914,13 +914,17 @@ local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
 end
 
 local function StartRaceCountdown(raceIndex)
-    TriggerClientEvent("races:startPreRaceCountdown", -1, READY_RACERS_COUNTDOWN)
+    for source,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent("races:startPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
+    end
     races[raceIndex].countdown = true
     races[raceIndex].countdownTimeStart = GetGameTimer()
 end
 
 local function StopRaceCountdown(raceIndex)
-    TriggerClientEvent("races:stopPreRaceCountdown", -1)
+    for source,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent("races:stopPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
+    end
     races[raceIndex].countdown = false
     races[raceIndex].countdownTimeStart = 0
 end

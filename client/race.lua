@@ -2919,6 +2919,13 @@ function RacesReport()
     end
 end
 
+function ClearReady()
+    SendNUIMessage({
+        type = 'ready',
+        action = 'clear_ready'
+    })
+end
+
 function ResetReady()
     ready = false
     TriggerServerEvent("races:readyState", raceIndex, ready)
