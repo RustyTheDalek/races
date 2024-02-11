@@ -776,13 +776,13 @@ local function saveResults(race)
 end
 
 --In cases where you need to trigger a simple event for all players in a race
-local function TriggerEventForRacers(raceIndex, event, arg1, arg2)
+local function TriggerEventForRacers(raceIndex, event, arg1, arg2, arg3)
     if(races[raceIndex] == nil) then
         print(("Ignoring event, no race with index %i"):format(raceIndex))
     end
 
     for racerSource,_ in pairs(races[raceIndex].players) do
-        TriggerClientEvent(event, racerSource, arg1, arg2)
+        TriggerClientEvent(event, racerSource, arg1, arg2, arg3)
     end
 
 end
@@ -1590,7 +1590,7 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
     races[raceIndex].numReady = numReady
     races[raceIndex].numRacing = numRacing
 
-    TriggerClientEvent("races:sendReadyData", -1, ready, source, GetPlayerName(source))
+    TriggerEventForRacers(raceIndex, "races:sendReadyData", ready, source, GetPlayerName(source))
 end)
 
 function StartRace(race, source, delay)
