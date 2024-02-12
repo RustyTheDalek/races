@@ -1,6 +1,6 @@
 SetManualShutdownLoadingScreenNui(true)
 
-raceState = racingStates.Idle
+local raceState = racingStates.Idle
 
 local gridRadius <const> = 5.0
 local gridCheckpoint
@@ -16,16 +16,11 @@ local blue <const> = { r = 0, g = 0, b = 255 }
 local yellow <const> = { r = 255, g = 255, b = 0 }
 local purple <const> = { r = 255, g = 0, b = 255 }
 
-local defaultPlayerBlip <const> = 6
-
 local startFinishBlipColor <const> = 5    -- yellow
 local startBlipColor <const> = 2          -- green
 local finishBlipColor <const> = 0         -- white
 local midBlipColor <const> = 38           -- dark blue
 local registerBlipColor <const> = 83      -- purple
-local racerAheadBlipColor <const> = 2     -- green
-local racerBehindBlipColor <const> = 1    -- red
-local defaultRacerBlipColor <const> = 0   -- white
 
 local selectedBlipColor <const> = 1       -- red
 
@@ -38,10 +33,10 @@ local midSprite <const> = 1               -- numbered circle
 local registerSprite <const> = 58         -- circled star
 local racerSprite <const> = 1             -- circle
 
-local finishCheckpoint <const> = 9        -- cylinder checkered flag
+local finishCheckpoint <const> = 4        -- cylinder checkered flag
 local midCheckpoint <const> = 42          -- cylinder with number
 local plainCheckpoint <const> = 45        -- cylinder
-local arrow3Checkpoint <const> = 7        -- cylinder with 3 arrows
+local arrow3Checkpoint <const> = 0        -- cylinder with 3 arrows
 
 local defaultTier <const> = "none"        -- default race Tier
 local defaultSpecialClass <const> = "none"-- default race Tier
@@ -75,17 +70,8 @@ local numWaypointsPassed = -1             -- number of waypoints player has pass
 local currentWaypoint = -1                -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
 local waypointCoord = nil                 -- coordinates of current waypoint
 
-local raceStart = -1                      -- start time of race before delay
-local raceDelay = -1                      -- delay before official start of race
-local countdown = -1                      -- countdown before start
-local drawLights = false                  -- draw start lights
-
 local position = -1                       -- position in race out of numRacers players
 local numRacers = -1                      -- number of players in race - no DNF players included
-local racerBlipGT = {}                    -- blips and gamer tags for all racers participating in race
-
-local lapTimeStart = -1                   -- start time of current lap
-local bestLapTime = -1                    -- best lap time
 
 local raceCheckpoint = nil                -- race checkpoint in world
 
@@ -106,7 +92,6 @@ local colorSec = -1                       -- secondary color of original vehicle
 local startVehicle = nil                  -- vehicle name hash of starting vehicle used in random races
 local currentVehicleHash = nil            -- hash of current vehicle being driven
 local currentVehicleName = nil            -- name of current vehicle being driven
-local bestLapVehicleName = nil            -- name of vehicle in which player recorded best lap time
 
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
 
@@ -118,8 +103,6 @@ local startCoord = nil                    -- coordinates of vehicle once race ha
 
 local results = {}                        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
 
-local started = false                     -- flag indicating if race started
-
 local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
 
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
@@ -130,8 +113,6 @@ local roleBits = 0                        -- bit flag indicating if player is pe
 
 local enteringVehicle = false             -- flag indicating if player is entering a vehicle
 
-local camTransStarted = false             -- flag indicating if camera transition at start of race has started
-
 local localPlayerPed = GetPlayerPed(-1)
 local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 
@@ -141,48 +122,39 @@ local currentRace = {
     raceType = ""
 }
 
-local ghosting = Ghosting:new()
+local ghosting = Ghosting:New()
+local playerDisplay = PlayerDisplay:New()
+local currentLapTimer = Timer:New()
 
 local configData
 
 local boost_active = false
 
-AddEventHandler('onClientGameTypeStart', function()
-    exports.spawnmanager:setAutoSpawnCallback(function()
-        if racingStates.Racing == raceState then
-            print("In race, spawning at race")
-            local coord = startCoord
-            if true == startIsFinish then
-                if currentWaypoint > 0 then
-                    coord = waypoints[currentWaypoint].coord
-                end
-            else
-                if currentWaypoint > 1 then
-                    coord = waypoints[currentWaypoint - 1].coord
-                end
+exports.spawnmanager:setAutoSpawnCallback(function()
+
+    local coord = { x = -1437.03, y = -2993.15 , z = 13.94, heading = 222.93 }
+
+    if racingStates.Racing == raceState then
+        print("In race, spawning at race")
+        coord = startCoord
+        if true == startIsFinish then
+            if currentWaypoint > 0 then
+                coord = waypoints[currentWaypoint].coord
             end
-
-            exports.spawnmanager:spawnPlayer({
-                x = coord.x,
-                y = coord.y,
-                z = coord.z,
-                heading = coord.heading,
-                skipFade = true
-            })
         else
-
-            print("Not in Race, spawning at airport")
-            exports.spawnmanager:spawnPlayer({
-                x = -1437.03,
-                y = -2993.15,
-                z = 13.94,
-                heading = 222.93,
-                skipFade = true
-            })
-
+            if currentWaypoint > 1 then
+                coord = waypoints[currentWaypoint - 1].coord
+            end
         end
-    end)
+    end
 
+    exports.spawnmanager:spawnPlayer({
+        x = coord.x,
+        y = coord.y,
+        z = coord.z,
+        heading = coord.heading,
+        skipFade = true
+    })
     exports.spawnmanager:setAutoSpawn(true)
     exports.spawnmanager:forceRespawn()
 end)
@@ -222,7 +194,7 @@ local sologridCheckpoint = {}
 local function CreateGridCheckpoint(position, gridNumber)
 
     gridCheckpoint = CreateCheckpoint(45,
-        position.x, position.y, position.z - gridRadius / 2.0,
+        position.x, position.y, position.z - 1,
         position.x, position.y, position.z,
         gridRadius,
         0, 255, 0,
@@ -326,15 +298,14 @@ local function getCheckpointColor(blipColor)
 end
 
 local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, num)
-    local zCoord = coord.z
-    if 42 == checkpointType or 45 == checkpointType then
-        zCoord = zCoord - coord.r / 2.0
-    else
-        zCoord = zCoord + coord.r / 2.0
-    end
-    local checkpoint = CreateCheckpoint(checkpointType, coord.x, coord.y, zCoord, nextCoord.x, nextCoord.y, nextCoord.z,
+    --The -1 represents the roughly half the height of the ped
+    --It's divided by the radius of the coord which is in turn divied by 2
+    --Because it's actually the diameter or because 2 is actually the ped height?
+    local checkpoint = CreateCheckpoint(checkpointType,
+    coord.x, coord.y, coord.z -1 / (coord.r / 2),
+    nextCoord.x, nextCoord.y, nextCoord.z -1 / (coord.r / 2) ,
     coord.r * 2.0, color.r, color.g, color.b, alpha, num)
-    SetCheckpointCylinderHeight(checkpoint, 10.0, 10.0, coord.r * 2.0)
+    SetCheckpointIconHeight(checkpoint, 0.3)
     return checkpoint
 end
 
@@ -613,14 +584,13 @@ local function StopRaceEffects()
     currentRace.raceType = ''
 end
 
-local function finishRace(time)
+local function finishRace(dnf)
     PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
     StopRaceEffects()
-    TriggerServerEvent("races:finish", raceIndex, PedToNet(PlayerPedId()), numWaypointsPassed, time, bestLapTime,
-    bestLapVehicleName, nil)
+    TriggerServerEvent("races:finish", raceIndex, numWaypointsPassed, dnf, nil)
     ClearDNFTime()
     SetLeaderboardLower(true)
-    ResetReady(PedToNet(PlayerPedId()))
+    ResetReady()
     restoreBlips()
     SetBlipRoute(waypoints[1].blip, true)
     SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
@@ -874,15 +844,6 @@ local function editWaypoints(coord, heading)
             end
         end
     end
-end
-
-local function removeRacerBlipGT()
-    RemoveRaceBlip()
-    for _, racer in pairs(racerBlipGT) do
-        RemoveBlip(racer.blip)
-        RemoveMpGamerTag(racer.gamerTag)
-    end
-    racerBlipGT = {}
 end
 
 local function updateList()
@@ -1479,10 +1440,10 @@ local function leave()
     local player = PlayerPedId()
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
-        ResetReady(PedToNet(player))
+        ResetReady()
         ClearLeaderboard()
-        TriggerServerEvent("races:leave", raceIndex, PedToNet(player), nil)
-        removeRacerBlipGT()
+        TriggerServerEvent("races:leave", raceIndex)
+        playerDisplay:ResetRaceBlips()
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     elseif racingStates.Racing == raceState then
@@ -1491,11 +1452,11 @@ local function leave()
         end
         RenderScriptCams(false, false, 0, true, true)
         DeleteCheckpoint(raceCheckpoint)
-        finishRace(-1)
-        removeRacerBlipGT()
-        ResetReady(PedToNet(player))
+        finishRace(true)
+        playerDisplay:ResetRaceBlips()
+        ResetReady()
         ClearLeaderboard()
-        TriggerServerEvent("races:removeFromLeaderboard", raceIndex, PedToNet(player))
+        TriggerServerEvent("races:removeFromLeaderboard", raceIndex)
         DeleteCheckpoint(gridCheckpoint)
         sendMessage("Left race.\n")
     else
@@ -1767,12 +1728,9 @@ function ClearDNFTime()
     })
 end
 
-function SendBestLapTime(minutes, seconds)
-    TriggerServerEvent("races:update_best_lap_time", minutes, seconds)
-end
-
-RegisterNetEvent("races:update_best_lap_time")
-AddEventHandler("races:update_best_lap_time", function(source, minutes, seconds)
+RegisterNetEvent("races:updatebestlaptime")
+AddEventHandler("races:updatebestlaptime", function(source, bestLapTime)
+    local minutes, seconds = minutesSeconds(bestLapTime)
     SendNUIMessage({
         type = "leaderboard",
         action = "updatebestlaptime",
@@ -1788,51 +1746,6 @@ function SetJoinMessage(message)
         action = "set_join_text",
         value = message
     })
-end
-
-function SetOwnRacerBlip()
-    SetBlipSprite(GetMainPlayerBlipId(), racerSprite)
-    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
-
-    if(position ~= -1) then
-        ShowNumberOnBlip(GetMainPlayerBlipId(), position)
-    end
-end
-
-function RemoveRaceBlip()
-    SetBlipSprite(GetMainPlayerBlipId(), defaultPlayerBlip)
-    SetBlipColour(GetMainPlayerBlipId(), defaultRacerBlipColor)
-    HideNumberOnBlip(GetMainPlayerBlipId())
-end
-
-function SetOtherRacerBlip(racerPosition, source)
-    local blip = racerBlipGT[source].blip
-    SetBlipSprite(blip, racerSprite)
-    local blipColour = defaultRacerBlipColor
-
-    if(source ~= GetPlayerServerId(PlayerId())) then
-        if(racerPosition < position) then
-            blipColour = racerAheadBlipColor
-        else
-            blipColour = racerBehindBlipColor
-        end
-    end
-
-    SetBlipColour(blip, blipColour)
-    ShowNumberOnBlip(blip, racerPosition)
-    racerBlipGT[source].blip = blip
-end
-
-function SetupGamerTag(ped, name)
-    local hudColour = 0
-    if(name == 'Rusty') then
-        hudColour = 49
-    end
-
-    local gamerTag = CreateFakeMpGamerTag(ped, name, false, false, nil, 0)
-    SetMpGamerTagColour(gamerTag, 0, hudColour)
-    SetMpGamerTagVisibility(gamerTag, 0, true)
-    return gamerTag
 end
 
 --#region NUI callbacks
@@ -2473,7 +2386,8 @@ AddEventHandler("races:unregister", function(rIndex)
         if rIndex == raceIndex then
             if racingStates.Joining == raceState then
                 raceState = racingStates.Idle
-                removeRacerBlipGT()
+                --Shouldn't need to reset here, but just incase
+                playerDisplay:ResetRaceBlips()
                 notifyPlayer("Race canceled.\n")
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
@@ -2481,7 +2395,8 @@ AddEventHandler("races:unregister", function(rIndex)
                 restoreBlips()
                 SetBlipRoute(waypoints[1].blip, true)
                 SetBlipRouteColour(waypoints[1].blip, blipRouteColor)
-                removeRacerBlipGT()
+                --Shouldn't need to reset here, but just incase
+                playerDisplay:ResetRaceBlips()
                 RenderScriptCams(false, false, 0, true, true)
                 local player = PlayerPedId()
                 if IsPedInAnyVehicle(player, false) == 1 then
@@ -2502,33 +2417,35 @@ AddEventHandler("races:unregister", function(rIndex)
     end
 end)
 
+RegisterNetEvent("races:greenflag")
+AddEventHandler("races:greenflag", function()
+    local player = PlayerPedId()
+    local vehicle = GetVehiclePedIsIn(player, false)
+    FreezeEntityPosition(vehicle, false)
+    raceState = racingStates.Racing
+    PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
+    currentLapTimer:Start()
+    if(currentRace.raceType ~= 'ghost') then
+        ghosting:StartGhosting(configData['raceStartGhostingTime'])
+    end
+end)
+
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(rIndex, delay)
     if rIndex ~= nil and delay ~= nil then
         if delay >= 5 then
-            local currentTime = GetGameTimer()
-
             if rIndex == raceIndex then
                 if racingStates.Joining == raceState then
-
                     UpdateVehicleName()
                     SendVehicleName()
-                    raceStart = currentTime
-                    raceDelay = delay
                     beginDNFTimeout = false
                     timeoutStart = -1
-                    started = false
                     position = -1
                     numWaypointsPassed = 0
                     currentLap = 1
-                    bestLapTime = -1
-                    bestLapVehicleName = currentVehicleName
-                    countdown = 5
-                    drawLights = false
                     numRacers = -1
                     results = {}
                     startCoord = GetEntityCoords(PlayerPedId())
-                    camTransStarted = false
 
                     if startVehicle ~= nil then
                         local vehicle = switchVehicle(PlayerPedId(), startVehicle)
@@ -2550,7 +2467,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     SetBlipRoute(waypointCoord, true)
                     SetBlipRouteColour(waypointCoord, blipRouteColor)
 
-                    raceState = racingStates.Racing
+                    raceState = racingStates.RaceCountdown
 
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
@@ -2563,6 +2480,14 @@ AddEventHandler("races:start", function(rIndex, delay)
                     print(sologridCheckpoint)
                     ClearReady();
                     notifyPlayer("Vehicle fixed.\n")
+
+                    SetLeaderboardLower(false)
+                    StartCountdownLights(delay)
+
+                    if IsPedInAnyVehicle(player, false) == 1 then
+                        FreezeEntityPosition(GetVehiclePedIsIn(player, false), true)
+                    end
+                    Citizen.CreateThread(RaceStartCameraTransition)
 
                 elseif racingStates.Racing == raceState then
                     notifyPlayer("Ignoring start event.  Already in a race.\n")
@@ -2578,6 +2503,21 @@ AddEventHandler("races:start", function(rIndex, delay)
     else
         notifyPlayer("Ignoring start event.  Invalid parameters.\n")
     end
+end)
+
+function FiveSecondWarning()
+    print("Five second warning client")
+    --God Save me
+    for i = 1, 5 do
+        PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+        Citizen.Wait(1000)
+    end
+
+end
+
+RegisterNetEvent("races:fivesecondwarning")
+AddEventHandler("races:fivesecondwarning", function()
+    Citizen.CreateThread(FiveSecondWarning)
 end)
 
 RegisterNetEvent("races:respawn")
@@ -2599,18 +2539,30 @@ AddEventHandler("races:hide", function(rIndex)
 end)
 
 RegisterNetEvent("races:joinnotification")
-AddEventHandler("races:joinnotification", function(playerName, racerDictionary, rIndex, trackName, numReady, numRacing, registrationCoords)
-    DeleteCheckpoint(starts[rIndex].checkpoint);
-    registrationCoords.r = defaultRadius
-    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
-    starts[rIndex].checkpoint = checkpoint
+AddEventHandler("races:joinnotification", function(joinNotificationData)
+
+    local raceIndex = joinNotificationData.raceIndex
+    local registrationCoords = joinNotificationData.waypointCoords
+    local numRacing = joinNotificationData.numRacing
+    local playerName = joinNotificationData.playerName
+    local trackName = joinNotificationData.trackName
+    local racerDictionary = joinNotificationData.racerDictionary
+
+    UpdateRegistrationCheckpoint(raceIndex, registrationCoords, numRacing)
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
     AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 end)
 
+RegisterNetEvent("races:onleave")
+AddEventHandler("races:onleave", function()
+    ClearLeaderboard()
+end)
+
 RegisterNetEvent("races:onplayerleave")
-AddEventHandler("races:onplayerleave", function()
-    ClearReady()
+AddEventHandler("races:onplayerleave", function(otherRaceSource)
+    ready = false
+    SendReadyData({ source = GetPlayerServerId(PlayerId()), ready = ready})
+    RemoveRacerFromLeaderboard(otherRaceSource)
 end)
 
 RegisterNetEvent("races:leave")
@@ -2618,15 +2570,16 @@ AddEventHandler("races:leave", function()
     leave()
 end)
 
+function UpdateRegistrationCheckpoint(raceIndex, coords, numRacing)
+    DeleteCheckpoint(starts[raceIndex].checkpoint);
+    coords.r = defaultRadius
+    local checkpoint = makeCheckpoint(plainCheckpoint, coords, coords, purple, 127, numRacing)
+    starts[raceIndex].checkpoint = checkpoint
+end
+
 RegisterNetEvent("races:leavenotification")
-AddEventHandler("races:leavenotification", function(message, source, rIndex, numReady, numRacing, registrationCoords)
-    print("Leave race notification")
-    DeleteCheckpoint(starts[rIndex].checkpoint);
-    registrationCoords.r = defaultRadius
-    local checkpoint = makeCheckpoint(plainCheckpoint, registrationCoords, registrationCoords, purple, 127, numRacing)
-    starts[rIndex].checkpoint = checkpoint
-    print(string.format("NumberRacing: %i", numRacing))
-    RemoveRacerFromLeaderboard(source)
+AddEventHandler("races:leavenotification", function(message, rIndex, numRacing, registrationCoords)
+    UpdateRegistrationCheckpoint(rIndex, registrationCoords, numRacing)
     sendMessage(message)
 end)
 
@@ -2652,7 +2605,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
                 loadWaypointBlips(waypointCoords)
-                SetOwnRacerBlip()
+                playerDisplay:SetOwnRacerBlip()
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -2721,7 +2674,15 @@ end)
 -- only accept finish events from current race
 -- do not accept finish events from previous race
 RegisterNetEvent("races:finish")
-AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, raceBestLapTime, raceVehicleName)
+AddEventHandler("races:finish", function(finishData)
+
+    local rIndex = finishData.raceIndex
+    local playerName = finishData.playerName
+    local raceFinishTime = finishData.data
+    local raceBestLapTime = finishData.bestLapTime
+    local raceVehicleName = finishData.bestLapVehicleName
+
+
     if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
         if rIndex == raceIndex then
             if -1 == raceFinishTime then
@@ -2743,7 +2704,7 @@ AddEventHandler("races:finish", function(rIndex, playerName, raceFinishTime, rac
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
-            removeRacerBlipGT()
+            playerDisplay:ResetRaceBlips()
         end
     else
         notifyPlayer("Ignoring finish event.  Invalid parameters.\n")
@@ -2793,14 +2754,7 @@ end)
 --racePositions index is the position of the racer in the race, the value at the index is the source of the player at that position
 RegisterNetEvent("races:racerPositions")
 AddEventHandler("races:racerPositions", function(racePositions)
-
-    for racerPosition, source in ipairs(racePositions) do
-        if source == GetPlayerServerId(PlayerId()) then
-            SetOwnRacerBlip()
-        else
-            SetOtherRacerBlip(racerPosition, source)
-        end
-    end
+    playerDisplay:UpdateRacerDisplay(racePositions, position)
 
     SendNUIMessage({
         type = "leaderboard",
@@ -2809,40 +2763,24 @@ AddEventHandler("races:racerPositions", function(racePositions)
     })
 end)
 
-RegisterNetEvent("races:addRacer")
-AddEventHandler("races:addRacer", function(netID, source, name)
-    if netID ~= nil and name ~= nil and source ~= GetPlayerServerId(PlayerId()) then
-        if racerBlipGT[source] ~= nil then
-            RemoveBlip(racerBlipGT[source].blip)
-            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
-        end
-        local ped = NetToPed(netID)
-        if DoesEntityExist(ped) == 1 then
-            local blip = AddBlipForEntity(ped)
-            SetBlipSprite(blip, racerSprite)
-            SetBlipColour(blip, defaultRacerBlipColor)
-            SetBlipAsShortRange(blip, false)
-            SetBlipDisplay(blip, 8)
-            local gamerTag = SetupGamerTag(ped, name)
-            racerBlipGT[source] = { blip = blip, gamerTag = gamerTag, netID = netID, name = name }
-        end
-    else
-        notifyPlayer("Ignoring addRacer event.  Invalid parameters.\n")
+RegisterNetEvent("races:addplayerdisplay")
+AddEventHandler("races:addplayerdisplay", function(source, playerName)
+
+    if (source == nil or source == GetPlayerServerId(PlayerId())) then
+        return
     end
+
+    playerDisplay:AddDisplay(source, playerName)
 end)
 
-RegisterNetEvent("races:delRacer")
-AddEventHandler("races:delRacer", function(source)
-    if source ~= nil then
-        if racerBlipGT[source] ~= nil then
-            DeleteCheckpoint(gridCheckpoint)
-            RemoveBlip(racerBlipGT[source].blip)
-            RemoveMpGamerTag(racerBlipGT[source].gamerTag)
-            racerBlipGT[source] = nil
-        end
-    else
-        notifyPlayer("Ignoring delRacer event.  Invalid parameters.\n")
+RegisterNetEvent("races:removeplayerdisplay")
+AddEventHandler("races:removeplayerdisplay", function(source)
+
+    if (source == nil or source == GetPlayerServerId(PlayerId())) then
+        return
     end
+
+    playerDisplay:RemoveDisplay(source)
 end)
 
 RegisterNetEvent("races:allVehicles")
@@ -2905,6 +2843,14 @@ AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
     table.insert(gridCheckpoints, CreateGridCheckpoint(position, gridNumber))
 end)
 
+RegisterNetEvent("races:spawncheckpoints")
+AddEventHandler("races:spawncheckpoints", function(gridPositions)
+    print("Spawn Checkpoints called")
+    for index, gridPosition in ipairs(gridPositions) do
+        table.insert(gridCheckpoints, CreateGridCheckpoint(gridPosition, index))
+    end
+end)
+
 RegisterNetEvent("races:autojoin")
 AddEventHandler("races:autojoin", function(raceIndex)
 
@@ -2921,7 +2867,7 @@ AddEventHandler("races:autojoin", function(raceIndex)
     local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
     TeleportPlayer(startPoint, registerPosition.heading)
 
-    TriggerServerEvent("races:join", raceIndex, PedToNet(player), nil)
+    TriggerServerEvent("races:join", raceIndex)
 end)
 
 RegisterNetEvent("races:setupgrid")
@@ -2970,14 +2916,9 @@ function RacesReport()
         if racingStates.Racing == raceState then
             local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
-            TriggerServerEvent("races:report", raceIndex, PedToNet(player), numWaypointsPassed, distance)
+            TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, distance)
         end
     end
-end
-
-function ResetReady(netID)
-    ready = false
-    TriggerServerEvent("races:readyState", raceIndex, ready, netID)
 end
 
 function ClearReady()
@@ -2985,6 +2926,11 @@ function ClearReady()
         type = 'ready',
         action = 'clear_ready'
     })
+end
+
+function ResetReady()
+    ready = false
+    TriggerServerEvent("races:readyState", raceIndex, ready)
 end
 
 function SetRaceLeaderboard(enabled)
@@ -3030,12 +2976,12 @@ function HandleJoinState()
     --Down
     if IsControlJustReleased(0, 173) then
         ready = not ready
-        TriggerServerEvent("races:readyState", raceIndex, ready, PedToNet(PlayerPedId()))
+        TriggerServerEvent("races:readyState", raceIndex, ready)
     end
 end
 
 function SendVehicleName()
-    TriggerServerEvent("races:sendvehiclename", currentVehicleName or 'N/A' )
+    TriggerServerEvent("races:sendvehiclename", raceIndex, currentVehicleName or 'N/A' )
 end
 
 RegisterNetEvent("races:sendvehiclename")
@@ -3108,15 +3054,16 @@ function HandleRaceType()
     end
 end
 
-function SendCheckpointTime(waypointsPassed, lapTime)
-    TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, lapTime)
+function SendCheckpointTime(waypointsPassed)
+    TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, raceIndex)
 end
 
 RegisterNetEvent("races:config")
 AddEventHandler("races:config", function(_configData)
     configData = _configData
 
-    ghosting = Ghosting:new(nil, configData['ghosting'])
+    ghosting:LoadConfig(configData['ghosting'])
+    playerDisplay:LoadConfig(configData['playerDisplay'])
 
 end)
 
@@ -3293,199 +3240,166 @@ function EditUpdate(playerCoord, heading)
     end
 end
 
-function RaceUpdate(player, playerCoord, currentTime)
-    local elapsedTime = currentTime - raceStart - raceDelay * 1000
-    local vehicle = GetVehiclePedIsIn(player, false)
-
-    SetLeaderboardLower(false)
-
-    if elapsedTime < 0 then
-
-        if false == camTransStarted then
-            camTransStarted = true
-            Citizen.CreateThread(RaceStartCameraTransition)
-        end
-
-        if elapsedTime > -countdown * 1000 then
-            if(drawLights == false) then
-                StartCountdownLights(countdown)
+function HandleRespawn(currentTime)
+    if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
+        if true == respawnCtrlPressed then
+            if currentTime - respawnTime > respawnTimer then
+                respawnCtrlPressed = false
+                respawnLock = true
+                respawn()
             end
-            drawLights = true
-            countdown = countdown - 1
-            PlaySoundFrontend(-1, "MP_5_SECOND_TIMER", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-        end
-
-        if IsPedInAnyVehicle(player, false) == 1 then
-            FreezeEntityPosition(GetVehiclePedIsIn(player, false), true)
+        elseif respawnLock == false then
+            SetRespawnIndicator(respawnTimer / 1000)
+            respawnCtrlPressed = true
+            respawnTime = currentTime
         end
     else
+        ClearRespawnIndicator()
+        respawnCtrlPressed = false
+    end
 
-        if false == started then
-            started = true
-            PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
-            bestLapVehicleName = currentVehicleName
-            lapTimeStart = currentTime
-            if(currentRace.raceType ~= 'ghost') then
-                ghosting:StartGhosting(configData['raceStartGhostingTime'])
-            end
+    if IsControlReleased(0, 19) == 1 then
+        respawnLock = false
+    end
+end
+
+--Returns true when the race is finished
+function OnNewLap(player)
+    currentWaypoint = 1
+    currentLapTimer:Reset()
+    TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
+
+    if currentLap < numLaps then
+        currentLap = currentLap + 1
+        PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
+        --Last lap gets a unique sound to signify it's end
+        if(currentLap == numLaps) then
+            PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
         end
+        UpdateCurrentLap()
+        if #randVehicles > 0 then
+            local randIndex = math.random(#randVehicles)
+            sendMessage("Random Index: " .. randIndex)
+            local randVehicle = switchVehicle(player,
+            randVehicles[randIndex])
+            if randVehicle ~= nil then
+                SetEntityAsNoLongerNeeded(randVehicle)
+            end
+            PlaySoundFrontend(-1, "CHARACTER_SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
+        end
+    else
+        finishRace(false)
+        return true
+    end
+end
 
-        if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
-            if true == respawnCtrlPressed then
-                if currentTime - respawnTime > respawnTimer then
-                    respawnCtrlPressed = false
-                    respawnLock = true
-                    respawn()
+function OnHitCheckpoint(player)
+    local vehicle = GetVehiclePedIsIn(player, false)
+
+    if restrictedHash ~= nil then
+        if nil == vehicle or currentVehicleHash ~= restrictedHash then
+            return
+        end
+    elseif restrictedClass ~= nil then
+        if vehicle ~= nil then
+            if -1 == restrictedClass then
+                if vehicleInList(vehicle, customClassVehicleList) == false then
+                    return
                 end
-            elseif respawnLock == false then
-                SetRespawnIndicator(respawnTimer / 1000)
-                respawnCtrlPressed = true
-                respawnTime = currentTime
+            elseif GetVehicleClass(vehicle) ~= restrictedClass then
+                return
             end
         else
-            ClearRespawnIndicator()
-            respawnCtrlPressed = false
+            return
         end
+    end
 
-        if IsControlReleased(0, 19) == 1 then
-            respawnLock = false
+
+    resetupgrades(vehicle)
+    DeleteCheckpoint(raceCheckpoint)
+
+    numWaypointsPassed = numWaypointsPassed + 1
+
+    SendCheckpointTime(numWaypointsPassed)
+
+    if currentWaypoint < #waypoints then
+        PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
+        currentWaypoint = currentWaypoint + 1
+    else
+        if (OnNewLap(player)) then
+            return
         end
+    end
 
-        FreezeEntityPosition(vehicle, false)
+    UpdateCurrentCheckpoint()
 
-        local lapTime = currentTime - lapTimeStart
-        local minutes, seconds = minutesSeconds(lapTime)
-        SendCurrentLapTime(minutes, seconds)
+    local prev = currentWaypoint - 1
+    local last = currentWaypoint + numVisible - 1
+    local addLast = true
+    local curr = currentWaypoint
+    local checkpointType = -1
 
-        LastPlaceBoost()
-        HandleRaceType()
-
-        if true == beginDNFTimeout then
-            local milliseconds = timeoutStart + DNFTimeout - currentTime
-            if milliseconds > 0 then
-                minutes, seconds = minutesSeconds(milliseconds)
-                UpdateDNFTime(minutes, seconds)
-            else -- DNF
-                DeleteCheckpoint(raceCheckpoint)
-                finishRace(-1)
-            end
+    if true == startIsFinish then
+        prev = currentWaypoint
+        if currentLap ~= numLaps then
+            last = last % #waypoints + 1
+        elseif last < #waypoints then
+            last = last + 1
+        elseif #waypoints == last then
+            last = 1
+        else
+            addLast = false
         end
-
-        if racingStates.Racing == raceState then
-            if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
-                local waypointPassed = true
-                if restrictedHash ~= nil then
-                    if nil == vehicle or currentVehicleHash ~= restrictedHash then
-                        waypointPassed = false
-                    end
-                elseif restrictedClass ~= nil then
-                    if vehicle ~= nil then
-                        if -1 == restrictedClass then
-                            if vehicleInList(vehicle, customClassVehicleList) == false then
-                                waypointPassed = false
-                            end
-                        elseif GetVehicleClass(vehicle) ~= restrictedClass then
-                            waypointPassed = false
-                        end
-                    else
-                        waypointPassed = false
-                    end
-                end
-
-                if true == waypointPassed then
-
-                    resetupgrades(vehicle)
-                    DeleteCheckpoint(raceCheckpoint)
-
-                    numWaypointsPassed = numWaypointsPassed + 1
-
-                    SendCheckpointTime(numWaypointsPassed, lapTime)
-
-                    if currentWaypoint < #waypoints then
-                        PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
-                        currentWaypoint = currentWaypoint + 1
-                    else
-                        currentWaypoint = 1
-                        lapTimeStart = currentTime
-                        if -1 == bestLapTime or lapTime < bestLapTime then
-                            bestLapTime = lapTime
-                            minutes, seconds = minutesSeconds(bestLapTime)
-                            SendBestLapTime(minutes, seconds)
-                            bestLapVehicleName = currentVehicleName
-                        end
-                        if currentLap < numLaps then
-                            currentLap = currentLap + 1
-                            PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
-                            --Last lap gets a unique sound to signify it's end
-                            if(currentLap == numLaps) then
-                                PlaySoundFrontend(-1, "TENNIS_MATCH_POINT", "HUD_AWARDS", true)
-                            end
-                            UpdateCurrentLap()
-                            if #randVehicles > 0 then
-                                local randIndex = math.random(#randVehicles)
-                                sendMessage("Random Index: " .. randIndex)
-                                local randVehicle = switchVehicle(player,
-                                randVehicles[randIndex])
-                                if randVehicle ~= nil then
-                                    SetEntityAsNoLongerNeeded(randVehicle)
-                                end
-                                PlaySoundFrontend(-1, "CHARACTER_SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
-                            end
-                        else
-                            finishRace(elapsedTime)
-                        end
-                    end
-
-                    UpdateCurrentCheckpoint()
-
-                    if racingStates.Racing == raceState then
-                        local prev = currentWaypoint - 1
-
-                        local last = currentWaypoint + numVisible - 1
-                        local addLast = true
-
-                        local curr = currentWaypoint
-                        local checkpointType = -1
-
-                        if true == startIsFinish then
-                            prev = currentWaypoint
-                            if currentLap ~= numLaps then
-                                last = last % #waypoints + 1
-                            elseif last < #waypoints then
-                                last = last + 1
-                            elseif #waypoints == last then
-                                last = 1
-                            else
-                                addLast = false
-                            end
-                            curr = curr % #waypoints + 1
-                            checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or
-                            arrow3Checkpoint
-                        else
-                            if last > #waypoints then
-                                addLast = false
-                            end
-                            checkpointType = #waypoints == curr and finishCheckpoint or arrow3Checkpoint
-                        end
-
-                        SetBlipDisplay(waypoints[prev].blip, 0)
-
-                        if true == addLast then
-                            SetBlipDisplay(waypoints[last].blip, 2)
-                        end
-
-                        SetBlipRoute(waypoints[curr].blip, true)
-                        SetBlipRouteColour(waypoints[curr].blip, blipRouteColor)
-                        waypointCoord = waypoints[curr].coord
-                        local nextCoord = waypointCoord
-                        if arrow3Checkpoint == checkpointType then
-                            nextCoord = curr < #waypoints and waypoints[curr + 1].coord or waypoints[1].coord
-                        end
-                        raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, yellow, 127, 0)
-                    end
-                end
-            end
+        curr = curr % #waypoints + 1
+        checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or
+        arrow3Checkpoint
+    else
+        if last > #waypoints then
+            addLast = false
         end
+        checkpointType = #waypoints == curr and finishCheckpoint or arrow3Checkpoint
+    end
+
+    SetBlipDisplay(waypoints[prev].blip, 0)
+
+    if true == addLast then
+        SetBlipDisplay(waypoints[last].blip, 2)
+    end
+
+    SetBlipRoute(waypoints[curr].blip, true)
+    SetBlipRouteColour(waypoints[curr].blip, blipRouteColor)
+    waypointCoord = waypoints[curr].coord
+    local nextCoord = waypointCoord
+    if arrow3Checkpoint == checkpointType then
+        nextCoord = curr < #waypoints and waypoints[curr + 1].coord or waypoints[1].coord
+    end
+    raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, yellow, 127, 0)
+end
+
+function RaceUpdate(player, playerCoord, currentTime)
+    HandleRespawn(currentTime)
+
+    currentLapTimer:Update()
+    local minutes, seconds = minutesSeconds(currentLapTimer.length)
+    SendCurrentLapTime(minutes, seconds)
+
+    LastPlaceBoost()
+    HandleRaceType()
+
+    if true == beginDNFTimeout then
+        local milliseconds = timeoutStart + DNFTimeout - currentTime
+        if milliseconds > 0 then
+            minutes, seconds = minutesSeconds(milliseconds)
+            UpdateDNFTime(minutes, seconds)
+        else -- DNF
+            DeleteCheckpoint(raceCheckpoint)
+            finishRace(true)
+            return
+        end
+    end
+
+    if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
+        OnHitCheckpoint(player)
     end
 end
 
@@ -3613,7 +3527,7 @@ function IdleUpdate(player, playerCoord)
                 end
             end
             if true == joinRace then
-                TriggerServerEvent("races:join", closestIndex, PedToNet(player))
+                TriggerServerEvent("races:join", closestIndex)
             end
         end
     else
@@ -3656,27 +3570,6 @@ function MainUpdate()
     end
 end
 
-function PlayerNamesUpdate()
-    local recreated = false
-    while true do
-        Citizen.Wait(0)
-        if IsPauseMenuActive() == false then
-            if false == recreated then
-                for _, racer in pairs(racerBlipGT) do
-                    ped = NetToPed(racer.netID)
-                    if DoesEntityExist(ped) == 1 then
-                        racer.gamerTag = SetupGamerTag(ped, racer.name)
-                    end
-                end
-                recreated = true
-            end
-        else
-            recreated = false
-        end
-    end
-end
-
 Citizen.CreateThread(VehicleNameUpdate)
 Citizen.CreateThread(MainUpdate)
-Citizen.CreateThread(PlayerNamesUpdate)
 Citizen.CreateThread(RacesReport)

@@ -77,7 +77,7 @@ function readLeaderBoardEvents(event) {
       SetGhostingIndicator(data.source, data.time);
       break;
     case "clear_ghosting":
-      ClearGhostingIndicator($(`#${source} .ghosting_indicator`));
+      ClearGhostingIndicator($(`#${data.source} .ghosting_indicator`));
       break;
     case "set_respawn":
       SetRespawnIndicator(data.time);
@@ -216,15 +216,15 @@ function SetGhostingIndicator(source, time = null) {
   let ghosting_indicator = $(`#${source} .ghosting_indicator`);
 
   ghosting_indicator.removeAttr('style');
-
   ghosting_indicator.show();
-  if (time) {
+
+  if(time != null) {
     ghosting_indicator.css('transition', `width ${time}s linear`);
   }
   ghosting_indicator.width('100%');
 
-  if (time) {
-    setTimeout(ClearGhostingIndicator(ghosting_indicator), time * 1000);
+  if (time != null) {
+    setTimeout(ClearGhostingIndicator, time * 1000, ghosting_indicator);
   }
 }
 

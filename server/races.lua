@@ -23,25 +23,12 @@ local defaultRadius <const> = 5.0                 -- default waypoint radius
 local requests = {}                               -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
 local READY_RACERS_COUNTDOWN = 5000
-local races = {} -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
+local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
 --2D array for checkpointTimes
 --1st dimension is checkpoint
 --2nd dimension is rcers
 local checkpointTimes = {}
-
-function dump(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k, v in pairs(o) do
-            if type(k) ~= 'number' then k = '"' .. k .. '"' end
-            s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
-end
 
 function explode(inputstr, sep)
     if sep == nil then
@@ -788,6 +775,18 @@ local function saveResults(race)
     end
 end
 
+--In cases where you need to trigger a simple event for all players in a race
+local function TriggerEventForRacers(raceIndex, event, arg1, arg2, arg3)
+    if(races[raceIndex] == nil) then
+        print(("Ignoring event, no race with index %i"):format(raceIndex))
+    end
+
+    for racerSource,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent(event, racerSource, arg1, arg2, arg3)
+    end
+
+end
+
 local function SetNextGridLineup(results)
     UseRaceResults = true
     for k in next, gridLineup do rawset(gridLineup, k, nil) end
@@ -831,14 +830,8 @@ end
 
 local gridSeparation <const> = 5
 
-local function GenerateStartingGrid(startWaypoint, totalGridPositions)
-    -- print("Generating starting grid")
+local function GenerateStartingGrid(startWaypoint, racers)
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
-
-    -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
-    -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
-
-    --TriggerClientEvent("races:spawncheckpoint", -1, startWaypoint, i)
 
     --Calculate the forwardVector of the starting Waypoint
     local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
@@ -852,15 +845,10 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
         0.0
     )
 
-    -- print(string.format("Forward Vector: %.2f, %.2f, %.2f", forwardVector.x, forwardVector.y, forwardVector.z))
-    -- print(string.format("Left Vector: %.2f, %.2f, %.2f", leftVector.x, leftVector.y, leftVector.z))
-
     local gridPositions = {}
 
-    for i = 1, totalGridPositions do
+    for i = 1, #racers do
         local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
-
-        -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y, gridPosition.z))
 
         if math.fmod(i, 2) == 0 then
             -- print("Right Grid")
@@ -870,37 +858,41 @@ local function GenerateStartingGrid(startWaypoint, totalGridPositions)
             gridPosition = gridPosition + leftVector * 3
         end
 
-        TriggerClientEvent("races:spawncheckpoint", -1, gridPosition, i)
-
         table.insert(gridPositions, gridPosition)
+    end
+
+    for source,_ in pairs(racers) do
+        TriggerClientEvent("races:spawncheckpoints", source, gridPositions)
     end
 
     return gridPositions
 end
 
-local function OnPlayerLeave(race, rIndex, netID, source)
+local function OnPlayerLeave(race, rIndex, source)
     print("On Player Leave called")
     race.numRacing = race.numRacing - 1
 
-    if (race.players[netID].ready) then
+    if (race.players[source].ready) then
         race.numReady = race.numReady - 1
     end
 
-    TriggerClientEvent("races:onplayerleave", source)
     TriggerClientEvent("races:leavenotification", -1,
-        string.format(
-            "%s has left Race %s",
-            race.players[netID].playerName,
-            race.trackName
-        ),
-        race.players[netID].source,
-        rIndex,
-        race.numReady,
-        race.numRacing,
-        race.waypointCoords[1]
-    )
+    string.format(
+        "%s has left Race %s",
+        race.players[source].playerName,
+        race.trackName
+    ),
+    rIndex,
+    race.numRacing,
+    race.waypointCoords[1]
+)
 
-    races[rIndex].players[netID] = nil
+    TriggerClientEvent("races:onleave", source)
+
+    races[rIndex].players[source] = nil
+
+    TriggerEventForRacers(rIndex, "races:onplayerleave", source)
+
 end
 
 local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
@@ -933,13 +925,17 @@ local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
 end
 
 local function StartRaceCountdown(raceIndex)
-    TriggerClientEvent("races:startPreRaceCountdown", -1, READY_RACERS_COUNTDOWN)
+    for source,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent("races:startPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
+    end
     races[raceIndex].countdown = true
     races[raceIndex].countdownTimeStart = GetGameTimer()
 end
 
 local function StopRaceCountdown(raceIndex)
-    TriggerClientEvent("races:stopPreRaceCountdown", -1)
+    for source,_ in pairs(races[raceIndex].players) do
+        TriggerClientEvent("races:stopPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
+    end
     races[raceIndex].countdown = false
     races[raceIndex].countdownTimeStart = 0
 end
@@ -965,9 +961,33 @@ local function ProcessReadyCountdown(raceIndex)
     end
 end
 
-AddEventHandler("respawnPlayerPedEvent", function(player, content)
-    TriggerClientEvent('races:respawn', player)
-end)
+local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, timeout, laps, rdata)
+    races[source] = {
+        raceStart = 0,
+        raceTime = 0,
+        state = racingStates.Registering,
+        waypointCoords = waypointCoords,
+        isPublic = isPublic,
+        trackName = trackName,
+        owner = owner,
+        tier = tier,
+        specialClass = rdata.specialClass,
+        laps = laps,
+        timeout = timeout,
+        rtype = rdata.rtype,
+        restrict = rdata.restrict,
+        vclass = rdata.vclass,
+        svehicle = rdata.svehicle,
+        vehicleList = rdata.vehicleList,
+        numRacing = 0,
+        numReady = 0,
+        countdown = false,
+        countdownTimeStart = 0,
+        players = {},
+        results = {},
+        gridPositions = {}
+    }
+end
 
 RegisterNetEvent("ghosting:setplayeralpha")
 AddEventHandler('ghosting:setplayeralpha', function(alphaValue)
@@ -1049,6 +1069,30 @@ RegisterCommand("races", function(_, args)
     end
 end, true)
 
+function ProcessPlayers(source)
+    local playerName = GetPlayerName(source)
+
+    for _, otherPlayerSource in pairs(GetPlayers()) do
+        local otherPlayerName = GetPlayerName(otherPlayerSource)
+
+        if (source ~= tonumber(otherPlayerSource)) then
+            TriggerClientEvent("races:addplayerdisplay", tonumber(otherPlayerSource), tonumber(source), playerName)
+
+            TriggerClientEvent("races:addplayerdisplay", tonumber(source), tonumber(otherPlayerSource), otherPlayerName)
+        end
+    end
+end
+
+AddEventHandler("playerJoining", function()
+    local source = source
+
+    --Players are sometimes given a temporary source when they first join ignore that 
+    if (source < 100) then
+        print("Adding players from connecting event")
+        ProcessPlayers(source)
+    end
+end)
+
 AddEventHandler("playerDropped", function()
     print("playerDropped")
     local source = source
@@ -1059,32 +1103,51 @@ AddEventHandler("playerDropped", function()
         TriggerClientEvent("races:unregister", -1, source)
     end
 
+    TriggerClientEvent("races:removeplayerdisplay", -1, source)
+
     -- make sure this is last code block in function because of early return if player found in race
     -- remove dropped player from the race they are joined to
     for i, race in pairs(races) do
-        for netID, player in pairs(race.players) do
-            if player.source == source then
-                --Remove player from gridLineup
-                for j = 1, #gridLineup do
-                    if gridLineup[j] == race.players[netID].source then
-                        table.remove(gridLineup, j)
-                        break
-                    end
+        if (race.players[source] ~= nil) then
+            local player = race.players[source]
+            --Remove player from gridLineup
+            for j = 1, #gridLineup do
+                if gridLineup[j] == source then
+                    table.remove(gridLineup, j)
+                    break
                 end
-
-                if racingStates.Registering == race.state then
-                    print("removing racer from race")
-
-                    OnPlayerLeave(race, i, netID, source)
-                    --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
-                else
-                    TriggerEvent("races:removeFromLeaderboard", i, netID)
-                    TriggerEvent("races:finish", i, netID, nil, 0, -1, -1, "", source)
-                end
-                return
             end
+
+            if racingStates.Registering == race.state then
+                print("removing racer from race")
+
+                OnPlayerLeave(race, i, source)
+                --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
+            else
+                TriggerEvent("races:removeFromLeaderboard", source)
+
+                local finishData = {
+                    raceIndex = source,
+                    playerName = nil,
+                    data = 0,
+                    bestLapTime = -1,
+                    bestLapVehicleName = ""
+                }
+
+                TriggerEvent("races:finish", i, finishData)
+            end
+            return
         end
     end
+end)
+
+AddEventHandler("playerEnteredScope", function(data)
+    local playerName = GetPlayerName(data.player)
+    TriggerClientEvent("races:addplayerdisplay", tonumber(data['for']), tonumber(data.player), playerName)
+end)
+
+AddEventHandler("playerLeftScope", function(data)
+    TriggerClientEvent("races:removeplayerdisplay",tonumber(data['for']), tonumber(data.player))
 end)
 
 RegisterNetEvent("races:init")
@@ -1092,6 +1155,8 @@ AddEventHandler("races:init", function()
     local source = source
 
     TriggerClientEvent("races:roles", source, getRoleBits(source))
+
+    ProcessPlayers(source)
 
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
@@ -1106,12 +1171,6 @@ AddEventHandler("races:init", function()
             }
             TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
                 race.owner, race.tier, race.laps, race.timeout, rdata)
-
-            for nID, player in pairs(race.players) do
-
-                print(("Player %s | NetID: %s | Source: %s"):format(player.playerName, player.netID, player.source))
-                TriggerClientEvent("races:addRacer", source, player.netID, player.source, player.playerName)
-            end
         end
     end
 
@@ -1411,29 +1470,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                         msg = msg .. "Prize distribution table is invalid\n"
                     end
                     sendMessage(source, msg)
-                    races[source] = {
-                        state = racingStates.Registering,
-                        waypointCoords = waypointCoords,
-                        isPublic = isPublic,
-                        trackName = trackName,
-                        owner = owner,
-                        tier = tier,
-                        specialClass = rdata.specialClass,
-                        laps = laps,
-                        timeout = timeout,
-                        rtype = rdata.rtype,
-                        restrict = rdata.restrict,
-                        vclass = rdata.vclass,
-                        svehicle = rdata.svehicle,
-                        vehicleList = rdata.vehicleList,
-                        numRacing = 0,
-                        numReady = 0,
-                        countdown = false,
-                        countdownTimeStart = 0,
-                        players = {},
-                        results = {},
-                        gridPositions = {}
-                    }
+
+                    AddNewRace(waypointCoords, isPublic, trackName, owner, tier, timeout, laps, rdata)
                     TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
                         owner, tier, laps, timeout, rdata)
                 else
@@ -1474,7 +1512,7 @@ RegisterNetEvent("races:endrace")
 AddEventHandler("races:endrace", function()
     local source = source
     if races[source] ~= nil then
-        TriggerClientEvent("races:leave", -1)
+        TriggerEventForRacers(source, "races:leave")
         sendMessage(source, "Race Ended.\n")
     else
         sendMessage(source, "Cannot End race.  You have no active race.\n")
@@ -1499,7 +1537,7 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], #GetPlayers())
+    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].players)
 
     if (gridPositions ~= nil) then
         PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players,
@@ -1529,7 +1567,7 @@ AddEventHandler("races:autojoin", function()
 end)
 
 RegisterNetEvent("races:readyState")
-AddEventHandler("races:readyState", function(raceIndex, ready, netID)
+AddEventHandler("races:readyState", function(raceIndex, ready)
     local source = source
     if races[raceIndex] == nil then
         print("can't find race to ready")
@@ -1553,20 +1591,28 @@ AddEventHandler("races:readyState", function(raceIndex, ready, netID)
         numReady = numRacing
     end
 
-    races[raceIndex].players[netID].ready = ready
+    races[raceIndex].players[source].ready = ready
     races[raceIndex].numReady = numReady
     races[raceIndex].numRacing = numRacing
 
-    TriggerClientEvent("races:sendReadyData", -1, ready, source, GetPlayerName(source))
+    TriggerEventForRacers(raceIndex, "races:sendReadyData", ready, source, GetPlayerName(source))
 end)
 
+--source is the source of racerOwner which is also the race's index
 function StartRace(race, source, delay)
     race.countdown = false
     race.countdownTimeStart = 0
-    race.state = racingStates.Racing
-    TriggerClientEvent("races:start", -1, source, delay)
+    StartRaceDelay(race, delay)
+    TriggerEventForRacers(source, "races:start", source, delay)
     TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
     sendMessage(source, "Race started.\n")
+end
+
+function StartRaceDelay(race, delay)
+    race.state = racingStates.RaceCountdown
+    race.fiveSecondWarning = false
+    race.delayTimer = Timer:New()
+    race.delayTimer:Start(delay * 1000)
 end
 
 RegisterNetEvent("races:start")
@@ -1593,15 +1639,10 @@ AddEventHandler("races:start", function(delay, override)
                             StopRaceCountdown(source)
                         end
 
-                        race.state = racingStates.Racing
+                        StartRaceDelay(race, delay)
 
-                        local sourceJoined = false
-                        for _, player in pairs(race.players) do
-                            TriggerClientEvent("races:start", player.source, source, delay)
-                            if player.source == source then
-                                sourceJoined = true
-                            end
-                        end
+                        TriggerEventForRacers(source, "races:start", source, delay)
+
                         TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
                         sendMessage(source, "Race started.\n")
                     else
@@ -1776,20 +1817,20 @@ AddEventHandler("races:listLsts", function(isPublic)
 end)
 
 RegisterNetEvent("races:leave")
-AddEventHandler("races:leave", function(rIndex, netID)
+AddEventHandler("races:leave", function(rIndex)
     local source = source
-    if rIndex ~= nil and netID ~= nil then
+    if rIndex ~= nil then
         if races[rIndex] ~= nil then
             if racingStates.Registering == races[rIndex].state then
-                if races[rIndex].players[netID] ~= nil then
+                if races[rIndex].players[source] ~= nil then
                     for i = 1, #gridLineup do
-                        if gridLineup[i] == races[rIndex].players[netID].source then
+                        if gridLineup[i] == races[rIndex].players[source].source then
                             table.remove(gridLineup, i)
                             break
                         end
                     end
 
-                    OnPlayerLeave(races[rIndex], rIndex, netID, source)
+                    OnPlayerLeave(races[rIndex], rIndex, source)
                 else
                     sendMessage(source, "Cannot leave.  Not a member of this race.\n")
                 end
@@ -1806,8 +1847,9 @@ AddEventHandler("races:leave", function(rIndex, netID)
 end)
 
 RegisterNetEvent("races:removeFromLeaderboard")
-AddEventHandler("races:removeFromLeaderboard", function(rIndex, netID)
-    TriggerClientEvent("races:removeFromLeaderboard", -1, races[rIndex].players[netID].source)
+AddEventHandler("races:removeFromLeaderboard", function(raceIndex)
+    local source = source
+    TriggerEventForRacers(raceIndex, "races:removeFromLeaderboard", source)
 end)
 
 RegisterNetEvent("races:rivals")
@@ -1834,22 +1876,22 @@ AddEventHandler("races:rivals", function(rIndex)
 end)
 
 RegisterNetEvent("races:join")
-AddEventHandler("races:join", function(rIndex, netID)
-    print(string.format("NetID:%s Joined", netID))
+AddEventHandler("races:join", function(rIndex)
     local source = source
-    if rIndex ~= nil and netID ~= nil then
+    if rIndex ~= nil then
         if races[rIndex] ~= nil then
             if racingStates.Registering == races[rIndex].state then
                 local playerName = GetPlayerName(source)
-                TriggerClientEvent("races:addRacer", -1, netID, source, playerName)
                 races[rIndex].numRacing = races[rIndex].numRacing + 1
-                races[rIndex].players[netID] = {
-                    netID = netID,
+                races[rIndex].players[source] = {
                     source = source,
                     playerName = playerName,
-                    numWaypointsPassed = -1,
+                    waypointsPassed = -1,
                     data = -1,
                     ready = false,
+                    bestLapTime = -1,
+                    bestLapVehicleName = "",
+                    currentLapTimeStart = -1
                 }
 
                 local racerDictionary = mapToArray(races[rIndex].players,
@@ -1865,11 +1907,20 @@ AddEventHandler("races:join", function(rIndex, netID)
                     print("No race results, adding racer")
                     table.insert(gridLineup, source)
                 end
-                TriggerClientEvent("races:joinnotification", -1, playerName, racerDictionary, rIndex,
-                    races[rIndex].trackName,
-                    races[rIndex].numReady, races[rIndex].numRacing, races[rIndex].waypointCoords[1])
+
+                local joinNotificationData = {
+                    playerName = playerName,
+                    racerDictionary = racerDictionary,
+                    raceIndex = rIndex,
+                    trackName = races[rIndex].trackName,
+                    numRacing = races[rIndex].numRacing,
+                    waypointCoords = races[rIndex].waypointCoords[1]
+                }
+
+                TriggerClientEvent("races:joinnotification", -1, joinNotificationData)
+
                 TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
-                    races[rIndex].waypointCoords)
+                races[rIndex].waypointCoords)
             else
                 notifyPlayer(source, "Cannot join.  Race in progress.\n")
             end
@@ -1883,34 +1934,45 @@ end)
 
 RegisterNetEvent("races:finish")
 AddEventHandler("races:finish",
-    function(rIndex, netID, numWaypointsPassed, finishTime, bestLapTime, vehicleName, altSource)
+    function(rIndex, numWaypointsPassed, dnf, altSource)
         local source = altSource or source
-        if rIndex ~= nil and netID ~= nil and numWaypointsPassed ~= nil and finishTime ~= nil and bestLapTime ~= nil and vehicleName ~= nil then
+        if rIndex ~= nil and source ~= nil and numWaypointsPassed ~= nil then
             local race = races[rIndex]
             if race ~= nil then
                 if racingStates.Racing == race.state then
-                    if race.players[netID] ~= nil then
-                        race.players[netID].numWaypointsPassed = numWaypointsPassed
-                        race.players[netID].data = finishTime
+                    if race.players[source] ~= nil then
+                        local finishedRacer = race.players[source]
+                        finishedRacer.numWaypointsPassed = numWaypointsPassed
 
-                        for nID, player in pairs(race.players) do
-                            TriggerClientEvent("races:finish", player.source, rIndex, race.players[netID].playerName,
-                                finishTime, bestLapTime, vehicleName)
-                            if nID ~= netID then
-                                TriggerClientEvent("races:delRacer", player.source, source)
-                            end
+                        if (dnf) then
+                            finishedRacer.data = -1
+                        else
+                            finishedRacer.data = GetGameTimer() - race.startTime
                         end
+
+                        print(("Finish Time: %i"):format(finishedRacer.data))
+
+                        local finishData = {
+                            raceIndex = rIndex,
+                            playerName = finishedRacer.playerName,
+                            finishTime = finishedRacer.data,
+                            bestLapTime = finishedRacer.bestLapTime,
+                            bestLapVehicleName = finishedRacer.bestLapVehicleName
+                        }
+
+                        TriggerEventForRacers(rIndex, "races:finish", finishData)
 
                         race.results[#race.results + 1] = {
                             source = source,
-                            playerName = race.players[netID].playerName,
-                            finishTime = finishTime,
-                            bestLapTime = bestLapTime,
-                            vehicleName = vehicleName
+                            playerName = finishedRacer.playerName,
+                            finishTime = finishedRacer.data,
+                            bestLapTime = finishedRacer.bestLapTime,
+                            vehicleName = finishedRacer.bestLapVehicleName
                         }
 
                         race.numRacing = race.numRacing - 1
                         if 0 == race.numRacing then
+
                             table.sort(race.results, function(p0, p1)
                                 return
                                     (p0.finishTime >= 0 and (-1 == p1.finishTime or p0.finishTime < p1.finishTime)) or
@@ -1928,11 +1990,8 @@ AddEventHandler("races:finish",
                                 end
                             end
 
-                            for _, player in pairs(race.players) do
-                                TriggerClientEvent("races:results", player.source, rIndex, race.results)
-                            end
-
-                            TriggerClientEvent("races:clearLeaderboard", -1)
+                            TriggerEventForRacers(rIndex, "races:results", rIndex, race.results)
+                            TriggerEventForRacers(rIndex, "races:clearLeaderboard")
 
                             saveResults(race)
 
@@ -1959,12 +2018,13 @@ AddEventHandler("races:finish",
     end)
 
 RegisterNetEvent("races:report")
-AddEventHandler("races:report", function(rIndex, netID, numWaypointsPassed, distance)
-    if rIndex ~= nil and netID ~= nil and numWaypointsPassed ~= nil and distance ~= nil then
+AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance)
+    local source = source
+    if rIndex ~= nil and numWaypointsPassed ~= nil and distance ~= nil then
         if races[rIndex] ~= nil then
-            if races[rIndex].players[netID] ~= nil then
-                races[rIndex].players[netID].numWaypointsPassed = numWaypointsPassed
-                races[rIndex].players[netID].data = distance
+            if races[rIndex].players[source] ~= nil then
+                races[rIndex].players[source].numWaypointsPassed = numWaypointsPassed
+                races[rIndex].players[source].data = distance
             else
                 notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
             end
@@ -2042,71 +2102,100 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
     end
 end)
 
-RegisterNetEvent("races:update_best_lap_time")
-AddEventHandler("races:update_best_lap_time", function(minutes, seconds)
-    local source = source
-    TriggerClientEvent("races:update_best_lap_time", -1, source, minutes, seconds)
-end)
-
 RegisterNetEvent("races:sendvehiclename")
-AddEventHandler("races:sendvehiclename", function(currentVehicleName)
+AddEventHandler("races:sendvehiclename", function(raceIndex, currentVehicleName)
     local source = source
-    TriggerClientEvent("races:sendvehiclename", -1, source, currentVehicleName)
+    TriggerEventForRacers(raceIndex, "races:sendvehiclename", source, currentVehicleName)
 end)
 
 RegisterNetEvent("races:sendCheckpointTime")
-AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, lapTime)
+AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     local source = source
 
-    local racersAhead = {}
-    local racersBehind = {}
+    if (races[raceIndex] == nil) then
+        print("No race by that index")
+        return
+    end
 
-    print("Sending Checkpoint Time")
-    print(waypointsPassed)
-    print(source)
+    local race = races[raceIndex]
+    local raceTime = race.raceTime
 
     table.insert(checkpointTimes, {})
 
-    for racerAheadSource, racerAheadLapTime in pairs(checkpointTimes[waypointsPassed]) do
-        if (racerAheadSource ~= source) then
-            print("checkpointTimes at [" .. waypointsPassed .. "][" .. racerAheadSource .. "] has values")
-            print("Updating time split for " ..
-                racerAheadSource ..
-                " with my source " .. source .. " and a difference of " .. lapTime - racerAheadLapTime)
-            TriggerClientEvent("races:updateTimeSplit", racerAheadSource, source, lapTime - racerAheadLapTime)
+    local racerTimeSplit = -1
+    local otherRacerTimeSplit = -1
 
-            table.insert(racersAhead, { source = racerAheadSource, timeSplit = (racerAheadLapTime - lapTime) })
+    for otherRacerSource, racer in pairs(race.players) do
+        if (otherRacerSource ~= source) then
+            print(("Comparing to Racer with source %i"):format(otherRacerSource))
+            if (racer.waypointsPassed >= waypointsPassed and racer.waypointsPassed > 0) then
+                --Racer is ahead so get their time at this checkpoint
+                racerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
+                otherRacerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
+            elseif (racer.waypointsPassed < 1) then
+                --Other Racer hasn't hit a checkpoint use race Start time
+                racerTimeSplit = raceTime - race.raceStart
+                otherRacerTimeSplit = race.raceStart - raceTime
+            else
+                --Racer is behind compare times at their waypoint
+                racerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
+                otherRacerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
+            end
+            TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
+            TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
+        else
+            racer.waypointsPassed = waypointsPassed
         end
     end
 
-    checkpointTimes[waypointsPassed][source] = lapTime
+    checkpointTimes[waypointsPassed][source] = raceTime
+end)
 
-    print(#checkpointTimes)
-    print(checkpointTimes)
-    print(#checkpointTimes[waypointsPassed])
-    print(checkpointTimes[waypointsPassed])
-    print(checkpointTimes[waypointsPassed][source])
+RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
+    local source = source
 
-    if (#racersAhead > 0) then
-        TriggerClientEvent("races:compareTimeSplit", source, racersAhead)
+    if (races[raceIndex] == nil) then
+        print("No race")
+        return
     end
+
+    local race = races[raceIndex]
+    local racer = race.players[source]
+
+    local gameTime = GetGameTimer()
+
+    print(("Time at Lap completion: %i"):format(gameTime))
+
+    --Get Current lap time
+    local currentLapTime = gameTime - racer.currentLapTimeStart
+    --Set offset for new lap
+    racer.currentLapTimeStart = gameTime
+
+    print(("Current Lap Time: %i"):format(currentLapTime))
+
+    TriggerClientEvent("races:newlap", source, gameTime)
+
+    if (racer.bestLapTime == -1 or currentLapTime < racer.bestLapTime ) then
+        print(("Best lap for source %i in Race[%s] with time %i and Vehicle %s"):format(source, raceIndex, currentLapTime, currentVehicleName))
+        racer.bestLapTime = currentLapTime
+        racer.bestLapVehicleName = currentVehicleName
+
+        race.players[source] = racer
+
+        TriggerEventForRacers(raceIndex, "races:updatebestlaptime", source, racer.bestLapTime)
+    end
+
 end)
 
 function RaceServerUpdate()
     while true do
         Citizen.Wait(500)
-
         for rIndex, race in pairs(races) do
-            if racingStates.Registering == race.state then
-                CheckReady(race, rIndex)
-                if race.countdown == true then
-                    ProcessReadyCountdown(rIndex)
-                end
-            elseif racingStates.Racing == race.state then
+            if racingStates.Racing == race.state then
                 local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
                 local complete = true
 
-                -- race.players[netID] = {source, playerName, numWaypointsPassed, data, coord}
+                -- race.players[source] = {source, playerName, numWaypointsPassed, data, coord}
                 for _, player in pairs(race.players) do
                     if -1 == player.numWaypointsPassed then -- player client hasn't updated numWaypointsPassed, data and coord
                         complete = false
@@ -2132,7 +2221,7 @@ function RaceServerUpdate()
 
                     local racePositions = map(sortedPlayers, function(item) return item.source end)
 
-                    TriggerClientEvent("races:racerPositions", -1, racePositions)
+                    TriggerEventForRacers(rIndex, "races:racerPositions", racePositions)
 
                     -- players sorted into sortedPlayers table
                     for position, sortedPlayer in pairs(sortedPlayers) do
@@ -2144,4 +2233,43 @@ function RaceServerUpdate()
     end
 end
 
+--Update every frame to track race time
+function MainServerUpdate()
+    while true do
+        Citizen.Wait(0)
+
+        for rIndex, race in pairs(races) do
+            if racingStates.Registering == race.state then
+                CheckReady(race, rIndex)
+                if race.countdown == true then
+                    ProcessReadyCountdown(rIndex)
+                end
+            elseif(race.state == racingStates.RaceCountdown) then
+                race.delayTimer:Update()
+
+                if (race.delayTimer.length <= 5000 and race.fiveSecondWarning == false) then
+                    race.fiveSecondWarning = true
+                    print("Five second warning")
+
+                    TriggerEventForRacers(rIndex, "races:fivesecondwarning")
+                end
+                if (race.delayTimer.complete) then
+
+                    race.startTime = GetGameTimer()
+                    print(("Race starts at %i"):format(race.startTime))
+
+                    for _, player in pairs(race.players) do
+                        player.currentLapTimeStart = race.startTime
+                        TriggerClientEvent("races:greenflag", player.source, race.startTime)
+                    end
+                    race.state = racingStates.Racing
+                end
+            elseif(race.state == racingStates.Racing) then
+                race.raceTime = GetGameTimer() - race.startTime
+            end
+        end
+    end
+end
+
 Citizen.CreateThread(RaceServerUpdate)
+Citizen.CreateThread(MainServerUpdate)

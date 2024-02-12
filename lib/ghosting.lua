@@ -1,4 +1,5 @@
 local lowGhostingAlpha = 0
+local lowPlayerGhostingAlpha = 0
 local highGhostingAlpha = 0
 local ghostingTimeoutStart = 0 -- At what time to start indicating that ghosting is running out
 local flickerInterval = 0
@@ -7,24 +8,44 @@ Ghosting = {
     active = false,
     length = 0,
     currentGhostedAlpha = 0,
-    timer = Timer:new(),
-    flickerTimer = Timer:new()
+    timer = Timer:New(),
+    flickerTimer = Timer:New()
 }
 
-function Ghosting:new (o, configData)
+function Ghosting:New(o)
     o = o or {}
     setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
+function Ghosting:LoadConfig(configData)
     if(configData~= nil) then
         lowGhostingAlpha = configData['lowGhostingAlpha']
+        lowPlayerGhostingAlpha = configData['lowPlayerGhostingAlpha']
         highGhostingAlpha = configData['highGhostingAlpha']
         ghostingTimeoutStart = configData['ghostingTimeoutStart']
         flickerInterval = configData['flickerInterval']
     end
-
-    self.__index = self
-    return o
 end
+
+function Ghosting:SetAlpha()
+
+    --Set Alpha of current Player and vehicle if they are in one
+    local player = PlayerPedId()
+    local playerAlpha = self.currentGhostedAlpha
+    if(playerAlpha == lowGhostingAlpha) then
+        playerAlpha = lowPlayerGhostingAlpha
+    end
+    SetEntityAlpha(player, playerAlpha, 0)
+
+    if(IsPedInAnyVehicle(player, false) == 1) then
+        SetEntityAlpha(GetVehiclePedIsIn(player, false), playerAlpha, 0)
+    end
+
+    SetGhostedEntityAlpha(self.currentGhostedAlpha)
+end
+
 
 function Ghosting:StartGhostingNoTimer()
 
@@ -38,7 +59,8 @@ function Ghosting:StartGhostingNoTimer()
     self.length = 0
     SetLocalPlayerAsGhost(true)
     self.currentGhostedAlpha = lowGhostingAlpha
-    SetGhostedEntityAlpha(lowGhostingAlpha)
+    self:SetAlpha()
+
     TriggerServerEvent('ghosting:setplayeralpha', lowGhostingAlpha)
 
 end
@@ -63,14 +85,15 @@ function Ghosting:StartGhosting(newLength)
     self.active = true
     SetLocalPlayerAsGhost(true)
     self.currentGhostedAlpha = lowGhostingAlpha
-    SetGhostedEntityAlpha(lowGhostingAlpha)
+    self:SetAlpha(lowGhostingAlpha)
     TriggerServerEvent('ghosting:setplayeralpha', lowGhostingAlpha)
 end
 
 function Ghosting:StopGhosting()
     PlaySoundFrontend(-1, "CONFIRM_BEEP", "HUD_MINI_GAME_SOUNDSET", true)
 
-    SetGhostedEntityAlpha(254)
+    self.currentGhostedAlpha = 254
+    self:SetAlpha()
     SetLocalPlayerAsGhost(false)
     ResetGhostedEntityAlpha()
 
@@ -88,7 +111,7 @@ function Ghosting:StopGhosting()
 end
 
 function Ghosting:Update()
-    
+
     if(self.active ~= true or self.length == 0) then
         return
     end
@@ -116,7 +139,7 @@ function Ghosting:Update()
         end
 
         self.currentGhostedAlpha = newGhostingAlpha
-        SetGhostedEntityAlpha(newGhostingAlpha)
+        self:SetAlpha()
         self.flickerTimer:Start(flickerInterval)
     end
 
