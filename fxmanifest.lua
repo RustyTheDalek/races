@@ -7,6 +7,8 @@ dependency "chat"
 
 loadscreen_manual_shutdown 'yes'
 
+resource_type 'gametype' { name = 'Race' }
+
 shared_scripts {
     "shared/*.lua"
 }
@@ -18,7 +20,8 @@ client_scripts {
 }
 
 server_scripts {
-    "server/races.lua"
+    "lib/mapManager.lua",
+    "server/*.lua"
 }
 
 ui_page "html/index.html"
