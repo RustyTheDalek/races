@@ -30,6 +30,8 @@ local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, 
 --2nd dimension is rcers
 local checkpointTimes = {}
 
+local racesMapManager = RacesMapManager:New()
+
 function explode(inputstr, sep)
     if sep == nil then
         sep = "%s"
@@ -988,6 +990,12 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         gridPositions = {},
         map = rdata.map
     }
+
+    if(rdata.map ~= "") then
+        print(("Map data, loading %s"):format(rdata.map))
+        racesMapManager:LoadMap(rdata.map)
+    end
+
 end
 
 RegisterNetEvent("ghosting:setplayeralpha")
@@ -1994,8 +2002,7 @@ AddEventHandler("races:finish",
                                 end
                             end
 
-                            TriggerEventForRacers(rIndex, "races:results", rIndex, race.results)
-                            TriggerEventForRacers(rIndex, "races:clearLeaderboard")
+                            TriggerEventForRacers(rIndex, "races:onendrace", rIndex, race.results)
 
                             saveResults(race)
 
@@ -2004,6 +2011,8 @@ AddEventHandler("races:finish",
                             if race.trackName ~= nil then
                                 updateBestLapTimes(rIndex)
                             end
+
+                            racesMapManager:UnloadMap(race.map)
 
                             races[rIndex] = nil -- delete race after all players finish
                         end
