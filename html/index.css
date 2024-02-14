@@ -49,6 +49,7 @@ body {
     white-space: nowrap;
     justify-content: center;
     align-items: center;
+    padding: 5px 0px;
 }
 
 #mainPanel {
@@ -271,6 +272,10 @@ body {
 
 #register {
     width: 15%;
+}
+
+select {
+    height: 44px;
 }
 
 #tier {

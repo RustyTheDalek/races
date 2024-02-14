@@ -132,13 +132,12 @@
         </div>
     </div>
 
-    <div style="display:none;" id="editPanel">
+    <div id="editPanel">
         <div class="row">
             <button id="edit">Toggle Edit Waypoints</button>
             <button id="edit_clear">Clear Waypoints</button>
             <button id="edit_reverse">Reverse Waypoints</button>
         </div>
-        <br>
         <div class="row">
             <select id="edit_track_access0">
                 <option value="pvt">Private</option>
@@ -149,13 +148,18 @@
             </select>
         </div>
         <div class="row">
+            <label for="map">Map: </label>
+            <select id="map">
+                <option value="">None</option>
+            </select>
+        </div>
+        <div class="row">
             <button id="edit_load">Load</button>
             <button id="edit_overwrite">Overwrite</button>
             <button id="edit_delete">Delete</button>
             <button id="edit_blt">Best Laps</button>
             <button id="edit_list">List</button>
         </div>
-        <br>
         <div class="row">
             <select id="edit_track_access1">
                 <option value="pvt">Private</option>
@@ -166,13 +170,11 @@
         <div class="row">
             <button id="edit_save">Save</button>
         </div>
-        <br>
         <div class="row">
             <button id="edit_main">Main Panel</button>
             <button id="edit_register">Register Panel</button>
             <button id="edit_vlist">Vehicle List Panel</button>
         </div>
-        <br>
         <div class="row">
             <button id="edit_close">Close</button>
         </div>
