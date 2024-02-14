@@ -130,13 +130,41 @@ $(function () {
         }
     }
 
+    function handleRaceManagement(data) {
+        switch (data.action) {
+            case "send_maps":
+                AddMaps(data.maps);
+                break;
+        }
+    }
+    
+    function AddMaps(maps) {
+
+        console.log(maps);
+        
+        for(map in maps) {
+            console.log(map);
+
+            let formattedMapName = map.
+            replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/[^0-9](?=[0-9])/g, '$& ').trim()
+
+            $('#map').append($('<option>', {
+                value: map,
+                text: formattedMapName
+            }));
+        }
+    }
+
     window.addEventListener("message", function (event) {
         let data = event.data;
         if (data.type === 'cartierui') {
             handleCarTier(data);
         } else if (data.type === 'ready') {
             handleReady(data);
-        } else if ("main" == data.panel) {
+        } else if (data.type === 'race_management') {
+            console.log("Reading Race Management event");
+            handleRaceManagement(data);
+        }else if ("main" == data.panel) {
             document.getElementById("main_vehicle").innerHTML = data.allVehicles;
             $("#main_vehicle").val(data.defaultVehicle);
             $("#mainPanel").show();
@@ -321,6 +349,12 @@ $(function () {
         } else {
             document.getElementById("edit_name").innerHTML = pubTrackNames;
         }
+    });
+
+    $("#map").change(function () {
+        $.post("https://races/setnewmap", JSON.stringify({
+            map: $(this).val()
+        }));
     });
 
     $("#edit_load").click(function () {

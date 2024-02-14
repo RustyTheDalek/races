@@ -62,6 +62,7 @@ local savedTrackName = nil                -- name of saved track - nil if track 
 
 local waypoints = {}                      -- waypoints[] = {coord = {x, y, z, r}, checkpoint, blip, sprite, color, number, name}
 local startIsFinish = false               -- flag indicating if start and finish are same waypoint
+local map = ""                            -- YMap used in conjunction with the race
 
 local numLaps = -1                        -- number of laps in current race
 local currentLap = -1                     -- current lap
@@ -962,7 +963,7 @@ local function saveTrack(access, trackName)
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             if #waypoints > 1 then
-                TriggerServerEvent("races:save", "pub" == access, trackName, waypointsToCoords())
+                TriggerServerEvent("races:save", "pub" == access, trackName, waypointsToCoords(), map)
             else
                 sendMessage("Cannot save.  Track needs to have at least 2 waypoints.\n")
             end
@@ -982,7 +983,7 @@ local function overwriteTrack(access, trackName)
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             if #waypoints > 1 then
-                TriggerServerEvent("races:overwrite", "pub" == access, trackName, waypointsToCoords())
+                TriggerServerEvent("races:overwrite", "pub" == access, trackName, waypointsToCoords(), map)
             else
                 sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
             end
@@ -1124,7 +1125,8 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                             vclass = vclass,
                             svehicle = svehicle,
                             vehicleList = vehList,
-                            specialClass = specialClass
+                            specialClass = specialClass,
+                            map = map
                         }
                         TriggerServerEvent("races:register", waypointsToCoords(), isPublicTrack, savedTrackName,
                         tier, laps, timeout, rdata)
@@ -1939,6 +1941,17 @@ RegisterNUICallback("close", function()
     SetNuiFocus(false, false)
 end)
 
+RegisterNUICallback("setnewmap", function(data)
+    print(dump(data))
+    map = data.map
+    
+    if(map ~= "") then
+        notifyPlayer(("Map changed to %s"):format(map))
+    else
+        notifyPlayer("Map unset")
+    end
+end)
+
 --#endregion
 
 local function resetupgrades(vehicle)
@@ -2207,8 +2220,9 @@ AddEventHandler("races:message", function(msg)
 end)
 
 RegisterNetEvent("races:load")
-AddEventHandler("races:load", function(isPublic, trackName, waypointCoords)
+AddEventHandler("races:load", function(isPublic, trackName, waypointCoords, mapName)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
+        map = mapName
         if racingStates.Idle == raceState then
             isPublicTrack = isPublic
             savedTrackName = trackName
@@ -2655,7 +2669,7 @@ AddEventHandler("races:finish", function(finishData)
     local raceBestLapTime = finishData.bestLapTime
     local raceVehicleName = finishData.bestLapVehicleName
 
-    
+
     if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
         if rIndex == raceIndex then
             if -1 == raceFinishTime then

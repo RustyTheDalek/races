@@ -985,7 +985,8 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         countdownTimeStart = 0,
         players = {},
         results = {},
-        gridPositions = {}
+        gridPositions = {},
+        map = rdata.map
     }
 end
 
@@ -1155,6 +1156,7 @@ AddEventHandler("races:init", function()
     local source = source
 
     TriggerClientEvent("races:roles", source, getRoleBits(source))
+    racesMapManager:SendMapData()
 
     ProcessPlayers(source)
 
@@ -1187,6 +1189,8 @@ AddEventHandler("races:init", function()
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 
     local configData = loadConfig()
+
+    racesMapManager:LoadConfig(configData['mapManager'])
 
     TriggerClientEvent("races:config", source, configData)
 end)
@@ -1246,7 +1250,7 @@ AddEventHandler("races:load", function(isPublic, trackName)
     if isPublic ~= nil and trackName ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
-            TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords)
+            TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords, track.map)
         else
             sendMessage(source,
                 "Cannot load.   " ..
@@ -1258,7 +1262,7 @@ AddEventHandler("races:load", function(isPublic, trackName)
 end)
 
 RegisterNetEvent("races:save")
-AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
+AddEventHandler("races:save", function(isPublic, trackName, waypointCoords, map)
     local source = source
     if 0 == getRoleBits(source) & ROLE_EDIT then
         sendMessage(source, "Permission required.\n")
@@ -1267,7 +1271,7 @@ AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if nil == track then
-            track = { waypointCoords = waypointCoords, bestLaps = {} }
+            track = { waypointCoords = waypointCoords, bestLaps = {}, map = map }
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:save", source, isPublic, trackName)
                 TriggerEvent("races:trackNames", isPublic, source)
@@ -1286,7 +1290,7 @@ AddEventHandler("races:save", function(isPublic, trackName, waypointCoords)
 end)
 
 RegisterNetEvent("races:overwrite")
-AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords)
+AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords, map)
     local source = source
     if 0 == getRoleBits(source) & ROLE_EDIT then
         sendMessage(source, "Permission required.\n")
@@ -1295,7 +1299,7 @@ AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords)
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
-            track = { waypointCoords = waypointCoords, bestLaps = {} }
+            track = { waypointCoords = waypointCoords, bestLaps = {}, map = map}
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:overwrite", source, isPublic, trackName)
             else
