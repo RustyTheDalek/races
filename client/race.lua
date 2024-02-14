@@ -130,34 +130,7 @@ local configData
 
 local boost_active = false
 
-exports.spawnmanager:setAutoSpawnCallback(function()
-
-    local coord = { x = -1437.03, y = -2993.15 , z = 13.94, heading = 222.93 }
-
-    if racingStates.Racing == raceState then
-        print("In race, spawning at race")
-        coord = startCoord
-        if true == startIsFinish then
-            if currentWaypoint > 0 then
-                coord = waypoints[currentWaypoint].coord
-            end
-        else
-            if currentWaypoint > 1 then
-                coord = waypoints[currentWaypoint - 1].coord
-            end
-        end
-    end
-
-    exports.spawnmanager:spawnPlayer({
-        x = coord.x,
-        y = coord.y,
-        z = coord.z,
-        heading = coord.heading,
-        skipFade = true
-    })
-    exports.spawnmanager:setAutoSpawn(true)
-    exports.spawnmanager:forceRespawn()
-end)
+local lobbySpawn = { x = 0, y = 0, z = 0}
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -2682,7 +2655,7 @@ AddEventHandler("races:finish", function(finishData)
     local raceBestLapTime = finishData.bestLapTime
     local raceVehicleName = finishData.bestLapVehicleName
 
-
+    
     if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
         if rIndex == raceIndex then
             if -1 == raceFinishTime then
@@ -2719,8 +2692,13 @@ end)
 -- 5. receives results event from previous race before current race
 -- only accept results event from current race
 -- do not accept results event from previous race
-RegisterNetEvent("races:results")
-AddEventHandler("races:results", function(rIndex, raceResults)
+RegisterNetEvent("races:onendrace")
+AddEventHandler("races:onendrace", function(rIndex, raceResults)
+
+    ClearLeaderboard()
+
+    TeleportPlayer(lobbySpawn)
+
     if rIndex ~= nil and raceResults ~= nil then
         if rIndex == raceIndex then
             results = raceResults
@@ -2864,8 +2842,7 @@ AddEventHandler("races:autojoin", function(raceIndex)
     local registerPosition = starts[raceIndex].registerPosition
 
     ghosting:StartGhosting(configData['ghostingTime'])
-    local startPoint = vector3(registerPosition.x, registerPosition.y, registerPosition.z)
-    TeleportPlayer(startPoint, registerPosition.heading)
+    TeleportPlayer(registerPosition)
 
     TriggerServerEvent("races:join", raceIndex)
 end)
@@ -2874,7 +2851,7 @@ RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
 
     print("Setup Grid called")
-    TeleportPlayer(position, heading)
+    TeleportPlayer({x = position.x, y = position.y, z = position.z, heading = heading})
 
     -- sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
 end)
@@ -3064,6 +3041,37 @@ AddEventHandler("races:config", function(_configData)
 
     ghosting:LoadConfig(configData['ghosting'])
     playerDisplay:LoadConfig(configData['playerDisplay'])
+
+    lobbySpawn = _configData['spawnLocation']
+
+    exports.spawnmanager:setAutoSpawnCallback(function()
+    
+        if racingStates.Racing == raceState then
+            lobbySpawn = startCoord
+            if true == startIsFinish then
+                if currentWaypoint > 0 then
+                    lobbySpawn = waypoints[currentWaypoint].coord
+                end
+            else
+                if currentWaypoint > 1 then
+                    lobbySpawn = waypoints[currentWaypoint - 1].coord
+                end
+            end
+        elseif racingStates.Registering == racerState then
+            lobbySpawn = startCoord
+        end
+    
+        exports.spawnmanager:spawnPlayer({
+            x = lobbySpawn.x,
+            y = lobbySpawn.y,
+            z = lobbySpawn.z,
+            heading = lobbySpawn.heading,
+            skipFade = true
+        })
+        exports.spawnmanager:setAutoSpawn(true)
+        exports.spawnmanager:forceRespawn()
+    end)
+
 
 end)
 

@@ -12,5 +12,11 @@
         "raceDisplay" : {
             "gamerTagInfix" : " | "
         }
+    },
+    "spawnLocation" : {
+        "x" : -6562.41,
+        "y" : 1964.88,
+        "z" : 446.64,
+        "heading" : 90
     }
 }
