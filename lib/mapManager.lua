@@ -31,7 +31,7 @@ end
 
 function RacesMapManager:UnloadMap(mapName)
     print(("Attempting unload of map %s"):format(mapName))
-    if(mapName ~= defaultMap and self.maps[mapName] ~= nil) then 
+    if(mapName ~= defaultMap and self.maps[mapName] ~= nil and GetResourceState(mapName) == 'started') then 
         StopResource(mapName) 
     end
 end
