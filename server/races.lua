@@ -1481,6 +1481,11 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
                     if false == distValid then
                         msg = msg .. "Prize distribution table is invalid\n"
                     end
+
+                    if(rdata.map ~= "") then
+                        msg = msg .. (" with map %s"):format(rdata.map);
+                    end
+
                     sendMessage(source, msg)
 
                     AddNewRace(waypointCoords, isPublic, trackName, owner, tier, timeout, laps, rdata)

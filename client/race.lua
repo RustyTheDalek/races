@@ -2310,13 +2310,13 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
         SetBlipSprite(blip, registerSprite)
         SetBlipColour(blip, registerBlipColor)
         BeginTextCommandSetBlipName("STRING")
-        local msg = owner .. " (" .. "tier" .. tier
-        msg = msg .. " Special Class" .. rdata.specialClass
-        if "rest" == rdata.rtype then
+        local msg = owner .. " (" .. "tier:" .. tier
+        msg = msg .. " Special Class: " .. rdata.specialClass
+        if " rest" == rdata.rtype then
             msg = msg .. " : using '" .. rdata.restrict .. "' vehicle"
-        elseif "class" == rdata.rtype then
+        elseif " class" == rdata.rtype then
             msg = msg .. " : using " .. getClassName(rdata.vclass) .. " vehicle class"
-        elseif "rand" == rdata.rtype then
+        elseif " rand" == rdata.rtype then
             msg = msg .. " : using random "
             if rdata.vclass ~= nil then
                 msg = msg .. getClassName(rdata.vclass) .. " vehicle class"
@@ -2326,10 +2326,14 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             if rdata.svehicle ~= nil then
                 msg = msg .. " : '" .. rdata.svehicle .. "'"
             end
-        elseif "wanted" == rdata.rtype then
+        elseif " wanted" == rdata.rtype then
             msg = msg .. " : wanted race mode"
-        elseif "ghost" == rdata.rtype then
+        elseif " ghost" == rdata.rtype then
             msg = msg .. " : ghost race mode"
+        end
+
+        if(rdata.map) then
+            msg = msg .. " map: " .. rdata.map
         end
         msg = msg .. ")"
         AddTextComponentSubstringPlayerName(msg)
@@ -2353,7 +2357,8 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             vehicleList = rdata.vehicleList,
             blip = blip,
             checkpoint = checkpoint,
-            registerPosition = coord
+            registerPosition = coord,
+            map = rdata.map
         }
     else
         notifyPlayer("Ignoring register event.  Invalid parameters.\n")
@@ -2636,6 +2641,11 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                     msg = msg .. " : using ghost race mode"
                     currentRace.raceType = 'ghost'
                 end
+
+                if(starts[rIndex].map ~= "") then
+                    msg = msg .. (" with map %s"):format(starts[rIndex].map);
+                end
+
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
             elseif racingStates.Editing == raceState then
@@ -3465,6 +3475,11 @@ function IdleUpdate(player, playerCoord)
         elseif "ghost" == starts[closestIndex].rtype then
             msg = msg .. " : using ghost race mode"
         end
+
+        if (starts[closestIndex].map ~= "") then
+            msg = msg .. " with map " .. starts[closestIndex].map
+        end
+
         SetJoinMessage(msg)
         if IsControlJustReleased(0, 51) == 1 then -- E key or DPAD RIGHT
             local joinRace = true
