@@ -2682,7 +2682,7 @@ AddEventHandler("races:finish", function(finishData)
 
     local rIndex = finishData.raceIndex
     local playerName = finishData.playerName
-    local raceFinishTime = finishData.data
+    local raceFinishTime = finishData.finishTime
     local raceBestLapTime = finishData.bestLapTime
     local raceVehicleName = finishData.bestLapVehicleName
 
