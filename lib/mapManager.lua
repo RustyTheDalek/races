@@ -20,6 +20,7 @@ end
 function RacesMapManager:Initalise()
     print("Initalising")
     self.maps = exports.mapmanager:getMaps()
+    self:SendMapData()
 end
 
 function RacesMapManager:UnloadMaps()

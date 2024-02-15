@@ -1164,7 +1164,6 @@ AddEventHandler("races:init", function()
     local source = source
 
     TriggerClientEvent("races:roles", source, getRoleBits(source))
-    racesMapManager:SendMapData()
 
     ProcessPlayers(source)
 
