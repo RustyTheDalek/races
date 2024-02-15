@@ -832,7 +832,7 @@ end
 
 local gridSeparation <const> = 5
 
-local function GenerateStartingGrid(startWaypoint, racers)
+local function GenerateStartingGrid(startWaypoint, racers, numRacers)
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
     --Calculate the forwardVector of the starting Waypoint
@@ -849,7 +849,7 @@ local function GenerateStartingGrid(startWaypoint, racers)
 
     local gridPositions = {}
 
-    for i = 1, #racers do
+    for i = 1, numRacers do
         local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
 
         if math.fmod(i, 2) == 0 then
@@ -1556,7 +1556,7 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].players)
+    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].players, races[source].numRacing) 
 
     if (gridPositions ~= nil) then
         PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players,
