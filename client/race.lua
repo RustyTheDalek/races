@@ -1009,7 +1009,10 @@ local function saveTrack(access, trackName)
     end
 end
 
-local function overwriteTrack(access, trackName)
+local function overwriteTrack(access, trackName, map)
+
+    print(("overwriting with map %s"):format(map))
+
     if 0 == roleBits & ROLE_EDIT then
         sendMessage("Permission required.\n")
         return
@@ -1795,7 +1798,7 @@ RegisterNUICallback("save", function(data)
 end)
 
 RegisterNUICallback("overwrite", function(data)
-    overwriteTrack(data.access, data.trackName)
+    overwriteTrack(data.access, data.trackName, data.map)
 end)
 
 RegisterNUICallback("delete", function(data)
@@ -2299,11 +2302,11 @@ AddEventHandler("races:save", function(isPublic, trackName)
 end)
 
 RegisterNetEvent("races:overwrite")
-AddEventHandler("races:overwrite", function(isPublic, trackName)
+AddEventHandler("races:overwrite", function(isPublic, trackName, map)
     if isPublic ~= nil and trackName ~= nil then
         isPublicTrack = isPublic
         savedTrackName = trackName
-        sendMessage("Overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+        sendMessage("Overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. (nil ~= map and " with map " .. map or "") ..  "'.\n")
     else
         notifyPlayer("Ignoring overwrite event.  Invalid parameters.\n")
     end

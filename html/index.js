@@ -374,7 +374,8 @@ $(function () {
     $("#edit_overwrite").click(function () {
         $.post("https://races/overwrite", JSON.stringify({
             access: $("#edit_track_access0").val(),
-            trackName: $("#edit_name").val()
+            trackName: $("#edit_name").val(),
+            map : $("#map").val()
         }));
     });
 

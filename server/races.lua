@@ -1299,6 +1299,9 @@ end)
 
 RegisterNetEvent("races:overwrite")
 AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords, map)
+
+    print(("Recieved Overwrite with map %s"):format(map))
+
     local source = source
     if 0 == getRoleBits(source) & ROLE_EDIT then
         sendMessage(source, "Permission required.\n")
