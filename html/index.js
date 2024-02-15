@@ -122,10 +122,17 @@ $(function () {
         );
     }
 
+    function ResetCarTier() {
+        $.post("https://cartierui/resetCarTier");
+    }
+
     function handleCarTier(data) {
         switch (data.action) {
             case "sendCarData":
                 SendCarTier(data.tier, data.specialClass, data.openui);
+                break;
+            case "raceOver":
+                ResetCarTier();
                 break;
         }
     }

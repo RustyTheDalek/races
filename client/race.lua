@@ -1651,6 +1651,13 @@ function SendToRaceTier(tier, specialClass)
     })
 end
 
+function ResetCarTier()
+    SendNUIMessage({
+        type = "cartierui",
+        action = "raceOver"
+    })
+end
+
 function SendRaceData(raceData)
     SendNUIMessage({
         type = "leaderboard",
@@ -2701,6 +2708,7 @@ AddEventHandler("races:finish", function(finishData)
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
+            ResetCarTier();
             playerDisplay:ResetRaceBlips()
         end
     else
