@@ -131,7 +131,41 @@ local configData
 
 local boost_active = false
 
-local lobbySpawn = { x = 0, y = 0, z = 0}
+local lobbySpawn = { x = -1413, y = -3007, z = 13.95}
+
+AddEventHandler('onClientGameTypeStart', function()
+
+    exports.spawnmanager:setAutoSpawnCallback(function()
+
+        print("Overriding auto spawn")
+
+        if racingStates.Racing == raceState then
+            lobbySpawn = startCoord
+            if true == startIsFinish then
+                if currentWaypoint > 0 then
+                    lobbySpawn = waypoints[currentWaypoint].coord
+                end
+            else
+                if currentWaypoint > 1 then
+                    lobbySpawn = waypoints[currentWaypoint - 1].coord
+                end
+            end
+        elseif racingStates.Registering == raceState then
+            lobbySpawn = startCoord
+        end
+
+        exports.spawnmanager:spawnPlayer({
+            x = lobbySpawn.x,
+            y = lobbySpawn.y,
+            z = lobbySpawn.z,
+            heading = lobbySpawn.heading,
+            skipFade = true
+        })
+    end)
+
+    exports.spawnmanager:setAutoSpawn(true)
+    exports.spawnmanager:forceRespawn()
+end)
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -3070,39 +3104,16 @@ end
 RegisterNetEvent("races:config")
 AddEventHandler("races:config", function(_configData)
     configData = _configData
+    print("Loaded config")
 
     ghosting:LoadConfig(configData['ghosting'])
     playerDisplay:LoadConfig(configData['playerDisplay'])
 
     lobbySpawn = _configData['spawnLocation']
 
-    exports.spawnmanager:setAutoSpawnCallback(function()
-    
-        if racingStates.Racing == raceState then
-            lobbySpawn = startCoord
-            if true == startIsFinish then
-                if currentWaypoint > 0 then
-                    lobbySpawn = waypoints[currentWaypoint].coord
-                end
-            else
-                if currentWaypoint > 1 then
-                    lobbySpawn = waypoints[currentWaypoint - 1].coord
-                end
-            end
-        elseif racingStates.Registering == racerState then
-            lobbySpawn = startCoord
-        end
-    
-        exports.spawnmanager:spawnPlayer({
-            x = lobbySpawn.x,
-            y = lobbySpawn.y,
-            z = lobbySpawn.z,
-            heading = lobbySpawn.heading,
-            skipFade = true
-        })
-        exports.spawnmanager:setAutoSpawn(true)
-        exports.spawnmanager:forceRespawn()
-    end)
+    print(dump(exports))
+    print(dump(exports.spawnmanager))
+    print(dump(exports.spawnmanager:setAutoSpawnCallback()))
 
 
 end)
