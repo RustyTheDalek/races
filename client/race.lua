@@ -2332,7 +2332,7 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             msg = msg .. " : ghost race mode"
         end
 
-        if(rdata.map) then
+        if(rdata.map ~= "") then
             msg = msg .. " map: " .. rdata.map
         end
         msg = msg .. ")"
