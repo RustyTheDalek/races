@@ -2376,7 +2376,7 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
             msg = msg .. " : ghost race mode"
         end
 
-        if(rdata.map ~= "") then
+        if(rdata.map ~= nil and rdata.map ~= "") then
             msg = msg .. " map: " .. rdata.map
         end
         msg = msg .. ")"
@@ -3498,7 +3498,7 @@ function IdleUpdate(player, playerCoord)
             msg = msg .. " : using ghost race mode"
         end
 
-        if (starts[closestIndex].map ~= "") then
+        if (starts[closestIndex].map ~= nil and starts[closestIndex].map ~= "") then
             msg = msg .. " with map " .. starts[closestIndex].map
         end
 
