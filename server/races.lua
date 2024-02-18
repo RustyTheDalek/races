@@ -1264,9 +1264,9 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
     local numRacing = races[raceIndex].numRacing
 
     if ready then
-        numReady += 1
+        numReady = numReady + 1
     else
-        numReady -= 1
+        numReady = numReady - 1
     end
 
     if numReady < 0 then
