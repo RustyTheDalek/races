@@ -233,11 +233,6 @@ $(function () {
     });
 
     /* main panel */
-    $("#request").click(function () {
-        $.post("https://races/request", JSON.stringify({
-            role: $("#role").val()
-        }));
-    });
 
     $("#main_clear").click(function () {
         $.post("https://races/clear");

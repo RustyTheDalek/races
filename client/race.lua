@@ -5,10 +5,6 @@ local raceState = racingStates.Idle
 local gridRadius <const> = 5.0
 local gridCheckpoint
 
-local ROLE_EDIT <const> = 1     -- edit tracks role
-local ROLE_REGISTER <const> = 2 -- register races role
-local ROLE_SPAWN <const> = 4    -- spawn vehicles role
-
 local white <const> = { r = 255, g = 255, b = 255 }
 local red <const> = { r = 255, g = 0, b = 0 }
 local green <const> = { r = 0, g = 255, b = 0 }
@@ -109,8 +105,6 @@ local starts = {}                         -- starts[playerID] = {isPublic, track
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
 local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
 local allVehiclesHTML = ""                -- html option list of all vehicles
-
-local roleBits = 0                        -- bit flag indicating if player is permitted to create tracks, register races, and/or spawn vehicles
 
 local enteringVehicle = false             -- flag indicating if player is entering a vehicle
 
@@ -866,31 +860,7 @@ local function updateList()
     })
 end
 
-local function request(role)
-    if role ~= nil then
-        local roleBit = 0
-        if "edit" == role then
-            roleBit = ROLE_EDIT
-        elseif "register" == role then
-            roleBit = ROLE_REGISTER
-        elseif "spawn" == role then
-            roleBit = ROLE_SPAWN
-        end
-        if roleBit ~= 0 then
-            TriggerServerEvent("races:request", roleBit)
-        else
-            sendMessage("Cannot make request.  Invalid role.\n")
-        end
-    else
-        sendMessage("Cannot make request.  Role required.\n")
-    end
-end
-
 local function edit()
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if racingStates.Idle == raceState then
         raceState = racingStates.Editing
         SetWaypointOff()
@@ -942,10 +912,6 @@ local function clear()
 end
 
 local function reverse()
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if #waypoints > 1 then
         if racingStates.Idle == raceState then
             savedTrackName = nil
@@ -970,10 +936,6 @@ local function reverse()
 end
 
 local function loadTrack(access, trackName)
-    if 0 == roleBits & (ROLE_EDIT | ROLE_REGISTER) then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             if racingStates.Idle == raceState or racingStates.Editing == raceState then
@@ -990,10 +952,6 @@ local function loadTrack(access, trackName)
 end
 
 local function saveTrack(access, trackName)
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             if #waypoints > 1 then
@@ -1013,10 +971,6 @@ local function overwriteTrack(access, trackName, map)
 
     print(("overwriting with map %s"):format(map))
 
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             if #waypoints > 1 then
@@ -1033,10 +987,6 @@ local function overwriteTrack(access, trackName, map)
 end
 
 local function deleteTrack(access, trackName)
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if trackName ~= nil then
             TriggerServerEvent("races:delete", "pub" == access, trackName)
@@ -1069,11 +1019,6 @@ local function listTracks(access)
 end
 
 local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
-
     tier = (nil == tier or "." == tier) and defaultTier or string.lower(tier)
     specialClass = (nil == specialClass or "." == specialClass) and defaultSpecialClass or specialClass
 
@@ -1188,28 +1133,14 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
 end
 
 local function unregister()
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     TriggerServerEvent("races:unregister")
 end
 
 local function setupGrid()
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
-
     TriggerServerEvent("races:grid")
 end
 
 local function autojoin()
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
-
     TriggerServerEvent("races:autojoin")
 end
 
@@ -1220,10 +1151,6 @@ local function startRace(delay, override)
     end
 
     print(override)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     delay = math.tointeger(tonumber(delay)) or defaultDelay
     if delay ~= nil and delay >= 5 then
         TriggerServerEvent("races:start", delay, override)
@@ -1233,10 +1160,6 @@ local function startRace(delay, override)
 end
 
 local function addVeh(vehicle)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if vehicle ~= nil then
         if IsModelInCdimage(vehicle) == 1 and IsModelAVehicle(vehicle) == 1 then
             vehicleList[#vehicleList + 1] = vehicle
@@ -1253,10 +1176,6 @@ local function addVeh(vehicle)
 end
 
 local function delVeh(vehicle)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if vehicle ~= nil then
         if IsModelInCdimage(vehicle) == 1 and IsModelAVehicle(vehicle) == 1 then
             for i = 1, #vehicleList do
@@ -1279,10 +1198,6 @@ local function delVeh(vehicle)
 end
 
 local function addClass(class)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     class = math.tointeger(tonumber(class))
     if class ~= nil and class >= 0 and class <= 21 then
         for _, vehicle in pairs(allVehiclesList) do
@@ -1300,10 +1215,6 @@ local function addClass(class)
 end
 
 local function deleteClass(class)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     class = math.tointeger(tonumber(class))
     if class ~= nil and class >= 0 and class <= 21 then
         for i = 1, #vehicleList do
@@ -1329,10 +1240,6 @@ local function deleteClass(class)
 end
 
 local function addAllVeh()
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     for _, vehicle in pairs(allVehiclesList) do
         vehicleList[#vehicleList + 1] = vehicle
     end
@@ -1365,10 +1272,6 @@ local function listVeh()
 end
 
 local function loadLst(access, name)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if name ~= nil then
             TriggerServerEvent("races:loadLst", "pub" == access, name)
@@ -1381,10 +1284,6 @@ local function loadLst(access, name)
 end
 
 local function saveLst(access, name)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if name ~= nil then
             if #vehicleList > 0 then
@@ -1401,10 +1300,6 @@ local function saveLst(access, name)
 end
 
 local function overwriteLst(access, name)
-    if 0 == roleBits & ROLE_EDIT then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if name ~= nil then
             if #vehicleList > 0 then
@@ -1421,10 +1316,6 @@ local function overwriteLst(access, name)
 end
 
 local function deleteLst(access, name)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         if name ~= nil then
             TriggerServerEvent("races:deleteLst", "pub" == access, name)
@@ -1437,10 +1328,6 @@ local function deleteLst(access, name)
 end
 
 local function listLsts(access)
-    if 0 == roleBits & ROLE_REGISTER then
-        sendMessage("Permission required.\n")
-        return
-    end
     if "pvt" == access or "pub" == access then
         TriggerServerEvent("races:listLsts", "pub" == access)
     else
@@ -1584,10 +1471,6 @@ local function viewResults(chatOnly)
 end
 
 local function spawn(vehicleHash)
-    if 0 == roleBits & ROLE_SPAWN then
-        sendMessage("Permission required.\n")
-        return
-    end
     vehicleHash = vehicleHash or defaultVehicle
     if IsModelInCdimage(vehicleHash) == 1 and IsModelAVehicle(vehicleHash) == 1 then
         RequestModel(vehicleHash)
@@ -1768,10 +1651,6 @@ function SetJoinMessage(message)
 end
 
 --#region NUI callbacks
-
-RegisterNUICallback("request", function(data)
-    request(data.role)
-end)
 
 RegisterNUICallback("edit", function()
     edit()
@@ -2057,7 +1936,6 @@ RegisterCommand("races", function(_, args)
         local msg = "Commands:\n"
         msg = msg .. "Required arguments are in square brackets.  Optional arguments are in parentheses.\n"
         msg = msg .. "/races - display list of available /races commands\n"
-        msg = msg .. "/races request [role] - request permission to have [role] = {edit, register, spawn} role\n"
         msg = msg .. "/races edit - toggle editing track waypoints\n"
         msg = msg .. "/races clear - clear track waypoints\n"
         msg = msg .. "/races reverse - reverse order of track waypoints\n"
@@ -2114,8 +1992,6 @@ RegisterCommand("races", function(_, args)
         msg = msg ..
         "/races panel (panel) - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified\n"
         notifyPlayer(msg)
-    elseif "request" == args[1] then
-        request(args[2])
     elseif "edit" == args[1] then
         edit()
     elseif "clear" == args[1] then
@@ -2247,15 +2123,6 @@ RegisterCommand("races", function(_, args)
     else
         notifyPlayer("Unknown command.\n")
     end
-end)
-
-RegisterNetEvent("races:roles")
-AddEventHandler("races:roles", function(roles)
-    if 0 == roles & ROLE_EDIT and racingStates.Editing == raceState then
-        roleBits = roleBits | ROLE_EDIT
-        edit()
-    end
-    roleBits = roles
 end)
 
 RegisterNetEvent("races:message")

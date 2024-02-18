@@ -1,26 +1,11 @@
-local ROLE_EDIT <const> = 1         -- edit tracks role
-local ROLE_REGISTER <const> = 2     -- register races role
-local ROLE_SPAWN <const> = 4        -- spawn vehicles role
-
 local gridLineup = {}
 UseRaceResults = false
 
 local defaultDelay <const> = 5
 
-local requirePermissionToEdit <const> = false     -- flag indicating if permission is required to edit tracks
-local requirePermissionToRegister <const> = false -- flag indicating if permission is required to register races
-local requirePermissionToSpawn <const> = false    -- flag indicating if permission is required to spawn vehicles
-
-local requirePermissionBits <const> =             -- bit flag indicating if permission is required to edit tracks, register races or spawn vehicles
-    (true == requirePermissionToEdit and ROLE_EDIT or 0) |
-    (true == requirePermissionToRegister and ROLE_REGISTER or 0) |
-    (true == requirePermissionToSpawn and ROLE_SPAWN or 0)
-
 local allVehicleFileName <const> = "vehicles.txt" -- list of all vehicles filename
 
 local defaultRadius <const> = 5.0                 -- default waypoint radius
-
-local requests = {}                               -- requests[playerID] = {name, roleBit} - list of requests to edit tracks, register races and/or spawn vehicles
 
 local READY_RACERS_COUNTDOWN = 5000
 local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
@@ -85,7 +70,6 @@ local function loadConfig()
 end
 
 createFileIfEmpty('raceData.json')
-createFileIfEmpty('rolesData.json')
 createFileIfEmpty('vehicleListData.json')
 
 local function map(tbl, f)
@@ -217,206 +201,6 @@ local function import(trackName, withBLT)
         end
     else
         print("import: Name required.")
-    end
-end
-
-local function listReqs()
-    --requests[playerID] = {name, roleBit}
-    for playerID, request in pairs(requests) do
-        local role = "INVALID ROLE"
-        if ROLE_EDIT == request.roleBit then
-            role = "EDIT"
-        elseif ROLE_REGISTER == request.roleBit then
-            role = "REGISTER"
-        elseif ROLE_SPAWN == request.roleBit then
-            role = "SPAWN"
-        end
-        print(playerID .. " : " .. request.name .. " : " .. role)
-    end
-end
-
-local function approve(playerID)
-    if playerID ~= nil then
-        local name = GetPlayerName(playerID)
-        if name ~= nil then
-            playerID = tonumber(playerID)
-            if requests[playerID] ~= nil then
-                local license = GetPlayerIdentifier(playerID, 0)
-                if license ~= nil then
-                    local rolesData = LoadRacesFileJson('rolesData.json')
-                    if rolesData ~= nil then
-                        license = string.sub(license, 9)
-                        --requests[playerID] = {name, roleBit}
-                        if rolesData[license] ~= nil then
-                            rolesData[license].roleBits = rolesData[license].roleBits | requests[playerID].roleBit
-                        else
-                            rolesData[license] = { name = name, roleBits = requests[playerID].roleBit }
-                        end
-                        if true == SaveRacesFileJson('rolesData.json', rolesData) then
-                            local roleType = "SPAWN"
-                            if ROLE_EDIT == requests[playerID].roleBit then
-                                roleType = "EDIT"
-                            elseif ROLE_REGISTER == requests[playerID].roleBit then
-                                roleType = "REGISTER"
-                            end
-                            local msg = "approve: Request by '" .. name .. "' for " .. roleType .. " role approved."
-                            print(msg)
-
-                            TriggerClientEvent("races:roles", playerID, rolesData[license].roleBits)
-                            notifyPlayer(playerID, "Request for " .. roleType .. " role approved.\n")
-                            requests[playerID] = nil
-                        else
-                            print("approve: Could not approve role.")
-                        end
-                    else
-                        print("approve: Could not load race data.")
-                    end
-                else
-                    print("approve: Could not get license for player source ID: " .. playerID)
-                end
-            else
-                print("approve: Player did not request approval.")
-            end
-        else
-            print("approve: Invalid player ID.")
-        end
-    else
-        print("approve: Player ID required.")
-    end
-end
-
-local function deny(playerID)
-    if playerID ~= nil then
-        local name = GetPlayerName(playerID)
-        if name ~= nil then
-            playerID = tonumber(playerID)
-            if requests[playerID] ~= nil then
-                local roleType = "SPAWN"
-                if ROLE_EDIT == requests[playerID].roleBit then
-                    roleType = "EDIT"
-                elseif ROLE_REGISTER == requests[playerID].roleBit then
-                    roleType = "REGISTER"
-                end
-                local msg = "deny: Request by '" .. name .. "' for " .. roleType .. " role denied."
-                print(msg)
-
-                notifyPlayer(playerID, "Request for " .. roleType .. " role denied.\n")
-                requests[playerID] = nil
-            else
-                print("deny: Player did not request approval.")
-            end
-        else
-            print("deny: Invalid player ID.")
-        end
-    else
-        print("deny: Player ID required.")
-    end
-end
-
-local function listRoles()
-    print("Permission to edit tracks: " .. (true == requirePermissionToEdit and "required" or "NOT required"))
-    print("Permission to register races: " .. (true == requirePermissionToRegister and "required" or "NOT required"))
-    print("Permission to spawn vehicles: " .. (true == requirePermissionToSpawn and "required" or "NOT required"))
-    -- rolesData[license] = {name, roleBits}
-    local rolesData = LoadRacesFileJson('rolesData.json')
-    if rolesData ~= nil then
-        local rolesFound = false
-        for _, role in pairs(rolesData) do
-            rolesFound = true
-            local roleNames = ""
-            if 0 == role.roleBits & ~(ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) then
-                if role.roleBits & ROLE_EDIT ~= 0 then
-                    roleNames = " EDIT"
-                end
-                if role.roleBits & ROLE_REGISTER ~= 0 then
-                    roleNames = roleNames .. " REGISTER"
-                end
-                if role.roleBits & ROLE_SPAWN ~= 0 then
-                    roleNames = roleNames .. " SPAWN"
-                end
-            else
-                roleNames = "INVALID ROLE"
-            end
-            print(role.name .. " :" .. roleNames)
-        end
-        if false == rolesFound then
-            print("listRoles: No roles found.")
-        end
-    else
-        print("listRoles: Could not load roles data.")
-    end
-end
-
-local function removeRole(playerName, roleName)
-    if playerName ~= nil then
-        local rolesData = LoadRacesFileJson('rolesData.json')
-        if rolesData ~= nil then
-            local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN)
-            local roleType = ""
-            if "edit" == roleName then
-                roleBits = ROLE_EDIT
-                roleType = "EDIT"
-            elseif "register" == roleName then
-                roleBits = ROLE_REGISTER
-                roleType = "REGISTER"
-            elseif "spawn" == roleName then
-                roleBits = ROLE_SPAWN
-                roleType = "SPAWN"
-            elseif roleName ~= nil then
-                print("removeRole: Invalid role.")
-                return
-            end
-            local lic = nil
-            for license, role in pairs(rolesData) do
-                if role.name == playerName then
-                    lic = license
-                    if 0 == role.roleBits & roleBits then
-                        print("removeRole: Role was not assigned.")
-                        return
-                    end
-                    rolesData[lic].roleBits = rolesData[lic].roleBits & ~roleBits
-                    break
-                end
-            end
-            if lic ~= nil then
-                if roleBits & ROLE_REGISTER ~= 0 then
-                    for _, rIndex in pairs(GetPlayers()) do
-                        local license = GetPlayerIdentifier(rIndex, 0)
-                        if license ~= nil then
-                            if string.sub(license, 9) == lic then
-                                rIndex = tonumber(rIndex)
-                                if races[rIndex] ~= nil and racingStates.Registering == races[rIndex].state then
-                                    races[rIndex] = nil
-                                    TriggerClientEvent("races:unregister", -1, rIndex)
-                                end
-                                TriggerClientEvent("races:roles", rIndex, rolesData[lic].roleBits)
-                                break
-                            end
-                        else
-                            print("removeRole: Could not get license for player source ID: " .. rIndex)
-                        end
-                    end
-                end
-                local msg = ""
-                if 0 == rolesData[lic].roleBits then
-                    rolesData[lic] = nil
-                    msg = "removeRole: All '" .. playerName .. "' roles removed."
-                else
-                    msg = "removeRole: '" .. playerName .. "' role " .. roleType .. " removed."
-                end
-                if true == SaveRacesFileJson('rolesData.json', rolesData) then
-                    print(msg)
-                else
-                    print("removeRole: Could not remove role.")
-                end
-            else
-                print("removeRole: '" .. playerName .. "' not found.")
-            end
-        else
-            print("removeRole: Could not load roles data.")
-        end
-    else
-        print("removeRole: Name required.")
     end
 end
 
@@ -811,25 +595,6 @@ local function SetNextGridLineup(results)
     -- print(#gridLineup)
 end
 
-local function getRoleBits(source)
-    local roleBits = (ROLE_EDIT | ROLE_REGISTER | ROLE_SPAWN) & ~requirePermissionBits
-    local rolesData = LoadRacesFileJson('rolesData.json')
-    if rolesData ~= nil then
-        local license = GetPlayerIdentifier(source, 0)
-        if license ~= nil then
-            license = string.sub(license, 9)
-            if rolesData[license] ~= nil then
-                return rolesData[license].roleBits | roleBits
-            end
-        else
-            print("getRoleBits: Could not get license for player source ID: " .. source)
-        end
-    else
-        print("getRoleBits: Could not load roles data.")
-    end
-    return roleBits
-end
-
 local gridSeparation <const> = 5
 
 local function GenerateStartingGrid(startWaypoint, racers, numRacers)
@@ -1040,14 +805,6 @@ RegisterCommand("races", function(_, args)
             "races exportwblt [name] - export public track saved as [name] with best lap times to file named '[name].json'\n"
         msg = msg ..
             "races importwblt [name] - import track file named '[name].json' into public tracks with best lap times\n"
-        msg = msg .. "races listReqs - list requests to edit tracks, register races and spawn vehicles\n"
-        msg = msg ..
-            "races approve [playerID] - approve request of [playerID] to edit tracks, register races or spawn vehicles\n"
-        msg = msg ..
-            "races deny [playerID] - deny request of [playerID] to edit tracks, register races or spawn vehicles\n"
-        msg = msg .. "races listRoles - list approved players' roles\n"
-        msg = msg ..
-            "races removeRole [name] (role) - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified\n"
         msg = msg .. "races updateRaceData - update 'raceData.json' to new format\n"
         msg = msg .. "races updateTrack [name] - update exported track '[name].json' to new format\n"
         print(msg)
@@ -1059,16 +816,6 @@ RegisterCommand("races", function(_, args)
         export(args[2], true)
     elseif "importwblt" == args[1] then
         import(args[2], true)
-    elseif "listReqs" == args[1] then
-        listReqs()
-    elseif "approve" == args[1] then
-        approve(args[2])
-    elseif "deny" == args[1] then
-        deny(args[2])
-    elseif "listRoles" == args[1] then
-        listRoles()
-    elseif "removeRole" == args[1] then
-        removeRole(args[2], args[3])
     elseif "updateRaceData" == args[1] then
         updateRaceData()
     elseif "updateTrack" == args[1] then
@@ -1163,8 +910,6 @@ RegisterNetEvent("races:init")
 AddEventHandler("races:init", function()
     local source = source
 
-    TriggerClientEvent("races:roles", source, getRoleBits(source))
-
     ProcessPlayers(source)
 
     -- register any races created before player joined
@@ -1202,55 +947,6 @@ AddEventHandler("races:init", function()
     TriggerClientEvent("races:config", source, configData)
 end)
 
-RegisterNetEvent("races:request")
-AddEventHandler("races:request", function(roleBit)
-    local source = source
-    if roleBit ~= nil then
-        if ROLE_EDIT == roleBit or ROLE_REGISTER == roleBit or ROLE_SPAWN == roleBit then
-            if nil == requests[source] then
-                if roleBit & requirePermissionBits ~= 0 then
-                    local license = GetPlayerIdentifier(source, 0)
-                    if license ~= nil then
-                        local rolesData = LoadRacesFileJson('rolesData.json')
-                        if rolesData ~= nil then
-                            local roleType = "SPAWN"
-                            if ROLE_EDIT == roleBit then
-                                roleType = "EDIT"
-                            elseif ROLE_REGISTER == roleBit then
-                                roleType = "REGISTER"
-                            end
-                            license = string.sub(license, 9)
-                            if nil == rolesData[license] then
-                                requests[source] = { name = GetPlayerName(source), roleBit = roleBit }
-                                sendMessage(source, "Request for " .. roleType .. " role submitted.")
-                            else
-                                if 0 == rolesData[license].roleBits & roleBit then
-                                    requests[source] = { name = GetPlayerName(source), roleBit = roleBit }
-                                    sendMessage(source, "Request for " .. roleType .. " role submitted.")
-                                else
-                                    sendMessage(source, "Request for " .. roleType .. " role already approved.\n")
-                                end
-                            end
-                        else
-                            sendMessage("Could not load roles data.")
-                        end
-                    else
-                        sendMessage(source, "Could not get license for player source ID: " .. source .. "\n")
-                    end
-                else
-                    sendMessage(source, "Permission not required.\n")
-                end
-            else
-                sendMessage(source, "Previous request is pending approval.")
-            end
-        else
-            sendMessage(source, "Invalid role.\n")
-        end
-    else
-        sendMessage(source, "Ignoring request event.  Invalid parameters.\n")
-    end
-end)
-
 RegisterNetEvent("races:load")
 AddEventHandler("races:load", function(isPublic, trackName)
     local source = source
@@ -1271,10 +967,6 @@ end)
 RegisterNetEvent("races:save")
 AddEventHandler("races:save", function(isPublic, trackName, waypointCoords, map)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_EDIT then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if nil == track then
@@ -1302,10 +994,6 @@ AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords,
     print(("Recieved Overwrite with map %s"):format(map))
 
     local source = source
-    if 0 == getRoleBits(source) & ROLE_EDIT then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
@@ -1330,10 +1018,6 @@ end)
 RegisterNetEvent("races:delete")
 AddEventHandler("races:delete", function(isPublic, trackName)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_EDIT then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and trackName ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
@@ -1417,10 +1101,6 @@ end)
 RegisterNetEvent("races:register")
 AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, tier, laps, timeout, rdata)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if waypointCoords ~= nil and isPublic ~= nil and tier ~= nil and laps ~= nil and timeout ~= nil and rdata ~= nil then
         if laps > 0 then
             if timeout >= 0 then
@@ -1514,10 +1194,6 @@ end)
 RegisterNetEvent("races:unregister")
 AddEventHandler("races:unregister", function()
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if races[source] ~= nil then
         races[source] = nil
         TriggerClientEvent("races:unregister", -1, source)
@@ -1543,10 +1219,6 @@ AddEventHandler("races:grid", function()
     local source = source
 
     --#region Validation
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
 
     if races[source] == nil then
         sendMessage(source, "Cannot setup grid. Race does not exist.\n")
@@ -1569,11 +1241,6 @@ AddEventHandler("races:autojoin", function()
     local source = source
 
     --#region Validation
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
-
     if races[source] == nil then
         sendMessage(source, "Cannot setup grid. Race does not exist.\n")
     end
@@ -1637,10 +1304,6 @@ end
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay, override)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
 
     local race = races[source]
 
@@ -1684,10 +1347,6 @@ end)
 RegisterNetEvent("races:loadLst")
 AddEventHandler("races:loadLst", function(isPublic, name)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and name ~= nil then
         local list = loadVehicleList(isPublic, source, name)
         if list ~= nil then
@@ -1705,10 +1364,6 @@ end)
 RegisterNetEvent("races:saveLst")
 AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and name ~= nil and vehicleList ~= nil then
         if loadVehicleList(isPublic, source, name) == nil then
             if true == saveVehicleList(isPublic, source, name, vehicleList) then
@@ -1733,10 +1388,6 @@ end)
 RegisterNetEvent("races:overwriteLst")
 AddEventHandler("races:overwriteLst", function(isPublic, name, vehicleList)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_EDIT then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and name ~= nil and vehicleList ~= nil then
         local list = loadVehicleList(isPublic, source, name)
         if list ~= nil then
@@ -1762,10 +1413,6 @@ end)
 RegisterNetEvent("races:deleteLst")
 AddEventHandler("races:deleteLst", function(isPublic, name)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil and name ~= nil then
         local list = loadVehicleList(isPublic, source, name)
         if list ~= nil then
@@ -1791,10 +1438,6 @@ end)
 RegisterNetEvent("races:listLsts")
 AddEventHandler("races:listLsts", function(isPublic)
     local source = source
-    if 0 == getRoleBits(source) & ROLE_REGISTER then
-        sendMessage(source, "Permission required.\n")
-        return
-    end
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then

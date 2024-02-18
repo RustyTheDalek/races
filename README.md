@@ -7,7 +7,6 @@ CLIENT COMMANDS
 ---------------
 Required arguments are in square brackets.  Optional arguments are in parentheses.\
 **`/races`** - display list of available **`/races`** commands\
-**`/races request [role]`** - request permission to have [role] = {edit, register, spawn} role\
 **`/races edit`** - toggle editing track waypoints\
 **`/races clear`** - clear track waypoints\
 **`/races reverse`** - reverse order of track waypoints
@@ -64,30 +63,6 @@ Required arguments are in square brackets.  Optional arguments are in parenthese
 **`races exportwblt [name]`** - export public track saved as [name] with best lap times to file named **`[name].json`**\
 **`races importwblt [name]`** - import track file named **`[name].json`** into public tracks with best lap times
 
-**IF YOU WISH TO LIMIT WHO CAN EDIT TRACKS, YOU WILL NEED TO CHANGE THE LINE**\
-**`local requirePermissionToEdit <const> = false`**\
-**TO**\
-**`local requirePermissionToEdit <const> = true`**\
-**IN `races_server.lua`.**
-
-**IF YOU WISH TO LIMIT WHO CAN REGISTER RACES, YOU WILL NEED TO CHANGE THE LINE**\
-**`local requirePermissionToRegister <const> = false`**\
-**TO**\
-**`local requirePermissionToRegister <const> = true`**\
-**IN `races_server.lua`.**
-
-**IF YOU WISH TO LIMIT WHO CAN SPAWN VEHICLES, YOU WILL NEED TO CHANGE THE LINE**\
-**`local requirePermissionToSpawn <const> = false`**\
-**TO**\
-**`local requirePermissionToSpawn <const> = true`**\
-**IN `races_server.lua`.**
-
-**`races listReqs`** - list requests to edit tracks, register races and spawn vehicles\
-**`races approve [playerID]`** - approve request of [playerID] to edit tracks, register races or spawn vehicles\
-**`races deny [playerID]`** - deny request of [playerID] to edit tracks, register races or spawn vehicles\
-**`races listRoles`** - list approved players' roles\
-**`races removeRole [name] (role)`** - remove player [name]'s (role) = {edit, register, spawn} role; otherwise remove all roles if (role) is not specified
-
 **IF YOU WANT TO PRESERVE TRACKS FROM A PREVIOUS VERSION OF THESE SCRIPTS, YOU SHOULD UPDATE `raceData.json` AND ANY EXPORTED TRACKS BY EXECUTING THE FOLLOWING COMMANDS BEFORE CLIENTS CONNECT TO THE SERVER TO USE THE NEW TRACK DATA FORMAT WHICH INCLUDES WAYPOINT RADIUS SIZES.**
 
 **`races updateRaceData`** - update **`raceData.json`** to new format\
@@ -95,13 +70,13 @@ Required arguments are in square brackets.  Optional arguments are in parenthese
 
 SAMPLE TRACKS
 -------------
-If permission to edit tracks and register races is given or is not required, the sample tracks will be available for you to load.  There are six sample tracks:  '00', '01', '02', '03', '04' and '05' saved in the public tracks list.  You can load sample track '00' by typing **`/races load pub 00`**.  To use the loaded track in a race, you need to register the race by typing **`/races register`**.  Go to the registration waypoint of the race indicated by a purple circled star blip on the waypoint map and a purple cylinder checkpoint in the world.  When prompted to join, type 'E' or press right DPAD to join.  Wait for other people to join if you want, then type **`/races start`**.
+There are six sample tracks:  '00', '01', '02', '03', '04' and '05' saved in the public tracks list.  You can load sample track '00' by typing **`/races load pub 00`**.  To use the loaded track in a race, you need to register the race by typing **`/races register`**.  Go to the registration waypoint of the race indicated by a purple circled star blip on the waypoint map and a purple cylinder checkpoint in the world.  When prompted to join, type 'E' or press right DPAD to join.  Wait for other people to join if you want, then type **`/races start`**.
 
 There are backups of the sample tracks in the **`sampletracks/`** folder with the extension '.json'.  Track '00' is backed up as **`sampletracks/00.json`**.  If any of the sample tracks were deleted from the public list of tracks, you can restore them.  Copy the deleted track from the **`sampletracks/`** folder to the **`resources/races/`** folder.  In the server console, type **`races import 00`** to import track '00' back into the public tracks list.
 
 QUICK GUIDE FOR RACE CREATORS
 -----------------------------
-If permission to edit tracks and register races is given or is not required, all the following **`/races`** commands are permitted.  Type **`/races edit`** until you see the message **`Editing started`**.  Add at least 2 waypoints on the waypoint map or in the world by pressing 'Enter' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller.  Type **`/races edit`** again until you see the message **`Editing stopped`**.  Save the track if you want by typing **`/races save pvt mytrack`**.  Register your race by typing **`/races register`**.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This is the registration waypoint which all players will see.  Players who want to join, maybe including yourself, need to move towards the registration waypoint until prompted to join.  Once prompted to join, type 'E' or press right DPAD to join.  Once other people have joined, you can start the race by typing **`/races start`**.
+Type **`/races edit`** until you see the message **`Editing started`**.  Add at least 2 waypoints on the waypoint map or in the world by pressing 'Enter' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller.  Type **`/races edit`** again until you see the message **`Editing stopped`**.  Save the track if you want by typing **`/races save pvt mytrack`**.  Register your race by typing **`/races register`**.  At the starting waypoint of the track, a purple circled star blip will appear on the waypoint map and a purple cylinder checkpoint will appear in the world.  This is the registration waypoint which all players will see.  Players who want to join, maybe including yourself, need to move towards the registration waypoint until prompted to join.  Once prompted to join, type 'E' or press right DPAD to join.  Once other people have joined, you can start the race by typing **`/races start`**.
 
 QUICK GUIDE FOR RACING
 ----------------------
@@ -123,17 +98,11 @@ CLIENT COMMAND DETAILS
 ----------------------
 Type **`/races`** to see the list of available **`/races`** commands.  If you cannot see all the commands, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
 
-By default, permission is not required to use any of the commands.  If permission is required, there are 3 types of permissions that can be given: edit tracks, register races and spawn vehicles.
-
-If permission is required to edit tracks, the following commands will be restricted to players who have permission:
-
 **`/races edit`**\
 **`/races reverse`**\
 **`/races save [access] [name]`**\
 **`/races overwrite [access] [name]`**\
 **`/races delete [access] [name]`**
-
-If permission is required to register races, the following commands will be restricted to players who have permission:
 
 **`/races register (tier) (specialClass) (laps) (DNF timeout) `**\
 **`/races register (tier) (specialClass) (laps) (DNF timeout) rest [vehicle]`**\
@@ -154,11 +123,7 @@ If permission is required to register races, the following commands will be rest
 **`/races vl deleteLst [access] [name]`**\
 **`/races vl listLsts [access]`**
 
-If permission is required to spawn vehicles, the following command will be restricted to players who have permission:
-
 **`/races spawn (vehicle)`**
-
-If permission is required to edit tracks, register races and spawn vehicles, players who wish to do these tasks will need to request permission.  Type **`/races request edit`** to request permission to edit tracks.  Type **`/races request register`** to request permission to register races.  Type **`/races request spawn`** to request permission to spawn vehicles.  The server administrator will then approve or deny the request and the player will be notified.
 
 Type **`/races edit`** until you see the message **`Editing started`** to start editing waypoints.  Once you are finished, type **`/races edit`** until you see the message **`Editing stopped`** to stop editing.  You cannot edit waypoints if you are joined to a race.  Leave the race or finish it first.
 
@@ -340,20 +305,6 @@ Type **`races exportwblt publictrack`** to export the public track saved as **`p
 
 Type **`races importwblt mytrack`** to import the track file named **`resources/races/mytrack.json`** into the public tracks list with best lap times.  You cannot import **`mytrack`** if it already exists in the public tracks list.  You will need to rename the file and then import with the new name.
 
-**If permission is required to edit tracks, register races and spawn vehicles, the following commands administer these permissions:**
-
-Type **`races listReqs`** to list requests by players to edit tracks, register races and spawn vehicles.  The format of each element of the list is **`[playerID]:[name]:[role]`** where [playerID] is the player ID who requested permission, [name] is the player's name and [role] is either **`EDIT`**, **`REGISTER`** or **`SPAWN`**.
-
-Type **`races approve [playerID]`** to approve the request of the player with [playerID].
-
-Type **`races deny [playerID]`** to deny the request of the player with [playerID].
-
-Type **`races listRoles`** to list if permission is required to edit tracks, register races and spawn vehicles and list the players who have had their roles approved.  The format of each element of the list is **`[name]:[roles]`** where [name] is the name of the player and [roles] is a list of roles the player has which can be any combination of **`EDIT`**, **`REGISTER`** and **`SPAWN`**.
-
-Type **`races removeRole [name] (role)`** to remove player [name]'s (role) which can be **`edit`**, **`register`** or **`spawn`**.  If (role) is not specified, remove all roles.
-
-Roles are saved in the file **`resources/races/rolesData.json`**.
-
 **IF YOU WANT TO PRESERVE TRACKS FROM A PREVIOUS VERSION OF THESE SCRIPTS, YOU SHOULD UPDATE `raceData.json` AND ANY EXPORTED TRACKS BY EXECUTING THE FOLLOWING COMMANDS BEFORE CLIENTS CONNECT TO THE SERVER TO USE THE NEW TRACK DATA FORMAT WHICH INCLUDES WAYPOINT RADIUS SIZES.**
 
 Type **`races updateRaceData`** to update **`resources/races/raceData.json`** to the new file **`resources/races/raceData_updated.json`**.  You will need to remove the old **`raceData.json`** file and then rename **`raceData_updated.json`** to **`raceData.json`** to use the new race data format.
@@ -370,17 +321,14 @@ in **`races_server.lua`**.  The following events will be saved to **`resources/r
 
 1. Exporting a track
 2. Importing a track
-3. Approving a request for a role
-4. Denying a request for a role
-5. Removing one or all roles of a player
-6. Updating raceData.json from an old format to the current format
-7. Updating a track from an old format to the current format
-8. Saving a track
-9. Overwriting a track
-10. Deleting a track
-11. Saving a vehicle list
-12. Overwriting a vehicle list
-13. Deleting a vehicle list
+3. Updating raceData.json from an old format to the current format
+4. Updating a track from an old format to the current format
+5. Saving a track
+6. Overwriting a track
+7. Deleting a track
+8. Saving a vehicle list
+9. Overwriting a vehicle list
+10. Deleting a vehicle list
 
 SCREENSHOTS
 -----------
