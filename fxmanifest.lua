@@ -10,7 +10,7 @@ loadscreen_manual_shutdown 'yes'
 resource_type 'gametype' { name = 'Race' }
 
 shared_scripts {
-    "shared/*.lua"
+    "shared/**/*.lua"
 }
 
 client_scripts {

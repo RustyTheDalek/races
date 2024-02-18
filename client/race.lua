@@ -5,13 +5,6 @@ local raceState = racingStates.Idle
 local gridRadius <const> = 5.0
 local gridCheckpoint
 
-local white <const> = { r = 255, g = 255, b = 255 }
-local red <const> = { r = 255, g = 0, b = 0 }
-local green <const> = { r = 0, g = 255, b = 0 }
-local blue <const> = { r = 0, g = 0, b = 255 }
-local yellow <const> = { r = 255, g = 255, b = 0 }
-local purple <const> = { r = 255, g = 0, b = 255 }
-
 local startFinishBlipColor <const> = 5    -- yellow
 local startBlipColor <const> = 2          -- green
 local finishBlipColor <const> = 0         -- white
@@ -279,24 +272,6 @@ local function TeleportPlayer(position, heading)
 
     SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
     SetEntityHeading(entityToMove, heading)
-end
-
-local function getCheckpointColor(blipColor)
-    if 0 == blipColor then
-        return white
-    elseif 1 == blipColor then
-        return red
-    elseif 2 == blipColor then
-        return green
-    elseif 38 == blipColor then
-        return blue
-    elseif 5 == blipColor then
-        return yellow
-    elseif 83 == blipColor then
-        return purple
-    else
-        return yellow
-    end
 end
 
 local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, num)
@@ -2251,7 +2226,7 @@ function(rIndex, coord, isPublic, trackName, owner, tier, laps, timeout, rdata)
         EndTextCommandSetBlipName(blip)
 
         coord.r = defaultRadius
-        local checkpoint = makeCheckpoint(plainCheckpoint, coord, coord, purple, 127, 0) -- registration checkpoint
+        local checkpoint = makeCheckpoint(plainCheckpoint, coord, coord, colour.purple, 127, 0) -- registration checkpoint
 
         starts[rIndex] = {
             isPublic = isPublic,
@@ -2365,7 +2340,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     currentWaypoint = true == startIsFinish and 0 or 1
 
                     waypointCoord = waypoints[1].coord
-                    raceCheckpoint = makeCheckpoint(arrow3Checkpoint, waypointCoord, waypoints[2].coord, yellow, 127, 0)
+                    raceCheckpoint = makeCheckpoint(arrow3Checkpoint, waypointCoord, waypoints[2].coord, colour.yellow, 127, 0)
 
                     SetBlipRoute(waypointCoord, true)
                     SetBlipRouteColour(waypointCoord, blipRouteColor)
@@ -2476,7 +2451,7 @@ end)
 function UpdateRegistrationCheckpoint(raceIndex, coords, numRacing)
     DeleteCheckpoint(starts[raceIndex].checkpoint);
     coords.r = defaultRadius
-    local checkpoint = makeCheckpoint(plainCheckpoint, coords, coords, purple, 127, numRacing)
+    local checkpoint = makeCheckpoint(plainCheckpoint, coords, coords, colour.purple, 127, numRacing)
     starts[raceIndex].checkpoint = checkpoint
 end
 
@@ -3294,7 +3269,7 @@ function OnHitCheckpoint(player)
     if arrow3Checkpoint == checkpointType then
         nextCoord = curr < #waypoints and waypoints[curr + 1].coord or waypoints[1].coord
     end
-    raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, yellow, 127, 0)
+    raceCheckpoint = makeCheckpoint(checkpointType, waypointCoord, nextCoord, colour.yellow, 127, 0)
 end
 
 function RaceUpdate(player, playerCoord, currentTime)
