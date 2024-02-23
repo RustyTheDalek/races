@@ -2608,8 +2608,6 @@ AddEventHandler("races:onendrace", function(rIndex, raceResults)
 
     ClearLeaderboard()
 
-    TeleportPlayer(lobbySpawn)
-
     if rIndex ~= nil and raceResults ~= nil then
         if rIndex == raceIndex then
             results = raceResults
@@ -2618,6 +2616,10 @@ AddEventHandler("races:onendrace", function(rIndex, raceResults)
     else
         notifyPlayer("Ignoring results event.  Invalid parameters.\n")
     end
+
+    Citizen.Wait(5000)
+    TeleportPlayer(lobbySpawn)
+
 end)
 
 -- SCENARIO:
