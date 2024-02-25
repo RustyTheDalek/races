@@ -120,8 +120,14 @@ local boost_active = false
 
 local lobbySpawn = { x = -1413, y = -3007, z = 13.95}
 
-AddEventHandler('onClientGameTypeStart', function()
+function SetSpawning()
 
+    while(exports == nil) do
+        print("Exports nil. waiting")
+        Citizen.wait(1)
+    end
+
+    print("Setting autospawn")
     exports.spawnmanager:setAutoSpawnCallback(function()
 
         print("Overriding auto spawn")
@@ -152,7 +158,7 @@ AddEventHandler('onClientGameTypeStart', function()
 
     exports.spawnmanager:setAutoSpawn(true)
     exports.spawnmanager:forceRespawn()
-end)
+end
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -2958,10 +2964,7 @@ AddEventHandler("races:config", function(_configData)
 
     lobbySpawn = _configData['spawnLocation']
 
-    print(dump(exports))
-    print(dump(exports.spawnmanager))
-    print(dump(exports.spawnmanager:setAutoSpawnCallback()))
-
+    SetSpawning()
 
 end)
 
