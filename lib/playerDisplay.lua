@@ -113,6 +113,11 @@ function PlayerDisplay:ResetRaceBlips()
 end
 
 function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
+
+    if(self.players[source] == nil or self.players[source].blip == nil ) then
+        return
+    end
+
     local blip = self.players[source].blip
     SetBlipSprite(blip, racerSprite)
     local blipColour = defaultRacerBlipColor
