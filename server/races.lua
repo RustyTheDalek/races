@@ -1871,7 +1871,8 @@ function RaceServerUpdate()
                         sortedPlayers[#sortedPlayers + 1] = {
                             source = player.source,
                             numWaypointsPassed = player.numWaypointsPassed,
-                            data = player.data
+                            data = player.data,
+                            playerName = GetPlayerName(player.source)
                         }
                     end
                 end
@@ -1882,7 +1883,13 @@ function RaceServerUpdate()
                             (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
                     end)
 
-                    local racePositions = map(sortedPlayers, function(item) return item.source end)
+                    local racePositions = map(sortedPlayers,
+                        function(item)
+                            return {
+                                source = item.source ,
+                                playerName = item.playerName
+                            }
+                        end)
 
                     TriggerEventForRacers(rIndex, "races:racerPositions", racePositions)
 

@@ -317,8 +317,8 @@ function ClearLeaderboard() {
 }
 
 function UpdatePositions(racePositions) {
-  racePositions.forEach((id, position) => {
-    $(`#${id}`).val(position + 1);
+  racePositions.forEach((data, position) => {
+    $(`#${data.source}`).val(position + 1);
   });
 
   SortLeaderboard();

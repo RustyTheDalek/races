@@ -77,11 +77,11 @@ function PlayerDisplay:GetPedFromPlayer(source)
 end
 
 function PlayerDisplay:UpdateRacerDisplay(racePositions, position)
-    for racerPosition, source in ipairs(racePositions) do
-        if source == GetPlayerServerId(PlayerId()) then
+    for racerPosition, racerData in ipairs(racePositions) do
+        if racerData.source == GetPlayerServerId(PlayerId()) then
             PlayerDisplay:SetOwnRacerBlip(position)
         else
-            PlayerDisplay:SetOtherRacerBlip(racerPosition, source, position)
+            PlayerDisplay:SetOtherRacerBlip(racerPosition, racerData.source, position, racerData.playerName)
         end
     end
 end
@@ -112,7 +112,7 @@ function PlayerDisplay:ResetRaceBlips()
     end
 end
 
-function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
+function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition, racerName)
 
     if(self.players[source] == nil or self.players[source].blip == nil ) then
         return
@@ -128,6 +128,10 @@ function PlayerDisplay:SetOtherRacerBlip(racerPosition, source, racePosition)
         else
             blipColour = racerBehindBlipColor
         end
+    end
+
+    if(racerName ~= nil) then
+        self.players[source].playerName = racerName
     end
 
     SetMpGamerTagName(self.players[source].nameTag, ("%i".. gamerTagInfix .. "%s"):format(racerPosition, self.players[source].playerName))
