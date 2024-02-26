@@ -597,7 +597,7 @@ end
 
 local gridSeparation <const> = 5
 
-local function GenerateStartingGrid(startWaypoint, racers, numRacers)
+local function GenerateStartingGrid(startWaypoint, numRacers)
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
     --Calculate the forwardVector of the starting Waypoint
@@ -626,10 +626,6 @@ local function GenerateStartingGrid(startWaypoint, racers, numRacers)
         end
 
         table.insert(gridPositions, gridPosition)
-    end
-
-    for source,_ in pairs(racers) do
-        TriggerClientEvent("races:spawncheckpoints", source, gridPositions)
     end
 
     return gridPositions
@@ -662,33 +658,30 @@ local function OnPlayerLeave(race, rIndex, source)
 
 end
 
-local function PlaceRacersOnGrid(gridPositions, players, totalPlayers, heading)
-    -- print("Spawning racers on grid")
-
-    -- print(gridLineup)
-    -- print(gridPositions)
-    -- print(players)
-    -- print(heading)
-    -- print(string.format("Total Players: %i", totalPlayers))
+local function PlaceRacersOnGrid(gridPositions, heading)
 
     local index = 1;
 
-    -- print(string.format("Grid positions length %i", #gridPositions))
     for _, player in pairs(gridLineup) do
-        --Get assigned Grid
-        -- print(string.format("Find position for Index %i", index))
-        local gridPosition = gridPositions[index]
 
-        -- print(gridPositions[index])
-        -- print(player)
-        -- print(player)
-        -- print(gridPosition)
+        local gridPosition = gridPositions[index]
 
         TriggerClientEvent("races:setupgrid", player, gridPosition, heading, index)
 
         index = index + 1
     end
     --print("finished placing playes")
+end
+
+local function setupGrid(raceIndex)
+    local gridPositions = GenerateStartingGrid(races[raceIndex].waypointCoords[1], races[raceIndex].numRacing)
+
+    if (gridPositions ~= nil) then
+
+        TriggerEventForRacers(raceIndex, "races:spawncheckpoints", gridPositions)
+
+        PlaceRacersOnGrid(gridPositions, races[raceIndex].waypointCoords[1].heading)
+    end
 end
 
 local function StartRaceCountdown(raceIndex)
@@ -1228,12 +1221,8 @@ AddEventHandler("races:grid", function()
         sendMessage(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    local gridPositions = GenerateStartingGrid(races[source].waypointCoords[1], races[source].players, races[source].numRacing) 
+    setupGrid(source)
 
-    if (gridPositions ~= nil) then
-        PlaceRacersOnGrid(gridPositions, races[source].players, #races[source].players,
-            races[source].waypointCoords[1].heading)
-    end
 end)
 
 RegisterNetEvent("races:autojoin")
@@ -1242,14 +1231,19 @@ AddEventHandler("races:autojoin", function()
 
     --#region Validation
     if races[source] == nil then
-        sendMessage(source, "Cannot setup grid. Race does not exist.\n")
+        sendMessage(source, "Cannot autojoin. Race does not exist.\n")
     end
 
     if racingStates.Registering ~= races[source].state then
-        sendMessage(source, "Cannot setup grid.  Race in progress.\n")
+        sendMessage(source, "Cannot autojoin.  Race in progress.\n")
     end
 
-    TriggerClientEvent("races:autojoin", -1, source)
+    for _, otherPlayerSource in pairs(GetPlayers()) do
+        JoinRacer(otherPlayerSource, source)
+    end
+
+    setupGrid(source)
+
 end)
 
 RegisterNetEvent("races:readyState")
@@ -1537,9 +1531,7 @@ AddEventHandler("races:rivals", function(rIndex)
     end
 end)
 
-RegisterNetEvent("races:join")
-AddEventHandler("races:join", function(rIndex)
-    local source = source
+function JoinRacer(source, rIndex)
     if rIndex ~= nil then
         if races[rIndex] ~= nil then
             if racingStates.Registering == races[rIndex].state then
@@ -1592,6 +1584,12 @@ AddEventHandler("races:join", function(rIndex)
     else
         notifyPlayer(source, "Ignoring join event.  Invalid parameters.\n")
     end
+end
+
+RegisterNetEvent("races:join")
+AddEventHandler("races:join", function(raceIndex)
+    local source = source
+    JoinRacer(source, raceIndex)
 end)
 
 RegisterNetEvent("races:finish")

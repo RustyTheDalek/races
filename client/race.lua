@@ -2786,24 +2786,6 @@ AddEventHandler("races:spawncheckpoints", function(gridPositions)
     end
 end)
 
-RegisterNetEvent("races:autojoin")
-AddEventHandler("races:autojoin", function(raceIndex)
-
-    if raceState ~= racingStates.Idle then
-        notifyPlayer("Cannnot join race. already joined.\n")
-        return
-    end
-
-    local player = PlayerPedId()
-
-    local registerPosition = starts[raceIndex].registerPosition
-
-    ghosting:StartGhosting(configData['ghostingTime'])
-    TeleportPlayer(registerPosition)
-
-    TriggerServerEvent("races:join", raceIndex)
-end)
-
 RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
 
