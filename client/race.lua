@@ -162,6 +162,8 @@ function SetSpawning()
             end
         elseif racingStates.Registering == raceState then
             spawnPosition = startCoord
+        elseif racingStates.Joining == raceState then
+            spawnPosition = starts[raceIndex].registerPosition
         elseif racingStates.Idle == raceState then
             spawnPosition = getOffsetSpawn(lobbySpawn)
         end
@@ -2806,7 +2808,7 @@ RegisterNetEvent("races:setupgrid")
 AddEventHandler("races:setupgrid", function(position, heading, gridNumber)
 
     print("Setup Grid called")
-    TeleportPlayer({x = position.x, y = position.y, z = position.z, heading = heading})
+    TeleportPlayer({x = position.x, y = position.y, z = position.z}, heading)
 
     -- sologridCheckpoint = CreateGridCheckpoint(position, gridNumber)
 end)
