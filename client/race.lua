@@ -119,6 +119,21 @@ local configData
 local boost_active = false
 
 local lobbySpawn = { x = -1413, y = -3007, z = 13.95}
+local spawnOffsetVector = { x = 1, y = 0, z = 0}
+
+local function getOffsetSpawn(startingSpawn)
+    local offsetSpawn = vector3(startingSpawn.x, startingSpawn.y, startingSpawn.z)
+    local offsetVector = vector3(spawnOffsetVector.x, spawnOffsetVector.y, spawnOffsetVector.z)
+
+    offsetSpawn = offsetSpawn + (offsetVector * (GetPlayerServerId(PlayerId()) - 1))
+
+    return {
+        x = offsetSpawn.x,
+        y = offsetSpawn.y,
+        z = offsetSpawn.z,
+        startingSpawn.heading
+    }
+end
 
 function SetSpawning()
 
@@ -132,26 +147,30 @@ function SetSpawning()
 
         print("Overriding auto spawn")
 
+        local spawnPosition = lobbySpawn
+
         if racingStates.Racing == raceState then
-            lobbySpawn = startCoord
+            spawnPosition = startCoord
             if true == startIsFinish then
                 if currentWaypoint > 0 then
-                    lobbySpawn = waypoints[currentWaypoint].coord
+                    spawnPosition = waypoints[currentWaypoint].coord
                 end
             else
                 if currentWaypoint > 1 then
-                    lobbySpawn = waypoints[currentWaypoint - 1].coord
+                    spawnPosition = waypoints[currentWaypoint - 1].coord
                 end
             end
         elseif racingStates.Registering == raceState then
-            lobbySpawn = startCoord
+            spawnPosition = startCoord
+        elseif racingStates.Idle == raceState then
+            spawnPosition = getOffsetSpawn(lobbySpawn)
         end
 
         exports.spawnmanager:spawnPlayer({
-            x = lobbySpawn.x,
-            y = lobbySpawn.y,
-            z = lobbySpawn.z,
-            heading = lobbySpawn.heading,
+            x = spawnPosition.x,
+            y = spawnPosition.y,
+            z = spawnPosition.z,
+            heading = spawnPosition.heading,
             skipFade = true
         })
     end)
@@ -159,6 +178,12 @@ function SetSpawning()
     exports.spawnmanager:setAutoSpawn(true)
     exports.spawnmanager:forceRespawn()
 end
+
+AddEventHandler('onClientGameTypeStart', SetSpawning)
+AddEventHandler('onClientResourceStart', SetSpawning)
+AddEventHandler('baseevents:onPlayerDied', SetSpawning)
+AddEventHandler('baseevents:onPlayerKilled', SetSpawning)
+AddEventHandler('baseevents:onPlayerWasted', SetSpawning)
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -276,8 +301,16 @@ local function TeleportPlayer(position, heading)
         print("moving player")
     end
 
-    SetEntityCoords(entityToMove, position.x, position.y, position.z + 2, false, false, false, true)
+    --Heading needs to be a float
+    if (heading ~= nil) then
+        heading = int2float(heading)
+    end
+
+    print(heading)
+
+    SetEntityCoords(entityToMove, position.x, position.y, position.z, false, false, false, true)
     SetEntityHeading(entityToMove, heading)
+
 end
 
 local function makeCheckpoint(checkpointType, coord, nextCoord, color, alpha, num)
@@ -2053,6 +2086,8 @@ RegisterCommand("races", function(_, args)
         ghosting:StartGhosting(configData['ghostingTime'])
     elseif "source" == args[1] then
         notifyPlayer(GetPlayerServerId(PlayerId()))
+    elseif "lobby" == args[1] then
+        TeleportPlayer(getOffsetSpawn(lobbySpawn), lobbySpawn.heading)
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -2624,7 +2659,8 @@ AddEventHandler("races:onendrace", function(rIndex, raceResults)
     end
 
     Citizen.Wait(5000)
-    TeleportPlayer(lobbySpawn)
+
+    TeleportPlayer(getOffsetSpawn(lobbySpawn), lobbySpawn.heading)
 
 end)
 
@@ -2962,7 +2998,8 @@ AddEventHandler("races:config", function(_configData)
     ghosting:LoadConfig(configData['ghosting'])
     playerDisplay:LoadConfig(configData['playerDisplay'])
 
-    lobbySpawn = _configData['spawnLocation']
+    lobbySpawn = _configData['spawning']['spawnLocation']
+    spawnOffsetVector = _configData['spawning']['spawnOffsetVector']
 
     SetSpawning()
 

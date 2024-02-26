@@ -16,10 +16,17 @@
     "mapManager" : {
         "defaultMap" : "GarageRacing"
     },
-    "spawnLocation" : {
-        "x" : -6562.41,
-        "y" : 1964.88,
-        "z" : 446.64,
-        "heading" : 90
+    "spawning" : {
+        "spawnLocation" : {
+            "x" : -6561.58,
+            "y" : 1968.09,
+            "z" : 446.64,
+            "heading" : 90
+        },
+        "spawnOffsetVector" : {
+            "x" : -0.02,
+            "y" : -2.9,
+            "z" : 0
+        }
     }
 }

@@ -38,3 +38,7 @@ function contains(table, val)
     end
     return false
 end
+
+function int2float(integer)
+    return integer + 0.0
+end
