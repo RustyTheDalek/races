@@ -131,7 +131,7 @@ local function getOffsetSpawn(startingSpawn)
         x = offsetSpawn.x,
         y = offsetSpawn.y,
         z = offsetSpawn.z,
-        startingSpawn.heading
+        heading = startingSpawn.heading
     }
 end
 
@@ -167,7 +167,7 @@ function SetSpawning()
         elseif racingStates.Idle == raceState then
             spawnPosition = getOffsetSpawn(lobbySpawn)
         end
-
+        
         exports.spawnmanager:spawnPlayer({
             x = spawnPosition.x,
             y = spawnPosition.y,
