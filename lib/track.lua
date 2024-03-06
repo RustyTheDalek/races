@@ -80,11 +80,10 @@ function Track:StartEditing()
     self:SetStartToFinishCheckpoints()
 end
 
-function Track:StopEditing(waypointCoords)
-    self:DeleteTrackCheckpoints()
+function Track:StopEditing()
+    self:DeleteCheckpoints()
     self:DeleteGridCheckPoints()
-    self.LoadWaypointBlips(waypointCoords)
-    self.setStartToFinishCheckpoints()
+    self:LoadWaypointBlips(self:WaypointsToCoords())
 end
 
 function Track:SetFirstWaypointAsStart()
@@ -149,7 +148,7 @@ function Track:SetStartToFinishCheckpoints()
 end
 
 function Track:LoadWaypointBlips(waypointCoords)
-    self:deleteWaypointBlips()
+    self:DeleteWaypointBlips()
     self.waypoints = {}
 
     for i = 1, #waypointCoords - 1 do
@@ -253,6 +252,12 @@ function Track:DeleteCheckpoints()
     end
 end
 
+function Track:DeleteWaypointBlips()
+    for i = 1, #self.waypoints do
+        RemoveBlip(self.waypoints[i].blip)
+    end
+end
+
 function Track:LoadWaypointBlips(waypointCoords)
     self:DeleteWaypointBlips()
     self.waypoints = {}
@@ -263,7 +268,7 @@ function Track:LoadWaypointBlips(waypointCoords)
             name = nil }
     end
 
-    self.startIsFinish =
+    self.startIsFinish = #waypointCoords > 1 and
         waypointCoords[1].x == waypointCoords[#waypointCoords].x and
         waypointCoords[1].y == waypointCoords[#waypointCoords].y and
         waypointCoords[1].z == waypointCoords[#waypointCoords].z
@@ -279,12 +284,6 @@ function Track:LoadWaypointBlips(waypointCoords)
 
     SetBlipRoute(self.waypoints[1].blip, true)
     SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
-end
-
-function Track:DeleteWaypointBlips()
-    for i = 1, #self.waypoints do
-        RemoveBlip(self.waypoints[i].blip)
-    end
 end
 
 function Track:WaypointsToCoords()
@@ -311,10 +310,10 @@ end
 
 function Track:Reverse()
     self.savedTrackName = nil
-    self.DeleteCheckpoints()
-    self.LoadWaypointBlips(self:WaypointsToCoordsRev())
-    self.SetStartFinishCheckpoints()    
-    self.GenerateStartingGrid(self.waypoints[1].coord, 8)
+    self:DeleteCheckpoints()
+    self:LoadWaypointBlips(self:WaypointsToCoordsRev())
+    self:SetStartFinishCheckpoints()    
+    self:GenerateStartingGrid(self.waypoints[1].coord, 8)
 end
 
 function Track:Clear()
