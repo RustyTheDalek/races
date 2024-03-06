@@ -44,7 +44,7 @@ function TrackEditor:StopEditing(waypointCoords)
     end
 
     self.highlightedCheckpoint = 0
-
+    
     self.track:StopEditing(waypointCoords)
 end
 
@@ -308,7 +308,7 @@ function TrackEditor:Update(playerCoord, heading)
 
     --TODO:Find a better way to do this
     --Used to prevent the enter key that is used to start editing 
-    if(GetGameTimer() - self.editStartTime < 100) then
+    if(GetGameTimer() - self.editStartTime < 500) then
         return
     end
 
