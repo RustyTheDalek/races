@@ -42,3 +42,15 @@ end
 function int2float(integer)
     return integer + 0.0
 end
+
+function drawMsg(x, y, msg, scale, justify)
+    SetTextFont(4)
+    SetTextScale(0, scale)
+    SetTextColour(255, 255, 0, 255)
+    SetTextOutline()
+    SetTextJustification(justify)
+    SetTextWrap(0.0, 1.0)
+    BeginTextCommandDisplayText("STRING")
+    AddTextComponentSubstringPlayerName(msg)
+    EndTextCommandDisplayText(x, y)
+end
