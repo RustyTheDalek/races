@@ -44,7 +44,7 @@ end
 
 local function SaveRacesFile(filename, data, length)
     if (length == nil) then length = -1 end
-    return SaveResourceFile(GetCurrentResourceName(), filename, data, length)
+    return toBoolean(SaveResourceFile(GetCurrentResourceName(), filename, data, length))
 end
 
 local function SaveRacesFileJson(filename, data, length)

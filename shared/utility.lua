@@ -54,3 +54,11 @@ function drawMsg(x, y, msg, scale, justify)
     AddTextComponentSubstringPlayerName(msg)
     EndTextCommandDisplayText(x, y)
 end
+
+function toBoolean(number)
+    if number == 1 then
+        return true
+    else
+        return false
+    end
+end
