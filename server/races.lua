@@ -3,8 +3,6 @@ UseRaceResults = false
 
 local defaultDelay <const> = 5
 
-local allVehicleFileName <const> = "vehicles.txt" -- list of all vehicles filename
-
 local defaultRadius <const> = 5.0                 -- default waypoint radius
 
 local READY_RACERS_COUNTDOWN = 5000
@@ -50,7 +48,7 @@ local function SaveRacesFile(filename, data, length)
 end
 
 local function SaveRacesFileJson(filename, data, length)
-    return SaveRacesFile(filename, json.encode(data), length)
+    return SaveRacesFile(filename .. '.json', json.encode(data), length)
 end
 
 local function LoadRacesFile(filename)
@@ -58,7 +56,7 @@ local function LoadRacesFile(filename)
 end
 
 local function LoadRacesFileJson(filename)
-    return json.decode(LoadRacesFile(filename))
+    return json.decode(LoadRacesFile(filename .. '.json'))
 end
 
 local function createFileIfEmpty(fileName)
@@ -68,7 +66,7 @@ local function createFileIfEmpty(fileName)
 end
 
 local function loadConfig()
-    return LoadRacesFileJson('config.json')
+    return LoadRacesFileJson('config')
 end
 
 createFileIfEmpty('raceData.json')
@@ -103,7 +101,7 @@ local function sendMessage(source, msg)
 end
 
 local function getTrack(trackName)
-    local track = LoadRacesFileJson(trackName .. '.json')
+    local track = LoadRacesFileJson(trackName)
     if track ~= nil then
         if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
             if #track.waypointCoords > 1 then
@@ -136,17 +134,17 @@ end
 
 local function export(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadRacesFileJson('raceData.json')
+        local raceData = LoadRacesFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
                 if publicTracks[trackName] ~= nil then
-                    local track = LoadRacesFileJson(trackName .. ".json")
+                    local track = LoadRacesFileJson(trackName)
                     if track == fail then
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
-                        if true == SaveRacesFileJson(trackName .. '.json', publicTracks[trackName]) then
+                        if true == SaveRacesFileJson(trackName, publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
                         else
@@ -173,7 +171,7 @@ end
 
 local function import(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadRacesFileJson('raceData.json')
+        local raceData = LoadRacesFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"] ~= nil and raceData["PUBLIC"] or {}
             if nil == publicTracks[trackName] then
@@ -184,7 +182,7 @@ local function import(trackName, withBLT)
                     end
                     publicTracks[trackName] = track
                     raceData["PUBLIC"] = publicTracks
-                    if true == SaveRacesFileJson('raceData.json', raceData) then
+                    if true == SaveRacesFileJson('raceData', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
                     else
@@ -207,7 +205,7 @@ local function import(trackName, withBLT)
 end
 
 local function updateRaceData()
-    local raceData = LoadRacesFileJson('raceData.json')
+    local raceData = LoadRacesFileJson('raceData')
     if raceData ~= nil then
         local update = false
         local newRaceData = {}
@@ -232,7 +230,7 @@ local function updateRaceData()
             end
         end
         if true == update then
-            if true == SaveRacesFileJson('raceData_updated.json', newRaceData) then
+            if true == SaveRacesFileJson('raceData_updated', newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
             else
@@ -248,7 +246,7 @@ end
 
 local function updateTrack(trackName)
     if trackName ~= nil then
-        local track = LoadRacesFileJson(trackName .. '.json')
+        local track = LoadRacesFileJson(trackName)
         if track ~= nil then
             if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
                 if #track.waypointCoords > 1 then
@@ -280,7 +278,7 @@ local function updateTrack(trackName)
                             end
                         end
 
-                        if true == SaveRacesFileJson(trackName .. '_updated.json', { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                        if true == SaveRacesFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
                                 trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
@@ -307,7 +305,7 @@ end
 local function loadTrack(isPublic, source, trackName)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadRacesFileJson('raceData.json')
+        local raceData = LoadRacesFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -328,7 +326,7 @@ end
 local function saveTrack(isPublic, source, trackName, track)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadRacesFileJson('raceData.json')
+        local raceData = LoadRacesFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -336,7 +334,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            if SaveRacesFileJson('raceData.json', raceData) == 1 then
+            if SaveRacesFileJson('raceData', raceData) == 1 then
                 return true
             else
                 notifyPlayer(source, "saveTrack: Could not write race data.\n")
@@ -353,7 +351,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadRacesFileJson('vehicleListData.json')
+        local vehicleListData = LoadRacesFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -374,7 +372,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadRacesFileJson('vehicleListData.json')
+        local vehicleListData = LoadRacesFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -382,7 +380,7 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
             local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
             lists[name] = vehicleList
             vehicleListData[license] = lists
-            if true == SaveRacesFileJson('vehicleListData.json', vehicleListData) then
+            if true == SaveRacesFileJson('vehicleListData', vehicleListData) then
                 return true
             else
                 notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
@@ -916,7 +914,7 @@ AddEventHandler("races:init", function()
         end
     end
 
-    local allVehicles = LoadRacesFileJson('vehicles.json')
+    local allVehicles = LoadRacesFileJson('vehicles')
 
     if (allVehicles == nil) then
         notifyPlayer(source, "Error opening file vehicles.json for read")
@@ -1052,7 +1050,7 @@ AddEventHandler("races:list", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadRacesFileJson('raceData.json')
+            local raceData = LoadRacesFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1441,7 +1439,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadRacesFileJson('vehicleListData.json')
+            local vehicleListData = LoadRacesFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1711,7 +1709,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadRacesFileJson('raceData.json')
+            local raceData = LoadRacesFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1744,7 +1742,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadRacesFileJson('vehicleListData.json')
+            local vehicleListData = LoadRacesFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
