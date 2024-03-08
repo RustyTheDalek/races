@@ -55,6 +55,8 @@ local currentVehicleHash = nil            -- hash of current vehicle being drive
 local currentVehicleName = nil            -- name of current vehicle being driven
 
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
+local randVehiclesUsed = {}               -- list of random vehicles already used in a random vehicle race
+
 
 local respawnLock = false
 local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
@@ -2512,10 +2514,18 @@ function OnNewLap(player)
         end
         UpdateCurrentLap()
         if #randVehicles > 0 then
-            local randIndex = math.random(#randVehicles)
+            
+            local randVehiclesNotUsed = uniqueValues(randVehicles, randVehiclesUsed)
+            if(#randVehiclesNotUsed <= 0) then
+                randVehiclesUsed = {}
+                randVehiclesNotUsed = randVehicles
+            end
+
+            local randIndex = math.random(#randVehiclesNotUsed)
             sendMessage("Random Index: " .. randIndex)
+            table.insert(randVehiclesUsed, randVehiclesNotUsed[randIndex])
             local randVehicle = switchVehicle(player,
-            randVehicles[randIndex])
+            randVehiclesNotUsed[randIndex])
             if randVehicle ~= nil then
                 SetEntityAsNoLongerNeeded(randVehicle)
             end
