@@ -1785,8 +1785,6 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     local race = races[raceIndex]
     local raceTime = race.raceTime
 
-    table.insert(checkpointTimes, {})
-
     local racerTimeSplit = -1
     local otherRacerTimeSplit = -1
 
@@ -1799,12 +1797,12 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
                 otherRacerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
             elseif (racer.waypointsPassed < 1) then
                 --Other Racer hasn't hit a checkpoint use race Start time
+                table.insert(checkpointTimes, {})
                 racerTimeSplit = raceTime - race.raceStart
                 otherRacerTimeSplit = race.raceStart - raceTime
             else
                 --Racer is behind compare times at their waypoint
-                racerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
-                otherRacerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
+                table.insert(checkpointTimes, {})
             end
             TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
             TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
