@@ -1788,14 +1788,14 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     local racerTimeSplit = -1
     local otherRacerTimeSplit = -1
 
-    for otherRacerSource, racer in pairs(race.players) do
+    for otherRacerSource, otherRacer in pairs(race.players) do
         if (otherRacerSource ~= source) then
             print(("Comparing to Racer with source %i"):format(otherRacerSource))
-            if (racer.waypointsPassed >= waypointsPassed and racer.waypointsPassed > 0) then
+            if (otherRacer.waypointsPassed >= waypointsPassed and otherRacer.waypointsPassed > 0) then
                 --Racer is ahead so get their time at this checkpoint
-                racerTimeSplit = checkpointTimes[racer.waypointsPassed][otherRacerSource] - raceTime
-                otherRacerTimeSplit = raceTime - checkpointTimes[racer.waypointsPassed][otherRacerSource]
-            elseif (racer.waypointsPassed < 1) then
+                racerTimeSplit = checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
+                otherRacerTimeSplit = raceTime - checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
+            elseif (otherRacer.waypointsPassed < 1) then
                 --Other Racer hasn't hit a checkpoint use race Start time
                 table.insert(checkpointTimes, {})
                 racerTimeSplit = raceTime - race.raceStart
@@ -1803,11 +1803,13 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
             else
                 --Racer is behind compare times at their waypoint
                 table.insert(checkpointTimes, {})
+                racerTimeSplit = raceTime - checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
+                otherRacerTimeSplit = checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
             end
             TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
             TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
         else
-            racer.waypointsPassed = waypointsPassed
+            otherRacer.waypointsPassed = waypointsPassed
         end
     end
 
