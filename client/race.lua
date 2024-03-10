@@ -150,7 +150,13 @@ function SetSpawning()
 end
 
 AddEventHandler('onClientGameTypeStart', SetSpawning)
-AddEventHandler('onClientResourceStart', SetSpawning)
+AddEventHandler('onClientResourceStart', function(resourceName)
+
+    if(GetCurrentResourceName() ~= resourceName) then
+        return
+    end
+    SetSpawning()
+end)
 AddEventHandler('baseevents:onPlayerDied', SetSpawning)
 AddEventHandler('baseevents:onPlayerKilled', SetSpawning)
 AddEventHandler('baseevents:onPlayerWasted', SetSpawning)
