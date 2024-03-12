@@ -245,9 +245,9 @@ local function switchVehicle(ped, vehicleHash)
     sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
     if vehicleHash ~= nil then
-        if(exports.cartierui ~= nil) then
+        if(exports.CarTierUI ~= nil) then
             print("cartierspawn")
-            vehicle = exports.cartierui:RequestVehicle(vehicleHash)
+            vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
         else 
             print("defaultspawn")
             local pedVehicle = GetVehiclePedIsIn(ped, false)
@@ -879,9 +879,9 @@ local function respawn()
 
         --Spawn vehicle is there is none
         if vehicle == 0 and currentVehicleHash ~= nil then
-            if(exports.cartierui ~= nil) then
+            if(exports.CarTierUI ~= nil) then
                 print("carTierSpawn") 
-                vehicle = exports.cartierui:RequestVehicle(currentVehicleHash)
+                vehicle = exports.CarTierUI:RequestVehicle(currentVehicleHash)
             else
                 print("defaultSpawn") 
                 print("No vehicle found")
@@ -949,10 +949,10 @@ end
 local function spawn(vehicleHash)
     vehicleHash = vehicleHash or defaultVehicle
 
-    if(exports.cartierui ~= nil) then
+    if(exports.CarTierUI ~= nil) then
         print("cartierspawn")
         print(vehicleHash)
-        exports.cartierui:RequestVehicle(vehicleHash)
+        exports.CarTierUI:RequestVehicle(vehicleHash)
     else
         print("defaultspawn")
         if IsModelInCdimage(vehicleHash) == 1 and IsModelAVehicle(vehicleHash) == 1 then
@@ -1043,7 +1043,7 @@ end
 
 function SendToRaceTier(tier, specialClass)
 
-    if(exports.cartierui == nil) then
+    if(exports.CarTierUI == nil) then
         print("CarTier not present, ignoring")
         return
     end
@@ -1060,18 +1060,18 @@ function SendToRaceTier(tier, specialClass)
         end
     end
 
-    exports.cartierui:RacesCurrentRaceState(carTierRaceType, tier, specialClass, openCarTierUI)
+    exports.CarTierUI:RaceFilters(carTierRaceType, tier, specialClass, openCarTierUI)
 
 end
 
 function ResetCarTier()
 
-    if(exports.cartierui == nil) then
+    if(exports.CarTierUI == nil) then
         print("CarTier not present, ignoring")
         return
     end
 
-    exports.cartierui:RacesCurrentRaceState(0, 'NONE', 'none', false)
+    exports.CarTierUI:RaceFilters(0, 'NONE', 'none', false)
 end
 
 function SendRaceData(raceData)
