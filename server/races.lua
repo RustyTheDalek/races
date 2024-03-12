@@ -1813,6 +1813,10 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
         end
     end
 
+    if (#race.players  == 1) then
+        table.insert(checkpointTimes, {})
+    end
+
     checkpointTimes[waypointsPassed][source] = raceTime
 end)
 
