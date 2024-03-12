@@ -84,6 +84,7 @@ local localVehicle = GetVehiclePedIsIn(localPlayerPed, false)
 local ready = false
 
 local currentRace = {
+    trackName = "",
     raceType = ""
 }
 
@@ -244,36 +245,42 @@ local function switchVehicle(ped, vehicleHash)
     sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
     if vehicleHash ~= nil then
-        local pedVehicle = GetVehiclePedIsIn(ped, false)
-        if pedVehicle ~= 0 then
-            if GetPedInVehicleSeat(pedVehicle, -1) == ped then
+        if(exports.cartierui ~= nil) then
+            print("cartierspawn")
+            vehicle = exports.cartierui:RequestVehicle(vehicleHash)
+        else 
+            print("defaultspawn")
+            local pedVehicle = GetVehiclePedIsIn(ped, false)
+            if pedVehicle ~= 0 then
+                if GetPedInVehicleSeat(pedVehicle, -1) == ped then
+                    RequestModel(vehicleHash)
+                    while HasModelLoaded(vehicleHash) == false do
+                        Citizen.Wait(0)
+                    end
+                    local passengers = {}
+                    for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(pedVehicle)) - 2 do
+                        local passenger = GetPedInVehicleSeat(pedVehicle, i)
+                        if passenger ~= 0 then
+                            passengers[#passengers + 1] = { ped = passenger, seat = i }
+                        end
+                    end
+                    local coord = GetEntityCoords(pedVehicle)
+                    local speed = GetEntitySpeed(ped)
+                    SetEntityAsMissionEntity(pedVehicle, true, true)
+                    DeleteVehicle(pedVehicle)
+                    vehicle = putPedInVehicle(ped, vehicleHash, coord)
+                    SetVehicleForwardSpeed(vehicle, speed)
+                    for _, passenger in pairs(passengers) do
+                        SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
+                    end
+                end
+            else
                 RequestModel(vehicleHash)
                 while HasModelLoaded(vehicleHash) == false do
                     Citizen.Wait(0)
                 end
-                local passengers = {}
-                for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(pedVehicle)) - 2 do
-                    local passenger = GetPedInVehicleSeat(pedVehicle, i)
-                    if passenger ~= 0 then
-                        passengers[#passengers + 1] = { ped = passenger, seat = i }
-                    end
-                end
-                local coord = GetEntityCoords(pedVehicle)
-                local speed = GetEntitySpeed(ped)
-                SetEntityAsMissionEntity(pedVehicle, true, true)
-                DeleteVehicle(pedVehicle)
-                vehicle = putPedInVehicle(ped, vehicleHash, coord)
-                SetVehicleForwardSpeed(vehicle, speed)
-                for _, passenger in pairs(passengers) do
-                    SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
-                end
+                vehicle = putPedInVehicle(ped, vehicleHash, nil)
             end
-        else
-            RequestModel(vehicleHash)
-            while HasModelLoaded(vehicleHash) == false do
-                Citizen.Wait(0)
-            end
-            vehicle = putPedInVehicle(ped, vehicleHash, nil)
         end
     end
     return vehicle
@@ -366,6 +373,8 @@ local function finishRace(dnf)
     ClearDNFTime()
     SetLeaderboardLower(true)
     ResetReady()
+    currentRace.currentTrack = ""
+    currentRace.raceType = ""
     currentTrack:RestoreBlips()
     currentTrack:RouteToTrack()
     if originalVehicleHash ~= nil then
@@ -870,17 +879,23 @@ local function respawn()
 
         --Spawn vehicle is there is none
         if vehicle == 0 and currentVehicleHash ~= nil then
-            print("No vehicle found")
-            RequestModel(currentVehicleHash)
-            while HasModelLoaded(currentVehicleHash) == false do
-                Citizen.Wait(0)
-            end
-            vehicle = putPedInVehicle(player, currentVehicleHash, coord)
-            SetEntityAsNoLongerNeeded(vehicle)
-            SetEntityHeading(vehicle, coord.heading)
-            repairVehicle(vehicle)
-            for _, passenger in pairs(passengers) do
-                SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
+            if(exports.cartierui ~= nil) then
+                print("carTierSpawn") 
+                vehicle = exports.cartierui:RequestVehicle(currentVehicleHash)
+            else
+                print("defaultSpawn") 
+                print("No vehicle found")
+                RequestModel(currentVehicleHash)
+                while HasModelLoaded(currentVehicleHash) == false do
+                    Citizen.Wait(0)
+                end
+                vehicle = putPedInVehicle(player, currentVehicleHash, coord)
+                SetEntityAsNoLongerNeeded(vehicle)
+                SetEntityHeading(vehicle, coord.heading)
+                repairVehicle(vehicle)
+                for _, passenger in pairs(passengers) do
+                    SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
+                end
             end
         elseif currentVehicleHash == nil then
             print("Respawning on foot")
@@ -933,17 +948,25 @@ end
 
 local function spawn(vehicleHash)
     vehicleHash = vehicleHash or defaultVehicle
-    if IsModelInCdimage(vehicleHash) == 1 and IsModelAVehicle(vehicleHash) == 1 then
-        RequestModel(vehicleHash)
-        while HasModelLoaded(vehicleHash) == false do
-            Citizen.Wait(0)
-        end
-        local vehicle = putPedInVehicle(PlayerPedId(), vehicleHash, nil)
-        SetEntityAsNoLongerNeeded(vehicle)
 
-        sendMessage("'" .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)) .. "' spawned.\n")
+    if(exports.cartierui ~= nil) then
+        print("cartierspawn")
+        print(vehicleHash)
+        exports.cartierui:RequestVehicle(vehicleHash)
     else
-        sendMessage("Cannot spawn vehicle.  Invalid vehicle.\n")
+        print("defaultspawn")
+        if IsModelInCdimage(vehicleHash) == 1 and IsModelAVehicle(vehicleHash) == 1 then
+            RequestModel(vehicleHash)
+            while HasModelLoaded(vehicleHash) == false do
+                Citizen.Wait(0)
+            end
+            local vehicle = putPedInVehicle(PlayerPedId(), vehicleHash, nil)
+            SetEntityAsNoLongerNeeded(vehicle)
+    
+            sendMessage("'" .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)) .. "' spawned.\n")
+        else
+            sendMessage("Cannot spawn vehicle.  Invalid vehicle.\n")
+        end
     end
 end
 
@@ -1020,23 +1043,35 @@ end
 
 function SendToRaceTier(tier, specialClass)
 
+    if(exports.cartierui == nil) then
+        print("CarTier not present, ignoring")
+        return
+    end
+
     local openCarTierUI = tier ~= "none" or specialClass ~= "none"
 
-    print("Sending message to car tier")
-    SendNUIMessage({
-        type = "cartierui",
-        action = "sendCarData",
-        tier = tier,
-        specialClass = specialClass,
-        openui = openCarTierUI
-    })
+    local carTierRaceType = 0
+
+    if (raceIndex ~= -1) then 
+        if(#randVehicles > 0) then
+            carTierRaceType = 3
+        elseif (string.find(string.lower(currentRace.trackName), 'wacky')) then
+            carTierRaceType = 2
+        end
+    end
+
+    exports.cartierui:RacesCurrentRaceState(carTierRaceType, tier, specialClass, openCarTierUI)
+
 end
 
 function ResetCarTier()
-    SendNUIMessage({
-        type = "cartierui",
-        action = "raceOver"
-    })
+
+    if(exports.cartierui == nil) then
+        print("CarTier not present, ignoring")
+        return
+    end
+
+    exports.cartierui:RacesCurrentRaceState(0, 'NONE', 'none', false)
 end
 
 function SendRaceData(raceData)
@@ -1936,7 +1971,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
         if starts[rIndex] ~= nil then
             if racingStates.Idle == raceState then
                 SetJoinMessage('')
-                SendToRaceTier(tier, specialClass)
                 raceState = racingStates.Joining
                 raceIndex = rIndex
                 numLaps = starts[rIndex].laps
@@ -1948,6 +1982,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 randVehicles = {}
                 currentTrack:LoadWaypointBlips(waypointCoords)
                 playerDisplay:SetOwnRacerBlip()
+
+                currentRace.trackName = starts[rIndex].trackName
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -1998,6 +2034,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
 
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
+                SendToRaceTier(tier, specialClass)
             elseif racingStates.Editing == raceState then
                 notifyPlayer("Ignoring join event.  Currently editing.\n")
             else

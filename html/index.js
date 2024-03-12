@@ -112,31 +112,6 @@ $(function () {
         }
     }
 
-    function SendCarTier(tier, specialClass, openui) {
-        $.post("https://cartierui/sendCarData",
-            JSON.stringify({
-                tier: tier,
-                specialClass: specialClass,
-                openui: openui
-            })
-        );
-    }
-
-    function ResetCarTier() {
-        $.post("https://cartierui/resetCarTier");
-    }
-
-    function handleCarTier(data) {
-        switch (data.action) {
-            case "sendCarData":
-                SendCarTier(data.tier, data.specialClass, data.openui);
-                break;
-            case "raceOver":
-                ResetCarTier();
-                break;
-        }
-    }
-
     function handleRaceManagement(data) {
         switch (data.action) {
             case "send_maps":
@@ -164,9 +139,7 @@ $(function () {
 
     window.addEventListener("message", function (event) {
         let data = event.data;
-        if (data.type === 'cartierui') {
-            handleCarTier(data);
-        } else if (data.type === 'ready') {
+        if (data.type === 'ready') {
             handleReady(data);
         } else if (data.type === 'race_management') {
             console.log("Reading Race Management event");
