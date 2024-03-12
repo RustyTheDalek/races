@@ -2,6 +2,10 @@ SetManualShutdownLoadingScreenNui(true)
 
 local raceState = racingStates.Idle
 
+function RaceState()
+    return raceState
+end
+
 local registerBlipColor <const> = 83      -- purple
 
 local selectedBlipColor <const> = 1       -- red

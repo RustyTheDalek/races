@@ -34,3 +34,7 @@ files {
     "html/css/leaderboard.css",
     "config.json"
 }
+
+export {
+    'RaceActive'
+}
