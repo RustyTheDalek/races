@@ -121,11 +121,8 @@ $(function () {
     }
     
     function AddMaps(maps) {
-
-        console.log(maps);
         
         for(map in maps) {
-            console.log(map);
 
             let formattedMapName = map.
             replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/[^0-9](?=[0-9])/g, '$& ').trim()
