@@ -334,7 +334,8 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            if SaveRacesFileJson('raceData', raceData) == 1 then
+            local saveRaceResult = SaveRacesFileJson('raceData', raceData)
+            if saveRaceResult == 1 or saveRaceResult == true then
                 return true
             else
                 notifyPlayer(source, "saveTrack: Could not write race data.\n")
