@@ -36,5 +36,6 @@ files {
 }
 
 export {
-    'RaceState'
+    'RaceState',
+    'UpdateVehicleName'
 }

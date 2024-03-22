@@ -2393,7 +2393,19 @@ function ClearRespawnIndicator()
     })
 end
 
-function UpdateVehicleName()
+function UpdateVehicleName(vehicleName)
+    if(vehicleName ~= nil) then
+        currentVehicleName = vehicleName
+        if raceState == racingStates.Racing or raceState == racingStates.Joining then
+            SendVehicleName()
+        end
+    else
+
+        if(currentVehicleName ~= nil) then
+            print("Already have car name, ignoring")
+            return
+        end
+
     local player = PlayerPedId()
     if IsPedInAnyVehicle(player, false) == 1 then
         local vehicle = GetVehiclePedIsIn(player, false)
@@ -2402,6 +2414,7 @@ function UpdateVehicleName()
     else
         currentVehicleName = "On Feet"
     end
+end
 end
 
 function HandleRaceType()
@@ -2468,16 +2481,6 @@ AddEventHandler("races:compareTimeSplit", function(racersAhead)
         racersAhead = racersAhead
     })
 end)
-
-function VehicleNameUpdate()
-    while true do
-        Citizen.Wait(1000)
-        if raceState == racingStates.Racing or raceState == racingStates.Joining then
-            UpdateVehicleName()
-            SendVehicleName()
-        end
-    end
-end
 
 function RaceStartCameraTransition()
 
@@ -2822,6 +2825,5 @@ function MainUpdate()
     end
 end
 
-Citizen.CreateThread(VehicleNameUpdate)
 Citizen.CreateThread(MainUpdate)
 Citizen.CreateThread(RacesReport)
