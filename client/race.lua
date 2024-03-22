@@ -245,7 +245,7 @@ local function switchVehicle(ped, vehicleHash)
     sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
     if vehicleHash ~= nil then
-        if(exports.CarTierUI ~= nil) then
+        if(CarTierUIActive()) then
             print("cartierspawn")
             vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
         else 
@@ -879,7 +879,7 @@ local function respawn()
 
         --Spawn vehicle is there is none
         if vehicle == 0 and currentVehicleHash ~= nil then
-            if(exports.CarTierUI ~= nil) then
+            if(CarTierUIActive()) then
                 print("carTierSpawn") 
                 vehicle = exports.CarTierUI:RequestVehicle(currentVehicleHash)
             else
@@ -949,7 +949,7 @@ end
 local function spawn(vehicleHash)
     vehicleHash = vehicleHash or defaultVehicle
 
-    if(exports.CarTierUI ~= nil) then
+    if(CarTierUIActive()) then
         print("cartierspawn")
         print(vehicleHash)
         exports.CarTierUI:RequestVehicle(vehicleHash)
@@ -1043,7 +1043,7 @@ end
 
 function SendToRaceTier(tier, specialClass)
 
-    if(exports.CarTierUI == nil) then
+    if(not CarTierUIActive()) then
         print("CarTier not present, ignoring")
         return
     end
@@ -1066,7 +1066,7 @@ end
 
 function ResetCarTier()
 
-    if(exports.CarTierUI == nil) then
+    if(not CarTierUIActive()) then
         print("CarTier not present, ignoring")
         return
     end
