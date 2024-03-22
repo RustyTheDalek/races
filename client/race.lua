@@ -817,6 +817,7 @@ end
 
 local function leave()
     local player = PlayerPedId()
+    currentVehicleName = nil
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
         ResetReady()
@@ -1826,8 +1827,6 @@ AddEventHandler("races:start", function(rIndex, delay)
         if delay >= 5 then
             if rIndex == raceIndex then
                 if racingStates.Joining == raceState then
-                    UpdateVehicleName()
-                    SendVehicleName()
                     beginDNFTimeout = false
                     timeoutStart = -1
                     position = -1
@@ -2035,6 +2034,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 msg = msg .. ".\n"
                 notifyPlayer(msg)
                 SendToRaceTier(tier, specialClass)
+                UpdateVehicleName()
+                SendVehicleName()
             elseif racingStates.Editing == raceState then
                 notifyPlayer("Ignoring join event.  Currently editing.\n")
             else
@@ -2087,6 +2088,7 @@ AddEventHandler("races:finish", function(finishData)
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
+            currentVehicleName = nil  
             ResetCarTier();
             playerDisplay:ResetRaceBlips()
         end
@@ -2406,15 +2408,15 @@ function UpdateVehicleName(vehicleName)
             return
         end
 
-    local player = PlayerPedId()
-    if IsPedInAnyVehicle(player, false) == 1 then
-        local vehicle = GetVehiclePedIsIn(player, false)
-        currentVehicleHash = GetEntityModel(vehicle)
-        currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
-    else
-        currentVehicleName = "On Feet"
+        local player = PlayerPedId()
+        if IsPedInAnyVehicle(player, false) == 1 then
+            local vehicle = GetVehiclePedIsIn(player, false)
+            currentVehicleHash = GetEntityModel(vehicle)
+            currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
+        else
+            currentVehicleName = "On Feet"
+        end
     end
-end
 end
 
 function HandleRaceType()
