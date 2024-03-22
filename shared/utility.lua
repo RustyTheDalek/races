@@ -82,3 +82,11 @@ function toBoolean(number)
         return false
     end
 end
+
+function CarTierUIActive()
+    return ResourceActive("CarTierUI")
+end
+
+function ResourceActive(resourceName)
+    return GetResourceState(resourceName) ~= "stopped"
+end
