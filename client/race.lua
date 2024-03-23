@@ -872,6 +872,7 @@ local function respawn()
         local passengers = {}
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player, true)
+        currentVehicleHash = GetEntityModel(vehicle)
 
         local coord = startCoord
         coord = currentTrack:GetTrackRespawnPosition(currentWaypoint)
