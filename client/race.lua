@@ -373,6 +373,7 @@ local function finishRace(dnf)
     ClearDNFTime()
     SetLeaderboardLower(true)
     ResetReady()
+    currentVehicleName = nil
     currentRace.currentTrack = ""
     currentRace.raceType = ""
     currentTrack:RestoreBlips()
@@ -2122,7 +2123,6 @@ AddEventHandler("races:finish", function(finishData)
                 notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
             end
-            currentVehicleName = nil  
             ResetCarTier();
             playerDisplay:ResetRaceBlips()
         end
