@@ -1174,7 +1174,24 @@ RegisterNUICallback("save", function(data)
 end)
 
 RegisterNUICallback("overwrite", function(data)
-    trackEditor:TryOverwrite(data.access, data.trackName, data.map)
+    if racingStates.Editing == raceState then
+        trackEditor:TryOverwrite(data.access, data.trackName, data.map)
+        return
+    else
+        if "pvt" == data.access or "pub" == data.access then
+            if data.trackName ~= nil then
+                if currentTrack:GetTotalWaypoints() > 1 then
+                    TriggerServerEvent("races:overwrite", "pub" == data.access, data.trackName, currentTrack:WaypointsToCoords(), data.map)
+                else
+                    sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
+                end
+            else
+                sendMessage("Cannot overwrite.  Name required.\n")
+            end
+        else
+            sendMessage("Cannot overwrite.  Invalid access type.\n")
+        end
+    end
 end)
 
 RegisterNUICallback("delete", function(data)
@@ -1500,7 +1517,24 @@ RegisterCommand("races", function(_, args)
     elseif "save" == args[1] then
         trackEditor:TrySave(args[2], args[3])
     elseif "overwrite" == args[1] then
-        trackEditor:TryOverwrite(args[2], args[3])
+        if racingStates.Editing == raceState then
+            trackEditor:TryOverwrite(args[2], args[3], args[4])
+            return
+        else
+            if "pvt" == args[2] or "pub" == args[2] then
+                if args[3] ~= nil then
+                    if currentTrack:GetTotalWaypoints() > 1 then
+                        TriggerServerEvent("races:overwrite", "pub" == args[2], args[3], currentTrack:WaypointsToCoords(), args[4])
+                    else
+                        sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
+                    end
+                else
+                    sendMessage("Cannot overwrite.  Name required.\n")
+                end
+            else
+                sendMessage("Cannot overwrite.  Invalid access type.\n")
+            end
+        end
     elseif "delete" == args[1] then
         deleteTrack(args[2], args[3])
     elseif "blt" == args[1] then
