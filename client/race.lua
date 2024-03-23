@@ -178,7 +178,7 @@ local function notifyPlayer(msg)
     })
 end
 
-local function sendMessage(msg)
+function sendMessage(msg)
     if true == panelShown then
         SendNUIMessage({
             panel = "reply",
