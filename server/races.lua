@@ -1189,6 +1189,7 @@ AddEventHandler("races:unregister", function()
     local source = source
     if races[source] ~= nil then
         races[source] = nil
+        for k in next, gridLineup do rawset(gridLineup, k, nil) end
         TriggerClientEvent("races:unregister", -1, source)
         notifyPlayer(source, "Race unregistered.\n")
     else
