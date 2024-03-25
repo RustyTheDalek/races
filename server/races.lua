@@ -1247,7 +1247,17 @@ AddEventHandler("races:autojoin", function()
         notifyPlayer(source, "Cannot autojoin.  Race in progress.\n")
     end
 
-    for _, otherPlayerSource in pairs(GetPlayers()) do
+    local playersToJoin = {}
+
+    if(ResourceActive('Party-System') and exports['Party-System']:HostingParty()) then
+        print("Using Party")
+        playersToJoin = exports['Party-System']:HostingParty()
+    else
+        print("Using All players")
+        playersToJoin = GetPlayers()
+    end
+
+    for _, otherPlayerSource in pairs(playersToJoin) do
         JoinRacer(tonumber(otherPlayerSource), source)
     end
 
