@@ -55,7 +55,8 @@ local colorPri = -1                       -- primary color of original vehicle
 local colorSec = -1                       -- secondary color of original vehicle
 
 local startVehicle = nil                  -- vehicle name hash of starting vehicle used in random races
-local currentVehicleHash = nil            -- hash of current vehicle being driven
+local raceVehicleHash = nil               -- hash of current vehicle being driven
+local raceVehicleName = nil
 local currentVehicleName = nil            -- name of current vehicle being driven
 
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
@@ -374,6 +375,8 @@ local function finishRace(dnf)
     SetLeaderboardLower(true)
     ResetReady()
     currentVehicleName = nil
+    raceVehicleHash = nil
+    raceVehicleName = nil
     currentRace.currentTrack = ""
     currentRace.raceType = ""
     currentTrack:RestoreBlips()
@@ -819,6 +822,8 @@ end
 local function leave()
     local player = PlayerPedId()
     currentVehicleName = nil
+    raceVehicleHash = nil
+    raceVehicleName = nil
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
         ResetReady()
@@ -872,8 +877,7 @@ local function respawn()
         local passengers = {}
         local player = PlayerPedId()
         local vehicle = GetVehiclePedIsIn(player, true)
-        currentVehicleHash = GetEntityModel(vehicle)
-
+        local currentVehicleHash = GetEntityModel(vehicle)
         local coord = startCoord
         coord = currentTrack:GetTrackRespawnPosition(currentWaypoint)
 
@@ -881,18 +885,18 @@ local function respawn()
         print(currentVehicleHash)
 
         --Spawn vehicle is there is none
-        if vehicle == 0 and currentVehicleHash ~= nil then
+        if vehicle == 0 and raceVehicleHash ~= nil then
             if(CarTierUIActive()) then
-                print("carTierSpawn") 
-                vehicle = exports.CarTierUI:RequestVehicle(currentVehicleHash)
+                print("carTierSpawn")
+                vehicle = exports.CarTierUI:RequestVehicle(raceVehicleName)
+                raceVehicleHash = GetEntityModel(vehicle)
             else
-                print("defaultSpawn") 
                 print("No vehicle found")
-                RequestModel(currentVehicleHash)
-                while HasModelLoaded(currentVehicleHash) == false do
+                RequestModel(raceVehicleName)
+                while HasModelLoaded(raceVehicleName) == false do
                     Citizen.Wait(0)
                 end
-                vehicle = putPedInVehicle(player, currentVehicleHash, coord)
+                vehicle = putPedInVehicle(player, raceVehicleName, coord)
                 SetEntityAsNoLongerNeeded(vehicle)
                 SetEntityHeading(vehicle, coord.heading)
                 repairVehicle(vehicle)
@@ -900,7 +904,7 @@ local function respawn()
                     SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
                 end
             end
-        elseif currentVehicleHash == nil then
+        elseif raceVehicleHash == nil then
             print("Respawning on foot")
             SetEntityCoords(player, coord.x, coord.y, coord.z, false, false, false, true)
             SetEntityHeading(player, coord.heading)
@@ -1885,6 +1889,8 @@ AddEventHandler("races:start", function(rIndex, delay)
 
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
+                    raceVehicleHash = GetEntityModel(vehicle)
+                    raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
 
                     StartRaceEffects()
 
@@ -2446,8 +2452,8 @@ function UpdateVehicleName(vehicleName)
         local player = PlayerPedId()
         if IsPedInAnyVehicle(player, false) == 1 then
             local vehicle = GetVehiclePedIsIn(player, false)
-            currentVehicleHash = GetEntityModel(vehicle)
-            currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(currentVehicleHash))
+            raceVehicleHash = GetEntityModel(vehicle)
+            currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(raceVehicleHash))
         else
             currentVehicleName = "On Feet"
         end
@@ -2628,7 +2634,7 @@ function OnHitCheckpoint(player)
     local vehicle = GetVehiclePedIsIn(player, false)
 
     if restrictedHash ~= nil then
-        if nil == vehicle or currentVehicleHash ~= restrictedHash then
+        if nil == vehicle or raceVehicleHash ~= restrictedHash then
             return
         end
     elseif restrictedClass ~= nil then
