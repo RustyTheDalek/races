@@ -908,10 +908,14 @@ AddEventHandler("races:init", function()
                 vclass = race.vclass,
                 svehicle = race.svehicle,
                 vehicleList = race.vehicleList,
-                specialClass = race.specialClass
+                specialClass = race.specialClass,
+                tier = race.tier,
+                laps = race.laps,
+                timeout = race.timeout
             }
+
             TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
-                race.owner, race.tier, race.laps, race.timeout, rdata)
+                race.owner, rdata)
         end
     end
 
