@@ -815,8 +815,12 @@ end, true)
 function ProcessPlayers(source)
     local playerName = GetPlayerName(source)
 
+    print("Processing player " .. source .. " " .. playerName)
+
     for _, otherPlayerSource in pairs(GetPlayers()) do
         local otherPlayerName = GetPlayerName(otherPlayerSource)
+
+        print("Other player " .. otherPlayerSource .. " " .. otherPlayerName)
 
         if (source ~= tonumber(otherPlayerSource)) then
             TriggerClientEvent("races:addplayerdisplay", tonumber(otherPlayerSource), tonumber(source), playerName)

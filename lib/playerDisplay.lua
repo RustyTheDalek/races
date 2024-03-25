@@ -55,6 +55,7 @@ function PlayerDisplay:AddNameTag(ped, playerName)
     return gamerTag
 end
 
+--TODO:Queue a request get the ped when it's valid
 function PlayerDisplay:GetPedFromPlayer(source)
 
     local player = GetPlayerFromServerId(source)
@@ -64,7 +65,7 @@ function PlayerDisplay:GetPedFromPlayer(source)
         return -1
     end
 
-    Citizen.Wait(2000)
+    Citizen.Wait(5000)
 
     local ped = GetPlayerPed(player)
 
@@ -142,8 +143,10 @@ end
 
 function PlayerDisplay:AddDisplay(source, playerName)
 
+    print(("new player display name for Source:%i with name %s"):format(source, playerName))
+
     if self.players[source] ~= nil then
-        print(("playerDisplay already exist for Source:%i"):format(source))
+        print(("playerDisplay already exist for Source:%i with name %s"):format(source, self.players[source]))
         return
     end
 
