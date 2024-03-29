@@ -31,8 +31,11 @@ function readLeaderBoardEvents(event) {
   if (data.type !== "leaderboard") return;
 
   switch (data.action) {
+    case "add_racer":
+      AddRacerToleaderboard(data.source, data.name, data.ownSource);
+      break;
     case "add_racers":
-      AddRacerToleaderboard(data.racers, data.source);
+      AddRacersToleaderboard(data.racers, data.source);
       break;
     case "remove_racer":
       RemovePlayerFromleaderboard(data.source);
@@ -218,7 +221,7 @@ function SetGhostingIndicator(source, time = null) {
   ghosting_indicator.removeAttr('style');
   ghosting_indicator.show();
 
-  if(time != null) {
+  if (time != null) {
     ghosting_indicator.css('transition', `width ${time}s linear`);
   }
   ghosting_indicator.width('100%');
@@ -336,89 +339,92 @@ function SetRaceLeaderboard(enabled) {
   }
 }
 
-function AddRacerToleaderboard(racers, source) {
+function AddRacerToleaderboard(source, name, ownSource) {
 
+  let racer_exists = leaderboard.find(`#${source}`).length > 0;
+
+  if (racer_exists) return;
+
+  let racers_in_leaderboard = leaderboard.children().length;
+
+  //Decide on top offset based on position
+  let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * spacing : topOffset - 0.5;
+  //Only add first-place class if it's first item to be added;
+  let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
+  let current_racer = source === ownSource ? "current_racer" : "";
+
+  let racer_element = $("<li/>", {
+    id: source,
+    value: racers_in_leaderboard + 1,
+    class: `leaderboard_chunk not-ready ${first_place} ${current_racer}`,
+    style: `top:${top}rem`,
+  });
+
+  let racer_detail = $("<div/>", {
+    class: 'racer_detail'
+  });
+
+  racer_element.append(racer_detail);
+
+  let racer_name = $("<div/>", {
+    class: 'racer',
+    text: name
+  });
+
+  racer_detail.append(racer_name);
+
+  let vehicle = $("<div/>", {
+    class: 'vehicle'
+  });
+
+  racer_detail.append(vehicle);
+
+  let racer_position = $("<span/>", { text: `${racers_in_leaderboard + 1}` });
+
+  racer_element.prepend(racer_position);
+
+  let lap_times = $("<div/>", {
+    class: 'lap_times'
+  });
+
+  let best_lap = $("<div/>", {
+    class: 'best',
+    text: '00:00.00'
+  });
+
+  let current_lap = $("<div/>", {
+    style: 'display:none;',
+    class: 'current',
+    text: '00:00.00'
+  });
+
+  let time_split = $("<div/>", {
+    style: 'display:none;',
+    class: 'time-split',
+    text: '0.00'
+  });
+
+  lap_times.append(best_lap);
+  lap_times.append(current_lap);
+  lap_times.append(time_split);
+
+  let ghosting_indicator = $("<div/>", {
+    class: 'ghosting_indicator'
+  });
+
+  racer_element.append(ghosting_indicator);
+
+  racer_element.append(lap_times);
+  leaderboard.append(racer_element);
+
+  setTimeout(() => {
+    racer_element.addClass('right-visible');
+  }, 250)
+}
+
+function AddRacersToleaderboard(racers, source) {
   racers.forEach((racer) => {
-    let racer_exists = leaderboard.find(`#${racer.source}`).length > 0;
-
-    if (racer_exists) return;
-
-    let racers_in_leaderboard = leaderboard.children().length;
-
-    //Decide on top offset based on position
-    let top = racers_in_leaderboard > 0 ? topOffset + racers_in_leaderboard * spacing : topOffset - 0.5;
-    //Only add first-place class if it's first item to be added;
-    let first_place = racers_in_leaderboard == 0 ? "first-place" : "";
-    let current_racer = source === racer.source ? "current_racer" : "";
-
-    let racer_element = $("<li/>", {
-      id: racer.source,
-      value: racers_in_leaderboard + 1,
-      class: `leaderboard_chunk not-ready ${first_place} ${current_racer}`,
-      style: `top:${top}rem`,
-    });
-
-    let racer_detail = $("<div/>", {
-      class: 'racer_detail'
-    });
-
-    racer_element.append(racer_detail);
-
-    let racer_name = $("<div/>", {
-      class: 'racer',
-      text: racer.playerName
-    });
-
-    racer_detail.append(racer_name);
-
-    let vehicle = $("<div/>", {
-      class: 'vehicle',
-      text: racer.vehicleName
-    });
-
-    racer_detail.append(vehicle);
-
-    let racer_position = $("<span/>", { text: `${racers_in_leaderboard + 1}` });
-
-    racer_element.prepend(racer_position);
-
-    let lap_times = $("<div/>", {
-      class: 'lap_times'
-    });
-
-    let best_lap = $("<div/>", {
-      class: 'best',
-      text: '00:00.00'
-    });
-
-    let current_lap = $("<div/>", {
-      style: 'display:none;',
-      class: 'current',
-      text: '00:00.00'
-    });
-
-    let time_split = $("<div/>", {
-      style: 'display:none;',
-      class: 'time-split',
-      text: '0.00'
-    });
-
-    lap_times.append(best_lap);
-    lap_times.append(current_lap);
-    lap_times.append(time_split);
-
-    let ghosting_indicator = $("<div/>", {
-      class: 'ghosting_indicator'
-    });
-
-    racer_element.append(ghosting_indicator);
-
-    racer_element.append(lap_times);
-    leaderboard.append(racer_element);
-
-    setTimeout(() => {
-      racer_element.addClass('right-visible');
-    }, 250)
+    AddRacerToleaderboard(racer.source, racer.playerName, source)
   });
 }
 

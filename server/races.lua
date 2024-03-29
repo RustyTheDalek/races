@@ -1563,6 +1563,9 @@ function JoinRacer(source, rIndex)
             if racingStates.Registering == races[rIndex].state then
                 local playerName = GetPlayerName(source)
                 races[rIndex].numRacing = races[rIndex].numRacing + 1
+
+                TriggerEventForRacers(rIndex, "races:racerJoined", source, playerName)
+
                 races[rIndex].players[source] = {
                     source = source,
                     playerName = playerName,
@@ -1600,7 +1603,8 @@ function JoinRacer(source, rIndex)
                 TriggerClientEvent("races:joinnotification", -1, joinNotificationData)
 
                 TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
-                races[rIndex].waypointCoords)
+                races[rIndex].waypointCoords, racerDictionary)
+
             else
                 notifyPlayer(source, "Cannot join.  Race in progress.\n")
             end

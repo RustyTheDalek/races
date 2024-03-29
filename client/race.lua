@@ -1968,7 +1968,6 @@ AddEventHandler("races:joinnotification", function(joinNotificationData)
 
     UpdateRegistrationCheckpoint(raceIndex, registrationCoords, numRacing)
     sendMessage(string.format("%s has joined Race %s", playerName, trackName))
-    AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 end)
 
 RegisterNetEvent("races:onleave")
@@ -2007,7 +2006,7 @@ AddEventHandler("races:removeFromLeaderboard", function(source)
 end)
 
 RegisterNetEvent("races:join")
-AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoords)
+AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoords, racerDictionary)
     if rIndex ~= nil and waypointCoords ~= nil then
         if starts[rIndex] ~= nil then
             if racingStates.Idle == raceState then
@@ -2032,6 +2031,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 }
                 SendRaceData(raceData)
                 SetRaceLeaderboard(true)
+                AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -2089,6 +2089,11 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
     else
         notifyPlayer("Ignoring join event.  Invalid parameters.\n")
     end
+end)
+
+RegisterNetEvent("races:racerJoined")
+AddEventHandler("races:racerJoined", function(racerSource, racerName)
+    AddRacerToLeaderboard(racerSource, racerName)
 end)
 
 -- SCENARIO:
@@ -2418,6 +2423,16 @@ function AddRacersToLeaderboard(racerDictionary, source)
         action = 'add_racers',
         racers = racerDictionary,
         source = source
+    })
+end
+
+function AddRacerToLeaderboard(racerSource, racerName)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'add_racer',
+        name = racerName,
+        source = racerSource,
+        ownSource = GetPlayerServerId(PlayerId())
     })
 end
 
