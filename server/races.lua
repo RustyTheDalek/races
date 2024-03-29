@@ -1,6 +1,3 @@
-local gridLineup = {}
-UseRaceResults = false
-
 local defaultDelay <const> = 5
 
 local defaultRadius <const> = 5.0                 -- default waypoint radius
@@ -574,9 +571,11 @@ local function TriggerEventForRacers(raceIndex, event, arg1, arg2, arg3)
 
 end
 
-local function SetNextGridLineup(results)
-    UseRaceResults = true
-    for k in next, gridLineup do rawset(gridLineup, k, nil) end
+local function SetNextGridLineup(race)
+    race.useRaceResults = true
+    
+
+    for k in next, race.gridLineup do rawset(race.gridLineup, k, nil) end
 
     -- print(gridLineup)
     -- print(gridLineup[1])
@@ -584,12 +583,12 @@ local function SetNextGridLineup(results)
 
     -- print("Grid lineup setup")
     -- print(string.format("Total results: %i", #results))
-    for i = 1, #results do
+    for i = 1, #race,results do
         -- print(string.format("Index: %i", #results + 1 - i))
-        local racer = results[#results + 1 - i]
+        local racer = race.results[#race.results + 1 - i]
         --print("Player " .. racer.playerName)
         --print("Source " .. racer.source)
-        table.insert(gridLineup, racer.source)
+        table.insert(race.gridLineup, racer.source)
     end
 
     -- print(gridLineup)
@@ -659,9 +658,12 @@ local function OnPlayerLeave(race, rIndex, source)
 
 end
 
-local function PlaceRacersOnGrid(gridPositions, heading)
+local function PlaceRacersOnGrid(gridPositions, race)
+
+    local heading = race.waypointCoords[1].heading
+
     local index = 1
-    for _, player in pairs(gridLineup) do
+    for _, player in pairs(race.gridLineup) do
         local gridPosition = gridPositions[index]
         print(dump(gridPosition))
         TriggerClientEvent("races:teleportplayer", player, gridPosition, heading)
@@ -674,7 +676,7 @@ local function setupGrid(raceIndex)
 
     if (gridPositions ~= nil) then
         TriggerEventForRacers(raceIndex, "races:spawncheckpoints", gridPositions)
-        PlaceRacersOnGrid(gridPositions, races[raceIndex].waypointCoords[1].heading)
+        PlaceRacersOnGrid(gridPositions, races[raceIndex])
     end
 end
 
@@ -739,6 +741,7 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         countdownTimeStart = 0,
         players = {},
         results = {},
+        gridLineup = {},
         gridPositions = {},
         map = rdata.map
     }
@@ -858,9 +861,9 @@ AddEventHandler("playerDropped", function()
         if (race.players[source] ~= nil) then
             local player = race.players[source]
             --Remove player from gridLineup
-            for j = 1, #gridLineup do
-                if gridLineup[j] == source then
-                    table.remove(gridLineup, j)
+            for j = 1, #race.gridLineup do
+                if race.gridLineup[j] == source then
+                    table.remove(race.gridLineup, j)
                     break
                 end
             end
@@ -1197,7 +1200,7 @@ AddEventHandler("races:unregister", function()
     local source = source
     if races[source] ~= nil then
         races[source] = nil
-        for k in next, gridLineup do rawset(gridLineup, k, nil) end
+        for k in next, races[source].gridLineup do rawset(races[source].gridLineup, k, nil) end
         TriggerClientEvent("races:unregister", -1, source)
         notifyPlayer(source, "Race unregistered.\n")
     else
@@ -1503,9 +1506,9 @@ AddEventHandler("races:leave", function(rIndex)
         if races[rIndex] ~= nil then
             if racingStates.Registering == races[rIndex].state then
                 if races[rIndex].players[source] ~= nil then
-                    for i = 1, #gridLineup do
-                        if gridLineup[i] == races[rIndex].players[source].source then
-                            table.remove(gridLineup, i)
+                    for i = 1, #races[rIndex].gridLineup do
+                        if races[rIndex].gridLineup[i] == races[rIndex].players[source].source then
+                            table.remove(races[rIndex].gridLineup, i)
                             break
                         end
                     end
@@ -1581,9 +1584,9 @@ function JoinRacer(source, rIndex)
                         }
                     end)
 
-                if UseRaceResults == false then
+                if races[rIndex].useRaceResults == false then
                     print("No race results, adding racer")
-                    table.insert(gridLineup, source)
+                    table.insert(races[rIndex].gridLineup, source)
                 end
 
                 local joinNotificationData = {
@@ -1678,7 +1681,7 @@ AddEventHandler("races:finish",
 
                             saveResults(race)
 
-                            SetNextGridLineup(race.results)
+                            SetNextGridLineup(race)
 
                             if race.trackName ~= nil then
                                 updateBestLapTimes(rIndex)
