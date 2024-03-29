@@ -573,8 +573,6 @@ end
 
 local function SetNextGridLineup(race)
     race.useRaceResults = true
-    
-
     for k in next, race.gridLineup do rawset(race.gridLineup, k, nil) end
 
     -- print(gridLineup)
@@ -583,7 +581,7 @@ local function SetNextGridLineup(race)
 
     -- print("Grid lineup setup")
     -- print(string.format("Total results: %i", #results))
-    for i = 1, #race,results do
+    for i = 1, #race.results do
         -- print(string.format("Index: %i", #results + 1 - i))
         local racer = race.results[#race.results + 1 - i]
         --print("Player " .. racer.playerName)
@@ -743,6 +741,7 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         results = {},
         gridLineup = {},
         gridPositions = {},
+        useRaceResults = false,
         map = rdata.map
     }
 
