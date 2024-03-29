@@ -14,7 +14,7 @@
 
 #laps.lobby-view,
 #checkpoints.lobby-view {
-  transform: translateY(60vh);
+  transform: scale(0.5) translateY(90vh);
 }
 
 #leaderboard {
@@ -24,7 +24,7 @@
 }
 
 #leaderboard.lobby-view {
-  transform: translateY(60vh);
+  transform: scale(0.5) translateY(90vh);
 }
 
 #leaderboard_container {
