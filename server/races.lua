@@ -1,5 +1,3 @@
-local defaultDelay <const> = 5
-
 local defaultRadius <const> = 5.0                 -- default waypoint radius
 
 local READY_RACERS_COUNTDOWN = 5000
@@ -660,7 +658,7 @@ end
 local function ProcessReadyCountdown(raceIndex)
     if GetGameTimer() - races[raceIndex].countdownTimeStart > READY_RACERS_COUNTDOWN then
         --START races
-        StartRace(races[raceIndex], raceIndex, defaultDelay)
+        StartRace(races[raceIndex], raceIndex, Config.data.races.defaultStartDelay)
     end
 end
 
