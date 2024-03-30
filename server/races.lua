@@ -1798,52 +1798,49 @@ RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
 end)
 
 function RaceServerUpdate()
-    while true do
-        Citizen.Wait(500)
-        for rIndex, race in pairs(races) do
-            if racingStates.Racing == race.state then
-                local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
-                local complete = true
+    for rIndex, race in pairs(races) do
+        if racingStates.Racing == race.state then
+            local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
+            local complete = true
 
-                -- race.players[source] = {source, playerName, numWaypointsPassed, data, coord}
-                for _, player in pairs(race.players) do
-                    if -1 == player.numWaypointsPassed then -- player client hasn't updated numWaypointsPassed, data and coord
-                        complete = false
-                        break
-                    end
-
-                    -- player.data will be travel distance to next waypoint or finish time; finish time will be -1 if player DNF
-                    -- if player.data == -1 then player did not finish race - do not include in sortedPlayers
-                    if player.data ~= -1 then
-                        sortedPlayers[#sortedPlayers + 1] = {
-                            source = player.source,
-                            numWaypointsPassed = player.numWaypointsPassed,
-                            data = player.data,
-                            playerName = GetPlayerName(player.source)
-                        }
-                    end
+            -- race.players[source] = {source, playerName, numWaypointsPassed, data, coord}
+            for _, player in pairs(race.players) do
+                if -1 == player.numWaypointsPassed then -- player client hasn't updated numWaypointsPassed, data and coord
+                    complete = false
+                    break
                 end
 
-                if true == complete then -- all player clients have updated numWaypointsPassed and data
-                    table.sort(sortedPlayers, function(p0, p1)
-                        return (p0.numWaypointsPassed > p1.numWaypointsPassed) or
-                            (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
+                -- player.data will be travel distance to next waypoint or finish time; finish time will be -1 if player DNF
+                -- if player.data == -1 then player did not finish race - do not include in sortedPlayers
+                if player.data ~= -1 then
+                    sortedPlayers[#sortedPlayers + 1] = {
+                        source = player.source,
+                        numWaypointsPassed = player.numWaypointsPassed,
+                        data = player.data,
+                        playerName = GetPlayerName(player.source)
+                    }
+                end
+            end
+
+            if true == complete then -- all player clients have updated numWaypointsPassed and data
+                table.sort(sortedPlayers, function(p0, p1)
+                    return (p0.numWaypointsPassed > p1.numWaypointsPassed) or
+                        (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
+                end)
+
+                local racePositions = map(sortedPlayers,
+                    function(item)
+                        return {
+                            source = item.source ,
+                            playerName = item.playerName
+                        }
                     end)
 
-                    local racePositions = map(sortedPlayers,
-                        function(item)
-                            return {
-                                source = item.source ,
-                                playerName = item.playerName
-                            }
-                        end)
+                TriggerEventForRacers(rIndex, "races:racerPositions", racePositions)
 
-                    TriggerEventForRacers(rIndex, "races:racerPositions", racePositions)
-
-                    -- players sorted into sortedPlayers table
-                    for position, sortedPlayer in pairs(sortedPlayers) do
-                        TriggerClientEvent("races:position", sortedPlayer.source, rIndex, position, #sortedPlayers)
-                    end
+                -- players sorted into sortedPlayers table
+                for position, sortedPlayer in pairs(sortedPlayers) do
+                    TriggerClientEvent("races:position", sortedPlayer.source, rIndex, position, #sortedPlayers)
                 end
             end
         end
@@ -1852,41 +1849,47 @@ end
 
 --Update every frame to track race time
 function MainServerUpdate()
-    while true do
-        Citizen.Wait(0)
-
-        for rIndex, race in pairs(races) do
-            if racingStates.Registering == race.state then
-                CheckReady(race, rIndex)
-                if race.countdown == true then
-                    ProcessReadyCountdown(rIndex)
-                end
-            elseif(race.state == racingStates.RaceCountdown) then
-                race.delayTimer:Update()
-
-                if (race.delayTimer.length <= 5000 and race.fiveSecondWarning == false) then
-                    race.fiveSecondWarning = true
-                    print("Five second warning")
-
-                    TriggerEventForRacers(rIndex, "races:fivesecondwarning")
-                end
-                if (race.delayTimer.complete) then
-
-                    race.startTime = GetGameTimer()
-                    print(("Race starts at %i"):format(race.startTime))
-
-                    for _, player in pairs(race.players) do
-                        player.currentLapTimeStart = race.startTime
-                        TriggerClientEvent("races:greenflag", player.source, race.startTime)
-                    end
-                    race.state = racingStates.Racing
-                end
-            elseif(race.state == racingStates.Racing) then
-                race.raceTime = GetGameTimer() - race.startTime
+    for rIndex, race in pairs(races) do
+        if racingStates.Registering == race.state then
+            CheckReady(race, rIndex)
+            if race.countdown == true then
+                ProcessReadyCountdown(rIndex)
             end
+        elseif(race.state == racingStates.RaceCountdown) then
+            race.delayTimer:Update()
+
+            if (race.delayTimer.length <= 5000 and race.fiveSecondWarning == false) then
+                race.fiveSecondWarning = true
+                print("Five second warning")
+
+                TriggerEventForRacers(rIndex, "races:fivesecondwarning")
+            end
+            if (race.delayTimer.complete) then
+
+                race.startTime = GetGameTimer()
+                print(("Race starts at %i"):format(race.startTime))
+
+                for _, player in pairs(race.players) do
+                    player.currentLapTimeStart = race.startTime
+                    TriggerClientEvent("races:greenflag", player.source, race.startTime)
+                end
+                race.state = racingStates.Racing
+            end
+        elseif(race.state == racingStates.Racing) then
+            race.raceTime = GetGameTimer() - race.startTime
         end
     end
 end
 
-Citizen.CreateThread(RaceServerUpdate)
-Citizen.CreateThread(MainServerUpdate)
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(500)
+        RaceServerUpdate()
+    end
+end)
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(0)
+        MainServerUpdate()
+    end
+end)
