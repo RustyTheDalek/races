@@ -115,3 +115,31 @@ function removeDuplicates(table)
 
     return res
 end
+
+function map(tbl, f)
+    local t = {}
+    for k, v in pairs(tbl) do
+        t[k] = f(v)
+    end
+    return t
+end
+
+function mapToArray(tbl, f)
+    local t = {}
+    for k, v in pairs(tbl) do
+        table.insert(t, f(v))
+    end
+    return t
+end
+
+function notifyPlayer(source, msg)
+    TriggerClientEvent("chat:addMessage", source, {
+        color = { 255, 0, 0 },
+        multiline = true,
+        args = { "[races:server]", msg }
+    })
+end
+
+function sendMessage(source, msg)
+    TriggerClientEvent("races:message", source, msg)
+end

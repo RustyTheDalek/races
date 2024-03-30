@@ -11,34 +11,6 @@ local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 fileManager:CreateFileIfEmpty('raceData.json')
 fileManager:CreateFileIfEmpty('vehicleListData.json')
 
-local function map(tbl, f)
-    local t = {}
-    for k, v in pairs(tbl) do
-        t[k] = f(v)
-    end
-    return t
-end
-
-local function mapToArray(tbl, f)
-    local t = {}
-    for k, v in pairs(tbl) do
-        table.insert(t, f(v))
-    end
-    return t
-end
-
-local function notifyPlayer(source, msg)
-    TriggerClientEvent("chat:addMessage", source, {
-        color = { 255, 0, 0 },
-        multiline = true,
-        args = { "[races:server]", msg }
-    })
-end
-
-local function sendMessage(source, msg)
-    TriggerClientEvent("races:message", source, msg)
-end
-
 local function getTrack(trackName)
     local track = fileManager:LoadCurrentResourceFileJson(trackName)
     if track ~= nil then
