@@ -3,11 +3,6 @@ local defaultRadius <const> = 5.0                 -- default waypoint radius
 local READY_RACERS_COUNTDOWN = 5000
 local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
---2D array for checkpointTimes
---1st dimension is checkpoint
---2nd dimension is rcers
-local checkpointTimes = {}
-
 local racesMapManager = RacesMapManager:New()
 local fileManager = FileManager:New()
 
@@ -689,7 +684,8 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         gridLineup = {},
         gridPositions = {},
         useRaceResults = false,
-        map = rdata.map
+        map = rdata.map,
+        checkpointTimes = {}
     }
 
     if(rdata.map ~= "") then
@@ -1766,18 +1762,18 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
             print(("Comparing to Racer with source %i"):format(otherRacerSource))
             if (otherRacer.waypointsPassed >= waypointsPassed and otherRacer.waypointsPassed > 0) then
                 --Racer is ahead so get their time at this checkpoint
-                racerTimeSplit = checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
-                otherRacerTimeSplit = raceTime - checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
+                racerTimeSplit = race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
+                otherRacerTimeSplit = raceTime - race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
             elseif (otherRacer.waypointsPassed < 1) then
                 --Other Racer hasn't hit a checkpoint use race Start time
-                table.insert(checkpointTimes, {})
+                table.insert(race.checkpointTimes, {})
                 racerTimeSplit = raceTime - race.raceStart
                 otherRacerTimeSplit = race.raceStart - raceTime
             else
                 --Racer is behind compare times at their waypoint
-                table.insert(checkpointTimes, {})
-                racerTimeSplit = raceTime - checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
-                otherRacerTimeSplit = checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
+                table.insert(race.checkpointTimes, {})
+                racerTimeSplit = raceTime - race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
+                otherRacerTimeSplit = race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
             end
             TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
             TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
@@ -1787,10 +1783,10 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
     end
 
     if (#race.players  == 1) then
-        table.insert(checkpointTimes, {})
+        table.insert(race.checkpointTimes, {})
     end
 
-    checkpointTimes[waypointsPassed][source] = raceTime
+    race.checkpointTimes[waypointsPassed][source] = raceTime
 end)
 
 RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
