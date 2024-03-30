@@ -9,25 +9,25 @@ function FileManager:New(o)
     return o
 end
 
-function FileManager:SaveRacesFile(filename, data, length)
+function FileManager:SaveCurrentResourceFile(filename, data, length)
     if (length == nil) then length = -1 end
     return toBoolean(SaveResourceFile(GetCurrentResourceName(), filename, data, length))
 end
 
-function FileManager:SaveRacesFileJson(filename, data, length)
-    return self:SaveRacesFile(filename .. '.json', json.encode(data), length)
+function FileManager:SaveCurrentResourceFileJson(filename, data, length)
+    return self:SaveCurrentResourceFile(filename .. '.json', json.encode(data), length)
 end
 
-function FileManager:LoadRacesFile(filename)
+function FileManager:LoadCurrentResourceFile(filename)
     return LoadResourceFile(GetCurrentResourceName(), filename)
 end
 
-function FileManager:LoadRacesFileJson(filename)
-    return json.decode(self:LoadRacesFile(filename .. '.json'))
+function FileManager:LoadCurrentResourceFileJson(filename)
+    return json.decode(self:LoadCurrentResourceFile(filename .. '.json'))
 end
 
-function FileManager:createFileIfEmpty(fileName)
-    if self:LoadRacesFile(fileName) == nil then
-        self:SaveRacesFile(fileName, {})
+function FileManager:CreateFileIfEmpty(fileName)
+    if self:LoadCurrentResourceFile(fileName) == nil then
+        self:SaveCurrentResourceFile(fileName, {})
     end
 end
