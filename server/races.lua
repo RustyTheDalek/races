@@ -11,38 +11,12 @@ local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, 
 local checkpointTimes = {}
 
 local racesMapManager = RacesMapManager:New()
+local fileManager = FileManager:New()
 
 local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 
-local function SaveRacesFile(filename, data, length)
-    if (length == nil) then length = -1 end
-    return toBoolean(SaveResourceFile(GetCurrentResourceName(), filename, data, length))
-end
-
-local function SaveRacesFileJson(filename, data, length)
-    return SaveRacesFile(filename .. '.json', json.encode(data), length)
-end
-
-local function LoadRacesFile(filename)
-    return LoadResourceFile(GetCurrentResourceName(), filename)
-end
-
-local function LoadRacesFileJson(filename)
-    return json.decode(LoadRacesFile(filename .. '.json'))
-end
-
-local function createFileIfEmpty(fileName)
-    if LoadRacesFile(fileName) == nil then
-        SaveRacesFile(fileName, {})
-    end
-end
-
-local function loadConfig()
-    return LoadRacesFileJson('config')
-end
-
-createFileIfEmpty('raceData.json')
-createFileIfEmpty('vehicleListData.json')
+fileManager:createFileIfEmpty('raceData.json')
+fileManager:createFileIfEmpty('vehicleListData.json')
 
 local function map(tbl, f)
     local t = {}
@@ -73,7 +47,7 @@ local function sendMessage(source, msg)
 end
 
 local function getTrack(trackName)
-    local track = LoadRacesFileJson(trackName)
+    local track = fileManager:LoadRacesFileJson(trackName)
     if track ~= nil then
         if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
             if #track.waypointCoords > 1 then
@@ -106,17 +80,17 @@ end
 
 local function export(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadRacesFileJson('raceData')
+        local raceData = fileManager:LoadRacesFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
                 if publicTracks[trackName] ~= nil then
-                    local track = LoadRacesFileJson(trackName)
+                    local track = fileManager:LoadRacesFileJson(trackName)
                     if track == fail then
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
-                        if true == SaveRacesFileJson(trackName, publicTracks[trackName]) then
+                        if true == fileManager:SaveRacesFileJson(trackName, publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
                         else
@@ -143,7 +117,7 @@ end
 
 local function import(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = LoadRacesFileJson('raceData')
+        local raceData = fileManager:LoadRacesFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"] ~= nil and raceData["PUBLIC"] or {}
             if nil == publicTracks[trackName] then
@@ -154,7 +128,7 @@ local function import(trackName, withBLT)
                     end
                     publicTracks[trackName] = track
                     raceData["PUBLIC"] = publicTracks
-                    if true == SaveRacesFileJson('raceData', raceData) then
+                    if true == fileManager:SaveRacesFileJson('raceData', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
                     else
@@ -177,7 +151,7 @@ local function import(trackName, withBLT)
 end
 
 local function updateRaceData()
-    local raceData = LoadRacesFileJson('raceData')
+    local raceData = fileManager:LoadRacesFileJson('raceData')
     if raceData ~= nil then
         local update = false
         local newRaceData = {}
@@ -202,7 +176,7 @@ local function updateRaceData()
             end
         end
         if true == update then
-            if true == SaveRacesFileJson('raceData_updated', newRaceData) then
+            if true == fileManager:SaveRacesFileJson('raceData_updated', newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
             else
@@ -218,7 +192,7 @@ end
 
 local function updateTrack(trackName)
     if trackName ~= nil then
-        local track = LoadRacesFileJson(trackName)
+        local track = fileManager:LoadRacesFileJson(trackName)
         if track ~= nil then
             if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
                 if #track.waypointCoords > 1 then
@@ -250,7 +224,7 @@ local function updateTrack(trackName)
                             end
                         end
 
-                        if true == SaveRacesFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                        if true == fileManager:SaveRacesFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
                                 trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
@@ -277,7 +251,7 @@ end
 local function loadTrack(isPublic, source, trackName)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadRacesFileJson('raceData')
+        local raceData = fileManager:LoadRacesFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -298,7 +272,7 @@ end
 local function saveTrack(isPublic, source, trackName, track)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = LoadRacesFileJson('raceData')
+        local raceData = fileManager:LoadRacesFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -306,7 +280,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            local saveRaceResult = SaveRacesFileJson('raceData', raceData)
+            local saveRaceResult = fileManager:SaveRacesFileJson('raceData', raceData)
             if saveRaceResult == 1 or saveRaceResult == true then
                 return true
             else
@@ -324,7 +298,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadRacesFileJson('vehicleListData')
+        local vehicleListData = fileManager:LoadRacesFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -345,7 +319,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = LoadRacesFileJson('vehicleListData')
+        local vehicleListData = fileManager:LoadRacesFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -353,7 +327,7 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
             local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
             lists[name] = vehicleList
             vehicleListData[license] = lists
-            if true == SaveRacesFileJson('vehicleListData', vehicleListData) then
+            if true == fileManager:SaveRacesFileJson('vehicleListData', vehicleListData) then
                 return true
             else
                 notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
@@ -458,7 +432,7 @@ end
 local function save_result_csv(trackName, results)
     local date = os.date("%d_%m", os.time())
     local resultsFileName = ('/results/%s_%s_results.csv'):format(trackName, date)
-    local saveCSVResults = SaveRacesFile(resultsFileName, results)
+    local saveCSVResults = fileManager:SaveRacesFile(resultsFileName, results)
 
     if (saveCSVResults == nil) then
         print("Error saving file '" .. resultsFilePath)
@@ -529,7 +503,7 @@ local function saveResults(race)
 
     save_result_csv(race.trackName, race_results_data)
 
-    if (SaveRacesFile('results_' .. race.owner .. ".txt", msg) == nil) then
+    if (fileManager:SaveRacesFile('results_' .. race.owner .. ".txt", msg) == nil) then
         print('Error Saving file file results_' .. race.owner .. '.txt')
     end
 end
@@ -900,7 +874,7 @@ AddEventHandler("races:init", function()
         end
     end
 
-    local allVehicles = LoadRacesFileJson('vehicles')
+    local allVehicles = fileManager:LoadRacesFileJson('vehicles')
 
     if (allVehicles == nil) then
         notifyPlayer(source, "Error opening file vehicles.json for read")
@@ -912,7 +886,7 @@ AddEventHandler("races:init", function()
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 
-    local configData = loadConfig()
+    local configData = fileManager:LoadRacesFileJson('config')
 
     racesMapManager:LoadConfig(configData['mapManager'])
 
@@ -1036,7 +1010,7 @@ AddEventHandler("races:list", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadRacesFileJson('raceData')
+            local raceData = fileManager:LoadRacesFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1436,7 +1410,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadRacesFileJson('vehicleListData')
+            local vehicleListData = fileManager:LoadRacesFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1710,7 +1684,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = LoadRacesFileJson('raceData')
+            local raceData = fileManager:LoadRacesFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1743,7 +1717,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = LoadRacesFileJson('vehicleListData')
+            local vehicleListData = fileManager:LoadRacesFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
