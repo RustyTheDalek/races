@@ -14,31 +14,6 @@ local racesMapManager = RacesMapManager:New()
 
 local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 
-function explode(inputstr, sep)
-    if sep == nil then
-        sep = "%s"
-    end
-    local t = {}
-    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
-    return t
-end
-
-function removeDuplicates(table)
-    local hash = {}
-    local res = {}
-
-    for _, v in ipairs(table) do
-        if (not hash[v]) then
-            res[#res + 1] = v
-            hash[v] = true
-        end
-    end
-
-    return res
-end
-
 local function SaveRacesFile(filename, data, length)
     if (length == nil) then length = -1 end
     return toBoolean(SaveResourceFile(GetCurrentResourceName(), filename, data, length))
