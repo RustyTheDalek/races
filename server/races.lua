@@ -1448,29 +1448,6 @@ AddEventHandler("races:removeFromLeaderboard", function(raceIndex)
     TriggerEventForRacers(raceIndex, "races:removeFromLeaderboard", source)
 end)
 
-RegisterNetEvent("races:rivals")
-AddEventHandler("races:rivals", function(rIndex)
-    local source = source
-    if rIndex ~= nil then
-        if races[rIndex] ~= nil then
-            local names = {}
-            for _, player in pairs(races[rIndex].players) do
-                names[#names + 1] = player.playerName
-            end
-            table.sort(names)
-            local msg = "Competitors:\n"
-            for _, name in ipairs(names) do
-                msg = msg .. name .. "\n"
-            end
-            notifyPlayer(source, msg)
-        else
-            notifyPlayer(source, "Cannot list competitors.  Race does not exist.\n")
-        end
-    else
-        notifyPlayer(source, "Ignoring rivals event.  Invalid parameters.\n")
-    end
-end)
-
 function JoinRacer(source, rIndex)
     if rIndex ~= nil then
         if races[rIndex] ~= nil then

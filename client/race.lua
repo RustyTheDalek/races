@@ -852,14 +852,6 @@ local function endrace()
     TriggerServerEvent("races:endrace")
 end
 
-local function rivals()
-    if racingStates.Joining == raceState or racingStates.Racing == raceState then
-        TriggerServerEvent("races:rivals", raceIndex)
-    else
-        sendMessage("Cannot list competitors.  Not joined to any race.\n")
-    end
-end
-
 local function repairVehicle(vehicle)
     SetVehicleEngineHealth(vehicle, 1000.0)
     SetVehicleBodyHealth(vehicle, 1000.0)
@@ -1335,10 +1327,6 @@ RegisterNUICallback("leave", function()
     leave()
 end)
 
-RegisterNUICallback("rivals", function()
-    rivals()
-end)
-
 RegisterNUICallback("respawn", function()
     respawn()
 end)
@@ -1501,7 +1489,6 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races vl listLsts [access] - list saved private or public vehicle lists\n"
         msg = msg .. "\n"
         msg = msg .. "/races leave - leave a race that you joined\n"
-        msg = msg .. "/races rivals - list competitors in a race that you joined\n"
         msg = msg .. "/races respawn - respawn at last waypoint\n"
         msg = msg .. "/races results - view latest race results\n"
         msg = msg .. "/races spawn (vehicle) - spawn a vehicle; (vehicle) defaults to 'adder'\n"
@@ -1589,8 +1576,6 @@ RegisterCommand("races", function(_, args)
         leave()
     elseif "end" == args[1] then
         endrace()
-    elseif "rivals" == args[1] then
-        rivals()
     elseif "respawn" == args[1] then
         respawn()
     elseif "results" == args[1] then

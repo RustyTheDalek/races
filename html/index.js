@@ -239,11 +239,7 @@ $(function () {
     $("#leave").click(function () {
         $.post("https://races/leave");
     });
-
-    $("#rivals").click(function () {
-        $.post("https://races/rivals");
-    });
-
+    
     $("#respawn").click(function () {
         $.post("https://races/respawn");
     });

@@ -44,7 +44,6 @@ For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt
 **`/races vl listLsts [access]`** - list saved private or public vehicle lists
 
 **`/races leave`** - leave a race that you joined\
-**`/races rivals`** - list competitors in a race that you joined\
 **`/races respawn`** - respawn at last waypoint\
 **`/races results`** - view latest race results\
 **`/races spawn (vehicle)`** - spawn a vehicle; (vehicle) defaults to 'adder'\
@@ -258,8 +257,6 @@ If the race is restricted to specific vehicle, its name is shown at the registra
 If the race is restricted to a specific vehicle class, the class name and number is shown at the registration waypoint.  You must be in a vehicle of the restricted class to join the race.  If the class is Custom (-1), you can view which vehicles are allowed in the race by getting out of any vehicle you are in, walking into the registration waypoint on foot and trying to join the race.  The chat window will list which vehicles you can use in the class Custom (-1) race.  If the class is not Custom (-1), you can list vehicles of the class by typing **`/races lvehicles [class]`** where [class] is the vehicle class number.
 
 To join the race, type 'E' or press right DPAD.  Joining the race will clear any waypoints you previously set and load the track waypoints.  **NOTE THAT YOU CANNOT JOIN A RACE IF YOU ARE EDITING WAYPOINTS.  STOP EDITING FIRST.**  You can only join one race at a time.  If you want to join another race, leave your current one first.  **IF YOU DO NOT JOIN THE RACE YOU REGISTERED, YOU WILL NOT SEE THE RESULTS OF THE RACE.**
-
-To list all competitors in the race that you joined, type **`/races rivals`**.  You will not be able to see competitors if you have not joined a race.  If you cannot see all the competitors, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
 
 To respawn at the last waypoint the player has passed in a race type **`/races respawn`**.  You can also press 'X' on a keyboard, 'A' button on an Xbox controller or 'Cross' button on a DualShock controller for one second to respawn.  You can only respawn if you are currently in a race.
 
