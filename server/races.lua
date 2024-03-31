@@ -306,56 +306,11 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
     return false
 end
 
-local function getClassName(vclass)
-    if -1 == vclass then
-        return "'Custom'(-1)"
-    elseif 0 == vclass then
-        return "'Compacts'(0)"
-    elseif 1 == vclass then
-        return "'Sedans'(1)"
-    elseif 2 == vclass then
-        return "'SUVs'(2)"
-    elseif 3 == vclass then
-        return "'Coupes'(3)"
-    elseif 4 == vclass then
-        return "'Muscle'(4)"
-    elseif 5 == vclass then
-        return "'Sports Classics'(5)"
-    elseif 6 == vclass then
-        return "'Sports'(6)"
-    elseif 7 == vclass then
-        return "'Super'(7)"
-    elseif 8 == vclass then
-        return "'Motorcycles'(8)"
-    elseif 9 == vclass then
-        return "'Off-road'(9)"
-    elseif 10 == vclass then
-        return "'Industrial'(10)"
-    elseif 11 == vclass then
-        return "'Utility'(11)"
-    elseif 12 == vclass then
-        return "'Vans'(12)"
-    elseif 13 == vclass then
-        return "'Cycles'(13)"
-    elseif 14 == vclass then
-        return "'Boats'(14)"
-    elseif 15 == vclass then
-        return "'Helicopters'(15)"
-    elseif 16 == vclass then
-        return "'Planes'(16)"
-    elseif 17 == vclass then
-        return "'Service'(17)"
-    elseif 18 == vclass then
-        return "'Emergency'(18)"
-    elseif 19 == vclass then
-        return "'Military'(19)"
-    elseif 20 == vclass then
-        return "'Commercial'(20)"
-    elseif 21 == vclass then
-        return "'Trains'(21)"
-    else
-        return "'Unknown'(" .. vclass .. ")"
-    end
+local function updateBestLapTimes(rIndex)
+
+    if(races[rIndex] == nil) then
+        print("No Race with that index")
+        return
 end
 
 local function updateBestLapTimes(rIndex)
