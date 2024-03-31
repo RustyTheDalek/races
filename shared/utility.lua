@@ -195,3 +195,10 @@ function getClassName(vclass)
         return "'Unknown'(" .. vclass .. ")"
     end
 end
+
+function minutesSeconds(milliseconds)
+    local seconds = milliseconds / 1000.0
+    local minutes = math.floor(seconds / 60.0)
+    seconds = seconds - minutes * 60.0
+    return minutes, seconds
+end

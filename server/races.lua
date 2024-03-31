@@ -342,12 +342,6 @@ local function updateBestLapTimes(rIndex)
     end
 end
 
-local function minutesSeconds(milliseconds)
-    local seconds = milliseconds / 1000.0
-    local minutes = math.floor(seconds / 60.0)
-    seconds = seconds - minutes * 60.0
-    return minutes, seconds
-end
 
 local function save_result_csv(trackName, results)
     local date = os.date("%d_%m", os.time())
