@@ -262,6 +262,10 @@ function Track:LoadWaypointBlips(waypointCoords)
     self:DeleteWaypointBlips()
     self.waypoints = {}
 
+    if(waypointCoords == nil or #waypointCoords == 0 ) then
+        return
+    end
+
     for i = 1, #waypointCoords - 1 do
         local blip = AddBlipForCoord(waypointCoords[i].x, waypointCoords[i].y, waypointCoords[i].z)
         self.waypoints[i] = { coord = waypointCoords[i], checkpoint = nil, blip = blip, sprite = -1, color = -1, number = -1,
