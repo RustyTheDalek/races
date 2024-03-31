@@ -249,7 +249,9 @@ local function switchVehicle(ped, vehicleHash)
         if(CarTierUIActive()) then
             print("cartierspawn")
             vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
-        else 
+            raceVehicleHash = GetEntityModel(vehicle)
+            raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
+        else
             print("defaultspawn")
             local pedVehicle = GetVehiclePedIsIn(ped, false)
             if pedVehicle ~= 0 then
@@ -882,6 +884,11 @@ local function respawn()
                 print("carTierSpawn")
                 vehicle = exports.CarTierUI:RequestVehicle(raceVehicleName)
                 raceVehicleHash = GetEntityModel(vehicle)
+                SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
+                SetEntityHeading(vehicle, coord.heading)
+                SetVehicleEngineOn(vehicle, true, true, false)
+                SetVehRadioStation(vehicle, "OFF")
+                SetPedIntoVehicle(player, vehicle, -1)
             else
                 print("No vehicle found")
                 RequestModel(raceVehicleName)
@@ -2607,7 +2614,6 @@ function OnNewLap(player)
         end
         UpdateCurrentLap()
         if #randVehicles > 0 then
-            
             local randVehiclesNotUsed = uniqueValues(randVehicles, randVehiclesUsed)
             if(#randVehiclesNotUsed <= 0) then
                 randVehiclesUsed = {}
