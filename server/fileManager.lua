@@ -1,33 +1,24 @@
-FileManager = {
+FileManager = {}
 
-}
-
-function FileManager:New(o)
-    o = o or {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-
-function FileManager:SaveCurrentResourceFile(filename, data, length)
+FileManager.SaveCurrentResourceFile = function(filename, data, length)
     if (length == nil) then length = -1 end
     return toBoolean(SaveResourceFile(GetCurrentResourceName(), filename, data, length))
 end
 
-function FileManager:SaveCurrentResourceFileJson(filename, data, length)
-    return self:SaveCurrentResourceFile(filename .. '.json', json.encode(data), length)
+FileManager.SaveCurrentResourceFileJson = function(filename, data, length)
+    return FileManager.SaveCurrentResourceFile(filename .. '.json', json.encode(data), length)
 end
 
-function FileManager:LoadCurrentResourceFile(filename)
+FileManager.LoadCurrentResourceFile = function(filename)
     return LoadResourceFile(GetCurrentResourceName(), filename)
 end
 
-function FileManager:LoadCurrentResourceFileJson(filename)
-    return json.decode(self:LoadCurrentResourceFile(filename .. '.json'))
+FileManager.LoadCurrentResourceFileJson = function(filename)
+    return json.decode(FileManager.LoadCurrentResourceFile(filename .. '.json'))
 end
 
-function FileManager:CreateFileIfEmpty(fileName)
-    if self:LoadCurrentResourceFile(fileName) == nil then
-        self:SaveCurrentResourceFile(fileName, {})
+FileManager.CreateFileIfEmpty = function(fileName)
+    if FileManager.LoadCurrentResourceFile(fileName) == nil then
+        FileManager.SaveCurrentResourceFile(fileName, {})
     end
 end

@@ -4,15 +4,14 @@ local READY_RACERS_COUNTDOWN = 5000
 local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
 local racesMapManager = RacesMapManager:New()
-local fileManager = FileManager:New()
 
 local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 
-fileManager:CreateFileIfEmpty('raceData.json')
-fileManager:CreateFileIfEmpty('vehicleListData.json')
+FileManager.CreateFileIfEmpty('raceData.json')
+FileManager.CreateFileIfEmpty('vehicleListData.json')
 
 local function getTrack(trackName)
-    local track = fileManager:LoadCurrentResourceFileJson(trackName)
+    local track = FileManager:LoadCurrentResourceFileJson(trackName)
     if track ~= nil then
         if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
             if #track.waypointCoords > 1 then
@@ -45,17 +44,17 @@ end
 
 local function export(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+        local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"]
             if publicTracks ~= nil then
                 if publicTracks[trackName] ~= nil then
-                    local track = fileManager:LoadCurrentResourceFileJson(trackName)
+                    local track = FileManager.LoadCurrentResourceFileJson(trackName)
                     if track == fail then
                         if false == withBLT then
                             publicTracks[trackName].bestLaps = {}
                         end
-                        if true == fileManager:SaveCurrentResourceFileJson(trackName, publicTracks[trackName]) then
+                        if true == FileManager.SaveCurrentResourceFileJson(trackName, publicTracks[trackName]) then
                             local msg = "export: Exported track '" .. trackName .. "'."
                             print(msg)
                         else
@@ -82,7 +81,7 @@ end
 
 local function import(trackName, withBLT)
     if trackName ~= nil then
-        local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+        local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
         if raceData ~= nil then
             local publicTracks = raceData["PUBLIC"] ~= nil and raceData["PUBLIC"] or {}
             if nil == publicTracks[trackName] then
@@ -93,7 +92,7 @@ local function import(trackName, withBLT)
                     end
                     publicTracks[trackName] = track
                     raceData["PUBLIC"] = publicTracks
-                    if true == fileManager:SaveCurrentResourceFileJson('raceData', raceData) then
+                    if true == FileManager.SaveCurrentResourceFileJson('raceData', raceData) then
                         local msg = "import: Imported track '" .. trackName .. "'."
                         print(msg)
                     else
@@ -116,7 +115,7 @@ local function import(trackName, withBLT)
 end
 
 local function updateRaceData()
-    local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+    local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
     if raceData ~= nil then
         local update = false
         local newRaceData = {}
@@ -141,7 +140,7 @@ local function updateRaceData()
             end
         end
         if true == update then
-            if true == fileManager:SaveCurrentResourceFileJson('raceData_updated', newRaceData) then
+            if true == FileManager.SaveCurrentResourceFileJson('raceData_updated', newRaceData) then
                 local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
                 print(msg)
             else
@@ -157,7 +156,7 @@ end
 
 local function updateTrack(trackName)
     if trackName ~= nil then
-        local track = fileManager:LoadCurrentResourceFileJson(trackName)
+        local track = FileManager.LoadCurrentResourceFileJson(trackName)
         if track ~= nil then
             if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
                 if #track.waypointCoords > 1 then
@@ -189,7 +188,7 @@ local function updateTrack(trackName)
                             end
                         end
 
-                        if true == fileManager:SaveCurrentResourceFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
+                        if true == FileManager.SaveCurrentResourceFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
                             local msg = "updateTrack: '" ..
                                 trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
                             print(msg)
@@ -216,7 +215,7 @@ end
 local function loadTrack(isPublic, source, trackName)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+        local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -237,7 +236,7 @@ end
 local function saveTrack(isPublic, source, trackName, track)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+        local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
         if raceData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -245,7 +244,7 @@ local function saveTrack(isPublic, source, trackName, track)
             local tracks = raceData[license] ~= nil and raceData[license] or {}
             tracks[trackName] = track
             raceData[license] = tracks
-            local saveRaceResult = fileManager:SaveCurrentResourceFileJson('raceData', raceData)
+            local saveRaceResult = FileManager.SaveCurrentResourceFileJson('raceData', raceData)
             if saveRaceResult == 1 or saveRaceResult == true then
                 return true
             else
@@ -263,7 +262,7 @@ end
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = fileManager:LoadCurrentResourceFileJson('vehicleListData')
+        local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -284,7 +283,7 @@ end
 local function saveVehicleList(isPublic, source, name, vehicleList)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
     if license ~= nil then
-        local vehicleListData = fileManager:LoadCurrentResourceFileJson('vehicleListData')
+        local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
         if vehicleListData ~= nil then
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
@@ -292,7 +291,7 @@ local function saveVehicleList(isPublic, source, name, vehicleList)
             local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
             lists[name] = vehicleList
             vehicleListData[license] = lists
-            if true == fileManager:SaveCurrentResourceFileJson('vehicleListData', vehicleListData) then
+            if true == FileManager.SaveCurrentResourceFileJson('vehicleListData', vehicleListData) then
                 return true
             else
                 notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
@@ -311,116 +310,11 @@ local function updateBestLapTimes(rIndex)
     if(races[rIndex] == nil) then
         print("No Race with that index")
         return
+    end
+
+    races[rIndex]:UpdateBestLapTimes(rIndex)
 end
 
-local function updateBestLapTimes(rIndex)
-    local track = loadTrack(races[rIndex].isPublic, rIndex, races[rIndex].trackName)
-    if track ~= nil then -- saved track still exists - not deleted in middle of race
-        local bestLaps = track.bestLaps
-        for _, result in pairs(races[rIndex].results) do
-            if result.bestLapTime ~= -1 then
-                bestLaps[#bestLaps + 1] = {
-                    playerName = result.playerName,
-                    bestLapTime = result.bestLapTime,
-                    vehicleName =
-                        result.vehicleName
-                }
-            end
-        end
-        table.sort(bestLaps, function(p0, p1)
-            return p0.bestLapTime < p1.bestLapTime
-        end)
-        for i = 11, #bestLaps do
-            bestLaps[i] = nil
-        end
-        track.bestLaps = bestLaps
-        if false == saveTrack(races[rIndex].isPublic, rIndex, races[rIndex].trackName, track) then
-            notifyPlayer(rIndex, "Save error updating best lap times.\n")
-        end
-    else
-        notifyPlayer(rIndex, "Cannot save best lap times.  Track '" .. races[rIndex].trackName .. "' has been deleted.\n")
-    end
-end
-
-
-local function save_result_csv(trackName, results)
-    local date = os.date("%d_%m", os.time())
-    local resultsFileName = ('/results/%s_%s_results.csv'):format(trackName, date)
-    local saveCSVResults = fileManager:SaveCurrentResourceFile(resultsFileName, results)
-
-    if (saveCSVResults == nil) then
-        print("Error saving file '" .. resultsFilePath)
-    end
-end
-
-local function saveResults(race)
-    -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
-    local msg = "Race using "
-    if nil == race.trackName then
-        msg = msg .. "unsaved track "
-    else
-        msg = msg .. (true == race.isPublic and "publicly" or "privately") .. " saved track '" .. race.trackName .. "' "
-    end
-    msg = msg ..
-        ("registered by %s : tier %s : SpecialClass %s : %d lap(s)"):format(race.owner, race.tier, race.specialClass,
-            race.laps)
-    if "rest" == race.rtype then
-        msg = msg .. " : using '" .. race.restrict .. "' vehicle"
-    elseif "class" == race.rtype then
-        msg = msg .. " : using " .. getClassName(race.vclass) .. " vehicle class"
-    elseif "rand" == race.rtype then
-        msg = msg .. " : using random "
-        if race.vclass ~= nil then
-            msg = msg .. getClassName(race.vclass) .. " vehicle class"
-        else
-            msg = msg .. "vehicles"
-        end
-        if race.svehicle ~= nil then
-            msg = msg .. " : '" .. race.svehicle .. "'"
-        end
-    elseif "wanted" == race.rtype then
-        msg = msg .. " : using wanted race mode"
-    end
-    msg = msg .. "\n"
-
-    local race_results_data = ""
-
-    if #race.results > 0 then
-        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
-        msg = msg .. "Results:\n"
-        for pos, result in ipairs(race.results) do
-            local best_minutes = 99
-            local best_seconds = 99
-
-            if -1 == result.finishTime then
-                msg = msg .. "DNF - " .. result.playerName
-            else
-                local fMinutes, fSeconds = minutesSeconds(result.finishTime)
-                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
-                msg = msg ..
-                    ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                        result.playerName, best_minutes, best_seconds, result.vehicleName)
-            end
-
-            if result.bestLapTime >= 0 then
-                best_minutes, best_seconds = minutesSeconds(result.bestLapTime)
-                msg = msg .. (" - best lap %02d:%05.2f using %s"):format(best_minutes, best_seconds, result.vehicleName)
-            end
-            msg = msg .. "\n"
-
-            local race_results_line = ("%d,%s,%02d:%05.2f,\n"):format(pos, result.playerName, best_minutes, best_seconds)
-            race_results_data = race_results_data .. race_results_line
-        end
-    else
-        msg = msg .. "No results.\n"
-    end
-
-    save_result_csv(race.trackName, race_results_data)
-
-    if (fileManager:SaveCurrentResourceFile('results_' .. race.owner .. ".txt", msg) == nil) then
-        print('Error Saving file file results_' .. race.owner .. '.txt')
-    end
-end
 
 --In cases where you need to trigger a simple event for all players in a race
 local function TriggerEventForRacers(raceIndex, event, ...)
@@ -432,30 +326,6 @@ local function TriggerEventForRacers(raceIndex, event, ...)
     races[raceIndex]:TriggerEventForRacers(event, ...)
 
 end
-
-local function SetNextGridLineup(race)
-    race.useRaceResults = true
-    for k in next, race.gridLineup do rawset(race.gridLineup, k, nil) end
-
-    -- print(gridLineup)
-    -- print(gridLineup[1])
-    -- print(#gridLineup)
-
-    -- print("Grid lineup setup")
-    -- print(string.format("Total results: %i", #results))
-    for i = 1, #race.results do
-        -- print(string.format("Index: %i", #results + 1 - i))
-        local racer = race.results[#race.results + 1 - i]
-        --print("Player " .. racer.playerName)
-        --print("Source " .. racer.source)
-        table.insert(race.gridLineup, racer.source)
-    end
-
-    -- print(gridLineup)
-    -- print(#gridLineup)
-end
-
-local gridSeparation <const> = 5
 
 local function GenerateStartingGrid(startWaypoint, numRacers)
     local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
@@ -491,94 +361,10 @@ local function GenerateStartingGrid(startWaypoint, numRacers)
     return gridPositions
 end
 
-local function OnPlayerLeave(race, rIndex, source)
-    print("On Player Leave called")
-    race.numRacing = race.numRacing - 1
-
-    if (race.players[source].ready) then
-        race.numReady = race.numReady - 1
-    end
-
-    TriggerClientEvent("races:leavenotification", -1,
-    string.format(
-        "%s has left Race %s",
-        race.players[source].playerName,
-        race.trackName
-    ),
-    rIndex,
-    race.numRacing,
-    race.waypointCoords[1]
-)
-
-    TriggerClientEvent("races:onleave", source)
-
-    races[rIndex].players[source] = nil
-
-    TriggerEventForRacers(rIndex, "races:onplayerleave", source)
-
-end
-
-local function PlaceRacersOnGrid(gridPositions, race)
-
-    local heading = race.waypointCoords[1].heading
-
-    local index = 1
-    for _, player in pairs(race.gridLineup) do
-        local gridPosition = gridPositions[index]
-        print(dump(gridPosition))
-        TriggerClientEvent("races:teleportplayer", player, gridPosition, heading)
-        index = index + 1
-    end
-end
-
-local function setupGrid(raceIndex)
-    local gridPositions = GenerateStartingGrid(races[raceIndex].waypointCoords[1], races[raceIndex].numRacing)
-
-    if (gridPositions ~= nil) then
-        TriggerEventForRacers(raceIndex, "races:spawncheckpoints", gridPositions)
-        PlaceRacersOnGrid(gridPositions, races[raceIndex])
-    end
-end
-
-local function StartRaceCountdown(raceIndex)
-    for source,_ in pairs(races[raceIndex].players) do
-        TriggerClientEvent("races:startPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
-    end
-    races[raceIndex].countdown = true
-    races[raceIndex].countdownTimeStart = GetGameTimer()
-end
-
-local function StopRaceCountdown(raceIndex)
-    for source,_ in pairs(races[raceIndex].players) do
-        TriggerClientEvent("races:stopPreRaceCountdown", source, READY_RACERS_COUNTDOWN)
-    end
-    races[raceIndex].countdown = false
-    races[raceIndex].countdownTimeStart = 0
-end
-
-local function CheckReady(race, raceIndex)
-    if(race.numRacing == 0 ) then
-        return
-    end
-
-    if race.numReady == race.numRacing and race.countdown == false then
-        StartRaceCountdown(raceIndex)
-    end
-
-    if race.countdown == true and race.numReady ~= race.numRacing then
-        StopRaceCountdown(raceIndex)
-    end
-end
-
-local function ProcessReadyCountdown(raceIndex)
-    if GetGameTimer() - races[raceIndex].countdownTimeStart > READY_RACERS_COUNTDOWN then
-        --START races
-        StartRace(races[raceIndex], raceIndex, Config.data.races.defaultStartDelay)
-    end
-end
-
 local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, timeout, laps, rdata)
-    races[source] = {
+
+    races[source] = RaceEvent:New({
+        index = source,
         raceStart = 0,
         raceTime = 0,
         state = racingStates.Registering,
@@ -606,14 +392,14 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         useRaceResults = false,
         map = rdata.map,
         checkpointTimes = {}
-    }
+    })
 
     if(rdata.map ~= "") then
         print(("Map data, loading %s"):format(rdata.map))
         racesMapManager:LoadMap(rdata.map)
     end
 
-end
+end 
 
 RegisterNetEvent("ghosting:setplayeralpha")
 AddEventHandler('ghosting:setplayeralpha', function(alphaValue)
@@ -720,36 +506,7 @@ AddEventHandler("playerDropped", function()
     -- make sure this is last code block in function because of early return if player found in race
     -- remove dropped player from the race they are joined to
     for i, race in pairs(races) do
-        if (race.players[source] ~= nil) then
-            local player = race.players[source]
-            --Remove player from gridLineup
-            for j = 1, #race.gridLineup do
-                if race.gridLineup[j] == source then
-                    table.remove(race.gridLineup, j)
-                    break
-                end
-            end
-
-            if racingStates.Registering == race.state then
-                print("removing racer from race")
-
-                OnPlayerLeave(race, i, source)
-                --TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
-            else
-                TriggerEvent("races:removeFromLeaderboard", source)
-
-                local finishData = {
-                    raceIndex = source,
-                    playerName = nil,
-                    data = 0,
-                    bestLapTime = -1,
-                    bestLapVehicleName = ""
-                }
-
-                TriggerEvent("races:finish", i, finishData)
-            end
-            return
-        end
+        race:OnPlayerDropped(i, source)
     end
 end)
 
@@ -770,25 +527,10 @@ AddEventHandler("races:init", function()
 
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
-        if racingStates.Registering == race.state then
-            local rdata = {
-                rtype = race.rtype,
-                restrict = race.restrict,
-                vclass = race.vclass,
-                svehicle = race.svehicle,
-                vehicleList = race.vehicleList,
-                specialClass = race.specialClass,
-                tier = race.tier,
-                laps = race.laps,
-                timeout = race.timeout
-            }
-
-            TriggerClientEvent("races:register", source, rIndex, race.waypointCoords[1], race.isPublic, race.trackName,
-                race.owner, rdata)
-        end
+        race:Setup(source)
     end
 
-    local allVehicles = fileManager:LoadCurrentResourceFileJson('vehicles')
+    local allVehicles = FileManager.LoadCurrentResourceFileJson('vehicles')
 
     if (allVehicles == nil) then
         notifyPlayer(source, "Error opening file vehicles.json for read")
@@ -800,7 +542,7 @@ AddEventHandler("races:init", function()
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 
-    local configData = fileManager:LoadCurrentResourceFileJson('config')
+    local configData = FileManager.LoadCurrentResourceFileJson('config')
 
     racesMapManager:LoadConfig(configData['mapManager'])
 
@@ -924,7 +666,7 @@ AddEventHandler("races:list", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+            local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1060,21 +802,20 @@ end)
 RegisterNetEvent("races:unregister")
 AddEventHandler("races:unregister", function()
     local source = source
-    if races[source] ~= nil then
-        races[source] = nil
-        for k in next, races[source].gridLineup do rawset(races[source].gridLineup, k, nil) end
-        TriggerClientEvent("races:unregister", -1, source)
-        notifyPlayer(source, "Race unregistered.\n")
-    else
+    if races[source] == nil then
         notifyPlayer(source, "Cannot unregister.  No race registered.\n")
     end
+
+    races[source]:Unregister()
+    races[source] = nil
+
 end)
 
 RegisterNetEvent("races:endrace")
 AddEventHandler("races:endrace", function()
     local source = source
     if races[source] ~= nil then
-        TriggerEventForRacers(source, "races:leave")
+        races:TriggerEventForRacers("races:leave")
         notifyPlayer(source, "Race Ended.\n")
     else
         notifyPlayer(source, "Cannot End race.  You have no active race.\n")
@@ -1095,7 +836,7 @@ AddEventHandler("races:grid", function()
         notifyPlayer(source, "Cannot setup grid.  Race in progress.\n")
     end
 
-    setupGrid(source)
+    races[source]:SetupGrid()
 
 end)
 
@@ -1126,7 +867,7 @@ AddEventHandler("races:autojoin", function()
         JoinRacer(tonumber(otherPlayerSource), source)
     end
 
-    setupGrid(source)
+    races[source]:SetupGrid()
 
 end)
 
@@ -1138,51 +879,8 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
         return
     end
 
-    local numReady = races[raceIndex].numReady
-    local numRacing = races[raceIndex].numRacing
-
-    if ready then
-        numReady = numReady + 1
-    else
-        numReady = numReady - 1
-    end
-
-    if numReady < 0 then
-        numReady = 0
-    end
-
-    if numReady > numRacing then
-        numReady = numRacing
-    end
-
-    print(source)
-    print(dump(races[raceIndex].players))
-    print(dump(races[raceIndex].players["1"]))
-    print(dump(races[raceIndex].players[source]))
-
-    races[raceIndex].players[source].ready = ready
-    races[raceIndex].numReady = numReady
-    races[raceIndex].numRacing = numRacing
-
-    TriggerEventForRacers(raceIndex, "races:sendReadyData", ready, source, GetPlayerName(source))
+    races[raceIndex]:ReadyStateChange(source, ready)
 end)
-
---source is the source of racerOwner which is also the race's index
-function StartRace(race, source, delay)
-    race.countdown = false
-    race.countdownTimeStart = 0
-    StartRaceDelay(race, delay)
-    TriggerEventForRacers(source, "races:start", source, delay)
-    TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
-    notifyPlayer(source, "Race started.\n")
-end
-
-function StartRaceDelay(race, delay)
-    race.state = racingStates.RaceCountdown
-    race.fiveSecondWarning = false
-    race.delayTimer = Timer:New()
-    race.delayTimer:Start(delay * 1000)
-end
 
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay, override)
@@ -1190,41 +888,15 @@ AddEventHandler("races:start", function(delay, override)
 
     local race = races[source]
 
-    if delay ~= nil then
-        if race ~= nil then
-            if racingStates.Registering == race.state then
-                if delay >= 5 then
-                    if race.numRacing > 0 then
-                        if (race.numReady ~= race.numRacing and override == false) then
-                            notifyPlayer(source, "Cannot start. Not all Players ready.\n")
-                            return
-                        end
-
-                        if race.countdown == true then
-                            StopRaceCountdown(source)
-                        end
-
-                        StartRaceDelay(race, delay)
-
-                        TriggerEventForRacers(source, "races:start", source, delay)
-
-                        TriggerClientEvent("races:hide", -1, source) -- hide race so no one else can join
-                        notifyPlayer(source, "Race started.\n")
-                    else
-                        notifyPlayer(source, "Cannot start.  No players have joined race.\n")
-                    end
-                else
-                    notifyPlayer(source, "Cannot start.  Invalid delay.\n")
-                end
-            else
-                notifyPlayer(source, "Cannot start.  Race in progress.\n")
-            end
-        else
-            notifyPlayer(source, "Cannot start.  Race does not exist.\n")
-        end
-    else
+    if delay == nil then
         notifyPlayer(source, "Ignoring start event.  Invalid parameters.\n")
     end
+
+    if race == nil then
+        notifyPlayer(source, "Cannot start.  Race does not exist.\n")
+    end
+
+    race:Start(delay, override)
 end)
 
 RegisterNetEvent("races:loadLst")
@@ -1324,7 +996,7 @@ AddEventHandler("races:listLsts", function(isPublic)
     if isPublic ~= nil then
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = fileManager:LoadCurrentResourceFileJson('vehicleListData')
+            local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1364,31 +1036,15 @@ end)
 RegisterNetEvent("races:leave")
 AddEventHandler("races:leave", function(rIndex)
     local source = source
-    if rIndex ~= nil then
-        if races[rIndex] ~= nil then
-            if racingStates.Registering == races[rIndex].state then
-                if races[rIndex].players[source] ~= nil then
-                    for i = 1, #races[rIndex].gridLineup do
-                        if races[rIndex].gridLineup[i] == races[rIndex].players[source].source then
-                            table.remove(races[rIndex].gridLineup, i)
-                            break
-                        end
-                    end
-
-                    OnPlayerLeave(races[rIndex], rIndex, source)
-                else
-                    notifyPlayer(source, "Cannot leave.  Not a member of this race.\n")
-                end
-            else
-                -- player will trigger races:finish event
-                notifyPlayer(source, "Cannot leave.  Race in progress.\n")
-            end
-        else
-            notifyPlayer(source, "Cannot leave.  Race does not exist.\n")
-        end
-    else
+    if rIndex == nil then
         notifyPlayer(source, "Ignoring leave event.  Invalid parameters.\n")
     end
+
+    if races[rIndex] == nil then
+        notifyPlayer(source, "Cannot leave.  Race does not exist.\n")
+    end
+
+    races[rIndex]:OnPlayerLeave(source)
 end)
 
 RegisterNetEvent("races:removeFromLeaderboard")
@@ -1397,63 +1053,17 @@ AddEventHandler("races:removeFromLeaderboard", function(raceIndex)
     TriggerEventForRacers(raceIndex, "races:removeFromLeaderboard", source)
 end)
 
+
 function JoinRacer(source, rIndex)
-    if rIndex ~= nil then
-        if races[rIndex] ~= nil then
-            if racingStates.Registering == races[rIndex].state then
-                local playerName = GetPlayerName(source)
-                races[rIndex].numRacing = races[rIndex].numRacing + 1
-
-                TriggerEventForRacers(rIndex, "races:racerJoined", source, playerName)
-
-                races[rIndex].players[source] = {
-                    source = source,
-                    playerName = playerName,
-                    waypointsPassed = -1,
-                    data = -1,
-                    ready = false,
-                    bestLapTime = -1,
-                    bestLapVehicleName = "",
-                    currentLapTimeStart = -1
-                }
-
-                local racerDictionary = mapToArray(races[rIndex].players,
-                    function(racer)
-                        return {
-                            source = racer.source,
-                            playerName = racer.playerName,
-                            ready = racer.ready,
-                        }
-                    end)
-
-                if races[rIndex].useRaceResults == false then
-                    print("No race results, adding racer")
-                    table.insert(races[rIndex].gridLineup, source)
-                end
-
-                local joinNotificationData = {
-                    playerName = playerName,
-                    racerDictionary = racerDictionary,
-                    raceIndex = rIndex,
-                    trackName = races[rIndex].trackName,
-                    numRacing = races[rIndex].numRacing,
-                    waypointCoords = races[rIndex].waypointCoords[1]
-                }
-
-                TriggerClientEvent("races:joinnotification", -1, joinNotificationData)
-
-                TriggerClientEvent("races:join", source, rIndex, races[rIndex].tier, races[rIndex].specialClass,
-                races[rIndex].waypointCoords, racerDictionary)
-
-            else
-                notifyPlayer(source, "Cannot join.  Race in progress.\n")
-            end
-        else
-            notifyPlayer(source, "Cannot join.  Race does not exist.\n")
-        end
-    else
+    if rIndex == nil then
         notifyPlayer(source, "Ignoring join event.  Invalid parameters.\n")
     end
+
+    if races[rIndex] ~= nil then
+        notifyPlayer(source, "Cannot join.  Race does not exist.\n")
+    end
+
+    races[rIndex]:JoinRacer(source)
 end
 
 RegisterNetEvent("races:join")
@@ -1463,108 +1073,45 @@ AddEventHandler("races:join", function(raceIndex)
 end)
 
 RegisterNetEvent("races:finish")
-AddEventHandler("races:finish",
-    function(rIndex, numWaypointsPassed, dnf, altSource)
-        local source = altSource or source
-        if rIndex ~= nil and source ~= nil and numWaypointsPassed ~= nil then
-            local race = races[rIndex]
-            if race ~= nil then
-                if racingStates.Racing == race.state then
-                    if race.players[source] ~= nil then
-                        local finishedRacer = race.players[source]
-                        finishedRacer.numWaypointsPassed = numWaypointsPassed
+AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSource)
+    local source = altSource or source
 
-                        if (dnf) then
-                            finishedRacer.data = -1
-                        else
-                            finishedRacer.data = GetGameTimer() - race.startTime
-                        end
+    if rIndex == nil or source == nil or numWaypointsPassed == nil then
+        notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
+    end
 
-                        print(("Finish Time: %i"):format(finishedRacer.data))
+    local race = races[rIndex]
+    if race == nil then
+        notifyPlayer(source, "Cannot finish.  Race does not exist.\n")
+    end
 
-                        local finishData = {
-                            raceIndex = rIndex,
-                            playerName = finishedRacer.playerName,
-                            finishTime = finishedRacer.data,
-                            bestLapTime = finishedRacer.bestLapTime,
-                            bestLapVehicleName = finishedRacer.bestLapVehicleName
-                        }
+    if(race:Finish(source, numWaypointsPassed, dnf, altSource)) then
 
-                        TriggerEventForRacers(rIndex, "races:finish", finishData)
+        local track = loadTrack(race.isPublic, rIndex, race.trackName)
 
-                        race.results[#race.results + 1] = {
-                            source = source,
-                            playerName = finishedRacer.playerName,
-                            finishTime = finishedRacer.data,
-                            bestLapTime = finishedRacer.bestLapTime,
-                            vehicleName = finishedRacer.bestLapVehicleName
-                        }
+        track.bestLaps = race:GetBestLaps(track.bestLaps)
 
-                        race.numRacing = race.numRacing - 1
-                        if 0 == race.numRacing then
-
-                            table.sort(race.results, function(p0, p1)
-                                return
-                                    (p0.finishTime >= 0 and (-1 == p1.finishTime or p0.finishTime < p1.finishTime)) or
-                                    (-1 == p0.finishTime and -1 == p1.finishTime and (p0.bestLapTime >= 0 and (-1 == p1.bestLapTime or p0.bestLapTime < p1.bestLapTime)))
-                            end)
-
-                            if true == distValid and race.rtype ~= "rand" then
-                                local numRacers = #race.results
-                                local numFinished = 0
-
-                                for i, result in ipairs(race.results) do
-                                    if result.finishTime ~= -1 then
-                                        numFinished = numFinished + 1
-                                    end
-                                end
-                            end
-
-                            TriggerEventForRacers(rIndex, "races:onendrace", rIndex, race.results)
-
-                            saveResults(race)
-
-                            SetNextGridLineup(race)
-
-                            if race.trackName ~= nil then
-                                updateBestLapTimes(rIndex)
-                            end
-
-                            racesMapManager:UnloadMap(race.map)
-
-                            races[rIndex] = nil -- delete race after all players finish
-                        end
-                    else
-                        notifyPlayer(source, "Cannot finish.  Not a member of this race.\n")
-                    end
-                else
-                    notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
-                end
-            else
-                notifyPlayer(source, "Cannot finish.  Race does not exist.\n")
-            end
-        else
-            notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
+        if false == saveTrack(race.isPublic, rIndex, race.trackName, track) then
+            notifyPlayer(rIndex, "Save error updating best lap times.\n")
         end
-    end)
+
+        racesMapManager:UnloadMap(race.map)
+        races[rIndex] = nil
+    end
+end)
 
 RegisterNetEvent("races:report")
 AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance)
     local source = source
-    if rIndex ~= nil and numWaypointsPassed ~= nil and distance ~= nil then
-        if races[rIndex] ~= nil then
-            if races[rIndex].players[source] ~= nil then
-                races[rIndex].players[source].numWaypointsPassed = numWaypointsPassed
-                races[rIndex].players[source].data = distance
-            else
-                notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
-            end
-        else
-            notifyPlayer(source, "Cannot report.  Race does not exist.\n")
-        end
-    else
+    if rIndex == nil or numWaypointsPassed == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
     end
+
+    if races[rIndex] == nil then
+        notifyPlayer(source, "Cannot report.  Race does not exist.\n")
+    end
+
+    races[rIndex]:Report(source, numWaypointsPassed, distance)
 end)
 
 RegisterNetEvent("races:trackNames")
@@ -1575,7 +1122,7 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local raceData = fileManager:LoadCurrentResourceFileJson('raceData')
+            local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
             if raceData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1608,7 +1155,7 @@ AddEventHandler("races:listNames", function(isPublic, altSource)
 
         local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
         if license ~= nil then
-            local vehicleListData = fileManager:LoadCurrentResourceFileJson('vehicleListData')
+            local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
             if vehicleListData ~= nil then
                 if license ~= "PUBLIC" then
                     license = string.sub(license, 9)
@@ -1648,42 +1195,7 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
         return
     end
 
-    local race = races[raceIndex]
-    local raceTime = race.raceTime
-
-    local racerTimeSplit = -1
-    local otherRacerTimeSplit = -1
-
-    for otherRacerSource, otherRacer in pairs(race.players) do
-        if (otherRacerSource ~= source) then
-            print(("Comparing to Racer with source %i"):format(otherRacerSource))
-            if (otherRacer.waypointsPassed >= waypointsPassed and otherRacer.waypointsPassed > 0) then
-                --Racer is ahead so get their time at this checkpoint
-                racerTimeSplit = race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
-                otherRacerTimeSplit = raceTime - race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
-            elseif (otherRacer.waypointsPassed < 1) then
-                --Other Racer hasn't hit a checkpoint use race Start time
-                table.insert(race.checkpointTimes, {})
-                racerTimeSplit = raceTime - race.raceStart
-                otherRacerTimeSplit = race.raceStart - raceTime
-            else
-                --Racer is behind compare times at their waypoint
-                table.insert(race.checkpointTimes, {})
-                racerTimeSplit = raceTime - race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
-                otherRacerTimeSplit = race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - raceTime
-            end
-            TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
-            TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
-        else
-            otherRacer.waypointsPassed = waypointsPassed
-        end
-    end
-
-    if (#race.players  == 1) then
-        table.insert(race.checkpointTimes, {})
-    end
-
-    race.checkpointTimes[waypointsPassed][source] = raceTime
+    races[raceIndex]:SendCheckpointTime(source, waypointsPassed)
 end)
 
 RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
@@ -1694,31 +1206,7 @@ RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
         return
     end
 
-    local race = races[raceIndex]
-    local racer = race.players[source]
-
-    local gameTime = GetGameTimer()
-
-    print(("Time at Lap completion: %i"):format(gameTime))
-
-    --Get Current lap time
-    local currentLapTime = gameTime - racer.currentLapTimeStart
-    --Set offset for new lap
-    racer.currentLapTimeStart = gameTime
-
-    print(("Current Lap Time: %i"):format(currentLapTime))
-
-    TriggerClientEvent("races:newlap", source, gameTime)
-
-    if (racer.bestLapTime == -1 or currentLapTime < racer.bestLapTime ) then
-        print(("Best lap for source %i in Race[%s] with time %i and Vehicle %s"):format(source, raceIndex, currentLapTime, currentVehicleName))
-        racer.bestLapTime = currentLapTime
-        racer.bestLapVehicleName = currentVehicleName
-
-        race.players[source] = racer
-
-        TriggerEventForRacers(raceIndex, "races:updatebestlaptime", source, racer.bestLapTime)
-    end
+    races[raceIndex]:OnLapCompleted(source, currentVehicleName)
 
 end)
 
@@ -1775,34 +1263,7 @@ end
 --Update every frame to track race time
 function MainServerUpdate()
     for rIndex, race in pairs(races) do
-        if racingStates.Registering == race.state then
-            CheckReady(race, rIndex)
-            if race.countdown == true then
-                ProcessReadyCountdown(rIndex)
-            end
-        elseif(race.state == racingStates.RaceCountdown) then
-            race.delayTimer:Update()
-
-            if (race.delayTimer.length <= 5000 and race.fiveSecondWarning == false) then
-                race.fiveSecondWarning = true
-                print("Five second warning")
-
-                TriggerEventForRacers(rIndex, "races:fivesecondwarning")
-            end
-            if (race.delayTimer.complete) then
-
-                race.startTime = GetGameTimer()
-                print(("Race starts at %i"):format(race.startTime))
-
-                for _, player in pairs(race.players) do
-                    player.currentLapTimeStart = race.startTime
-                    TriggerClientEvent("races:greenflag", player.source, race.startTime)
-                end
-                race.state = racingStates.Racing
-            end
-        elseif(race.state == racingStates.Racing) then
-            race.raceTime = GetGameTimer() - race.startTime
-        end
+        race:Update()
     end
 end
 
