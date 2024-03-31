@@ -815,7 +815,7 @@ RegisterNetEvent("races:endrace")
 AddEventHandler("races:endrace", function()
     local source = source
     if races[source] ~= nil then
-        races:TriggerEventForRacers("races:leave")
+        races[source]:TriggerEventForRacers("races:leave")
         notifyPlayer(source, "Race Ended.\n")
     else
         notifyPlayer(source, "Cannot End race.  You have no active race.\n")
