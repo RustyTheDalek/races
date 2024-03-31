@@ -1407,17 +1407,17 @@ local function resetupgrades(vehicle)
 
     if eUpgrade ~= -1 then
         SetVehicleMod(vehicle, 11, -1) --Engine upgrade
-        TriggerServerEvent("races:resetupgrade", 11, currenTrack.savedTrackName)
+        TriggerServerEvent("races:resetupgrade", 11, currentTrack.savedTrackName)
     end
 
     if bUpgrade ~= -1 then
         SetVehicleMod(vehicle, 12, -1) --Brakes upgrade
-        TriggerServerEvent("races:resetupgrade", 12, currenTrack.savedTrackName)
+        TriggerServerEvent("races:resetupgrade", 12, currentTrack.savedTrackName)
     end
 
     if gUpgrade ~= -1 then
         SetVehicleMod(vehicle, 13, -1) --Gearbox upgrade
-        TriggerServerEvent("races:resetupgrade", 13, currenTrack.savedTrackName)
+        TriggerServerEvent("races:resetupgrade", 13, currentTrack.savedTrackName)
     end
 
     if nUpgrade ~= -1 then
