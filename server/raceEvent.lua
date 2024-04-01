@@ -275,7 +275,7 @@ function RaceEvent:StartRace(delay)
     notifyPlayer(self.index, "Race started.\n")
 end
 
-function RaceEvent:OnPlayerDropped(raceIndex, source)
+function RaceEvent:OnPlayerDropped(source)
 
     if (self.players[source] == nil) then
         return
@@ -292,12 +292,10 @@ function RaceEvent:OnPlayerDropped(raceIndex, source)
 
     if self.state == racingStates.Registering then
         print("removing racer from race")
-
-        self:OnPlayerLeave(raceIndex, source)
-
+        self:OnPlayerLeave(source)
         -- TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
     else
-        TriggerEvent("races:removeFromLeaderboard", source)
+        self:TriggerEventForRacers("races:removeFromLeaderboard", source)
 
         local finishData = {
             raceIndex = source,
@@ -307,11 +305,11 @@ function RaceEvent:OnPlayerDropped(raceIndex, source)
             bestLapVehicleName = ""
         }
 
-        TriggerEvent("races:finish", raceIndex, finishData)
+        TriggerEvent("races:finish", self.index, -1, true, source)
     end
 end
 
-function RaceEvent:Finish(source, numWaypointsPassed, dnf)
+function RaceEvent:Finish(source, dnf)
     if self.state == racingStates.Racing then
         notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
     end
@@ -321,7 +319,11 @@ function RaceEvent:Finish(source, numWaypointsPassed, dnf)
     end
 
     local finishedRacer = self.players[source]
-    finishedRacer.numWaypointsPassed = numWaypointsPassed
+
+    if(finishedRacer == nil) then
+        print("Racer nil")
+        return
+    end
 
     if (dnf) then
         finishedRacer.data = -1

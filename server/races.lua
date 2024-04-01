@@ -506,7 +506,7 @@ AddEventHandler("playerDropped", function()
     -- make sure this is last code block in function because of early return if player found in race
     -- remove dropped player from the race they are joined to
     for i, race in pairs(races) do
-        race:OnPlayerDropped(i, source)
+        race:OnPlayerDropped(source)
     end
 end)
 
@@ -1050,7 +1050,12 @@ end)
 RegisterNetEvent("races:removeFromLeaderboard")
 AddEventHandler("races:removeFromLeaderboard", function(raceIndex)
     local source = source
-    TriggerEventForRacers(raceIndex, "races:removeFromLeaderboard", source)
+    if(raceIndex == nil or races[raceIndex] == nil) then
+        print("No Race to remove from")
+        return
+    end
+
+    races[raceIndex]:TriggerEventForRacers("races:removeFromLeaderboard", source)
 end)
 
 
@@ -1078,11 +1083,13 @@ AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSou
 
     if rIndex == nil or source == nil or numWaypointsPassed == nil then
         notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
+        return
     end
 
     local race = races[rIndex]
     if race == nil then
         notifyPlayer(source, "Cannot finish.  Race does not exist.\n")
+        return
     end
 
     if(race:Finish(source, numWaypointsPassed, dnf, altSource)) then

@@ -839,11 +839,11 @@ local function leave()
         end
         RenderScriptCams(false, false, 0, true, true)
         DeleteCheckpoint(raceCheckpoint)
+        TriggerServerEvent("races:removeFromLeaderboard", raceIndex)
         finishRace(true)
         playerDisplay:ResetRaceBlips()
         ResetReady()
         ClearLeaderboard()
-        TriggerServerEvent("races:removeFromLeaderboard", raceIndex)
         sendMessage("Left race.\n")
     else
         sendMessage("Cannot leave.  Not joined to any race.\n")
