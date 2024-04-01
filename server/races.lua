@@ -321,6 +321,7 @@ local function TriggerEventForRacers(raceIndex, event, ...)
 
     if(races[raceIndex] == nil) then
         print(("Ignoring event, no race with index %i"):format(raceIndex))
+        return
     end
 
     races[raceIndex]:TriggerEventForRacers(event, ...)
