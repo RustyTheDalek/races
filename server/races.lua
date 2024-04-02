@@ -10,6 +10,8 @@ local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 FileManager.CreateFileIfEmpty('raceData.json')
 FileManager.CreateFileIfEmpty('vehicleListData.json')
 
+local latestTrackVersion = tonumber(GetResourceMetadata(GetCurrentResourceName(), 'track_version'))
+
 local function getTrack(trackName)
     local track = FileManager:LoadCurrentResourceFileJson(trackName)
     if track ~= nil then
@@ -558,6 +560,21 @@ AddEventHandler("races:load", function(isPublic, trackName)
     end
 
     local track = loadTrack(isPublic, source, trackName)
+
+    track.version = track.version or 0
+
+    print(("Latest Track version:%i"):format(latestTrackVersion))
+    print(("Track version:%i"):format(track.version))
+
+    if(track.version == nil or track.version < latestTrackVersion) then
+        print("Need to update Track")
+
+        local newTrack = Track.UpdateTrack(track)
+
+        if(saveTrack(isPublic, source, trackName, newTrack)) then
+            print("New Track Vesion saved")
+        end
+    end
 
     if track == nil then
         notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
