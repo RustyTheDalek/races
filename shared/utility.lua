@@ -202,3 +202,8 @@ function minutesSeconds(milliseconds)
     seconds = seconds - minutes * 60.0
     return minutes, seconds
 end
+
+function AddBlipForCoordVector3(coord)
+    local x, y, z = table.unpack(coord)
+    return AddBlipForCoord(x, y, z)
+end
