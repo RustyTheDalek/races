@@ -531,3 +531,58 @@ function Track:GetTrackRespawnPosition(index)
         end
     end
 end
+
+Track.UpdateTrack = function(track)
+
+    print("Updating track...")
+    print(("Track version:%i"):format(track.version))
+
+    if (track.version == 0) then
+        -- Update everything
+
+        track.waypoints = Track.UpdateWaypointCoords(track.waypointCoords)
+        track.waypointCoords = nil
+
+        track.version = 1
+    end
+
+    return track
+end
+
+Track.UpdateWaypointCoords = function(waypointCoords)
+
+    print(("Updating %i waypoints..."):format(#waypointCoords))
+
+    local newWaypoints = {}
+
+    for index, waypointCoord in ipairs(waypointCoords) do
+        print(("Updating Waypoint: %i"):format(index))
+
+        local newCoord = vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)
+        local next
+
+        if (index < #waypointCoords) then
+            next = { index + 1}
+        else
+            if(newCoord == newWaypoints[1].coord) then
+                --Looping track
+                print("Track Loops")
+                next = 1
+            end
+        end
+
+        local newWaypoint = Waypoint:New({
+            coord = newCoord,
+            radius = waypointCoord.r,
+            heading = waypointCoord.heading,
+            next = next
+        })
+
+        newWaypoints[index] = newWaypoint
+
+    end
+
+    print(json.encode(newWaypoints))
+
+    return newWaypoints
+end
