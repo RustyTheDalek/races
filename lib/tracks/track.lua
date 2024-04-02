@@ -90,7 +90,7 @@ function Track:SetFirstWaypointAsStart()
     self.waypoints[1].sprite = startSprite
     self.waypoints[1].color = startBlipColor
     self.waypoints[1].number = -1
-    self.waypoints[1].name = "Start" 
+    self.waypoints[1].name = "Start"
 end
 
 -- For when Track is multiple laps
@@ -98,7 +98,7 @@ function Track:SetFirstWaypointAsLoop()
     self.waypoints[1].sprite = startFinishSprite
     self.waypoints[1].color = startFinishBlipColor
     self.waypoints[1].number = -1
-    self.waypoints[1].name = "Start/Finish" 
+    self.waypoints[1].name = "Start/Finish"
 end
 
 function Track:SetLastWaypointAsLoop()
@@ -126,7 +126,7 @@ function Track:SetStartFinishCheckpoints(checkpointType)
     DeleteCheckpoint(self.waypoints[#self.waypoints].checkpoint)
     color = getCheckpointColor(self.waypoints[#self.waypoints].color)
     self.waypoints[#self.waypoints].checkpoint = MakeCheckpoint(checkpointType, self.waypoints[#self.waypoints].coord,
-    self.waypoints[#self.waypoints].coord, color, #self.waypoints - 1)
+        self.waypoints[#self.waypoints].coord, color, #self.waypoints - 1)
 
 end
 
@@ -170,7 +170,7 @@ function Track:LoadWaypointBlips(waypointCoords)
 
     if false == self.startIsFinish then
         local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
-        waypointCoords[#waypointCoords].z)
+            waypointCoords[#waypointCoords].z)
         self.waypoints[#waypointCoords] = {
             coord = waypointCoords[#waypointCoords],
             checkpoint = nil,
@@ -298,7 +298,7 @@ function Track:LoadWaypointBlips(waypointCoords)
 
     if false == self.startIsFinish then
         local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
-        waypointCoords[#waypointCoords].z)
+            waypointCoords[#waypointCoords].z)
         self.waypoints[#waypointCoords] = {
             coord = waypointCoords[#waypointCoords],
             checkpoint = nil,
@@ -342,7 +342,7 @@ function Track:Reverse()
     self.savedTrackName = nil
     self:DeleteCheckpoints()
     self:LoadWaypointBlips(self:WaypointsToCoordsRev())
-    self:SetStartFinishCheckpoints()    
+    self:SetStartFinishCheckpoints()
     self:GenerateStartingGrid(self.waypoints[1].coord, 8)
 end
 
