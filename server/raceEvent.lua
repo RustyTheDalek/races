@@ -597,7 +597,7 @@ function RaceEvent:SendCheckpointTime(source, waypointsPassed)
         end
     end
 
-    if (#self.players == 1) then
+    if (getTableSize(self.players) == 1) then
         table.insert(self.checkpointTimes, {})
     end
 
