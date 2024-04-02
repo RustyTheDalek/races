@@ -564,7 +564,7 @@ AddEventHandler("races:load", function(isPublic, trackName)
         return
     end
     
-    TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords, track.map)
+    TriggerClientEvent("races:load", source, isPublic, trackName, track)
 end)
 
 RegisterNetEvent("races:save")

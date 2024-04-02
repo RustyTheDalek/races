@@ -1655,7 +1655,7 @@ AddEventHandler("races:message", function(msg)
 end)
 
 RegisterNetEvent("races:load")
-AddEventHandler("races:load", function(isPublic, trackName, waypointCoords, mapName)
+AddEventHandler("races:load", function(isPublic, trackName, track)
     if isPublic == nil or trackName == nil and waypointCoords == nil then
         notifyPlayer("Ignoring load event.  Invalid parameters.\n")
         return
@@ -1667,9 +1667,9 @@ AddEventHandler("races:load", function(isPublic, trackName, waypointCoords, mapN
     end
 
     if racingStates.Idle == raceState then
-        currentTrack:Load(isPublic, trackName, waypointCoords, mapName)
+        currentTrack:Load(isPublic, trackName, track)
     elseif racingStates.Editing == raceState then
-        trackEditor:Load(isPublic, trackName, waypointCoords, mapName)
+        trackEditor:Load(isPublic, trackName, track)
     end
 
     sendMessage("Loaded " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
