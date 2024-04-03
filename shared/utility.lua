@@ -88,7 +88,7 @@ function CarTierUIActive()
 end
 
 function ResourceActive(resourceName)
-    return GetResourceState(resourceName) ~= "stopped"
+    return GetResourceState(resourceName) ~= "stopped" and GetResourceState(resourceName) ~= "missing"
 end
 
 function explode(inputstr, sep)
