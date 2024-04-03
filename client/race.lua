@@ -96,6 +96,7 @@ local currentLapTimer = Timer:New()
 local currentTrack = Track:New()
 local trackEditor = TrackEditor:New()
 
+local fpsMonitor = FPSMonitor:New()
 local configData
 
 local boost_active = false
@@ -826,6 +827,9 @@ local function leave()
     currentVehicleName = nil
     raceVehicleHash = nil
     raceVehicleName = nil
+
+    fpsMonitor:StopTracking()
+
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
         ResetReady()
@@ -1848,6 +1852,7 @@ AddEventHandler("races:greenflag", function()
     raceState = racingStates.Racing
     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
     currentLapTimer:Start()
+    fpsMonitor:StartTrackingAverage()
     if(currentRace.raceType ~= 'ghost') then
         ghosting:StartGhosting(configData['raceStartGhostingTime'])
     end
@@ -2024,6 +2029,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 SendRaceData(raceData)
                 SetRaceLeaderboard(true)
                 AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
+
+                fpsMonitor:StartTracking()
 
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
@@ -2532,6 +2539,11 @@ AddEventHandler("races:compareTimeSplit", function(racersAhead)
     })
 end)
 
+RegisterNetEvent("races:updatefps")
+AddEventHandler("races:updatefps", function(source, fps)
+    UpdateFPS(source, fps)
+end)
+
 function RaceStartCameraTransition()
 
     local player = PlayerPedId()
@@ -2604,6 +2616,8 @@ function OnNewLap(player)
     currentWaypoint = 1
     currentLapTimer:Reset()
     TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
+
+    fpsMonitor:SaveAverageChunk()
 
     if currentLap < numLaps then
         currentLap = currentLap + 1
@@ -2679,6 +2693,17 @@ function OnHitCheckpoint(player)
     waypointCoord, raceCheckpoint = currentTrack:OnHitCheckpoint(currentWaypoint, currentLap, numLaps)
 end
 
+function UpdateFPS(source, fps)
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "update_fps",
+        fps = fps,
+        source = source
+    })
+
+    TriggerServerEvent("races:updatefps", raceIndex, fps)
+end
+
 function RaceUpdate(player, playerCoord, currentTime)
     HandleRespawn(currentTime)
 
@@ -2688,6 +2713,8 @@ function RaceUpdate(player, playerCoord, currentTime)
 
     LastPlaceBoost()
     HandleRaceType()
+
+    UpdateFPS(GetPlayerServerId(PlayerId()), fpsMonitor.fps)
 
     if true == beginDNFTimeout then
         local milliseconds = timeoutStart + DNFTimeout - currentTime
@@ -2853,7 +2880,7 @@ function MainUpdate()
 
         local currentTime = GetGameTimer()
 
-        ghosting:Update()
+        fpsMonitor:Update()
 
         if racingStates.Editing == raceState then
             trackEditor:Update(playerCoord, heading)

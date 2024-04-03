@@ -883,6 +883,17 @@ AddEventHandler("races:readyState", function(raceIndex, ready)
     races[raceIndex]:ReadyStateChange(source, ready)
 end)
 
+RegisterNetEvent("races:updatefps")
+AddEventHandler("races:updatefps", function(raceIndex, fps)
+    local source = source
+    if races[raceIndex] == nil then
+        print("can't find race to ready")
+        return
+    end
+
+    races[raceIndex]:TriggerEventForRacers("races:updatefps", source, fps)
+end)
+
 RegisterNetEvent("races:start")
 AddEventHandler("races:start", function(delay, override)
     local source = source
