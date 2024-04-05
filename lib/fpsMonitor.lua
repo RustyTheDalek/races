@@ -31,7 +31,8 @@ function FPSMonitor:StopTracking()
 end
 
 function FPSMonitor:StartTrackingAverage()
-    self.averageFPS = {}
+    self.averageFPSChunk = {}
+    self.averageFPSTotals = {}
     self.trackingAverage = true
 end
 
