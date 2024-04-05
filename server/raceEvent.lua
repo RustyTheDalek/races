@@ -302,14 +302,17 @@ function RaceEvent:OnPlayerDropped(source)
             playerName = nil,
             data = 0,
             bestLapTime = -1,
-            bestLapVehicleName = ""
+            bestLapVehicleName = "",
+            dnf = true,
+            averageFPS = 0
         }
 
-        TriggerEvent("races:finish", self.index, -1, true, source)
+        TriggerEvent("races:finish", self.index, finishData, source)
     end
 end
 
-function RaceEvent:Finish(source, dnf)
+function RaceEvent:Finish(source, raceFinishData)
+
     if self.state == racingStates.Racing then
         notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
     end
@@ -325,7 +328,7 @@ function RaceEvent:Finish(source, dnf)
         return
     end
 
-    if (dnf) then
+    if (raceFinishData.dnf) then
         finishedRacer.data = -1
     else
         finishedRacer.data = GetGameTimer() - self.startTime
@@ -338,7 +341,8 @@ function RaceEvent:Finish(source, dnf)
         playerName = finishedRacer.playerName,
         finishTime = finishedRacer.data,
         bestLapTime = finishedRacer.bestLapTime,
-        bestLapVehicleName = finishedRacer.bestLapVehicleName
+        bestLapVehicleName = finishedRacer.bestLapVehicleName,
+        averageFPS = raceFinishData.raceAverageFPS
     }
 
     self:TriggerEventForRacers("races:finish", finishData)
@@ -348,7 +352,8 @@ function RaceEvent:Finish(source, dnf)
         playerName = finishedRacer.playerName,
         finishTime = finishedRacer.data,
         bestLapTime = finishedRacer.bestLapTime,
-        vehicleName = finishedRacer.bestLapVehicleName
+        vehicleName = finishedRacer.bestLapVehicleName,
+        averageFPS = raceFinishData.raceAverageFPS
     }
 
     self.numRacing = self.numRacing - 1
@@ -426,20 +431,20 @@ function RaceEvent:SaveResults()
             end
             msg = msg .. "\n"
 
-            local race_results_line = ("%d,%s,%02d:%05.2f,\n"):format(pos, result.playerName, best_minutes, best_seconds)
+            local race_results_line = ("%d,%s,%02d:%05.2f,%.2f\n"):format(pos, result.playerName, best_minutes, best_seconds, result.averageFPS)
             race_results_data = race_results_data .. race_results_line
         end
     else
         msg = msg .. "No results.\n"
     end
 
-    self:SaveResultsCSV()
+    self:SaveResultsCSV(race_results_data)
 end
 
-function RaceEvent:SaveResultsCSV()
+function RaceEvent:SaveResultsCSV(raceResultData)
     local date = os.date("%d_%m", os.time())
     local resultsFileName = ('/results/%s_%s_results.csv'):format(self.trackName, date)
-    local saveCSVResults = FileManager.SaveCurrentResourceFile(resultsFileName, self.results)
+    local saveCSVResults = FileManager.SaveCurrentResourceFile(resultsFileName, raceResultData)
 
     if (saveCSVResults == nil) then
         print("Error saving file '" .. resultsFileName)

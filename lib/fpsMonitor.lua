@@ -20,6 +20,7 @@ function FPSMonitor:New(o)
 end
 
 function FPSMonitor:StartTracking()
+    self.active = true
     Citizen.CreateThread(function()
         self:Update()
     end)
@@ -41,15 +42,15 @@ function FPSMonitor:SaveAverageChunk()
 end
 
 function FPSMonitor:StopTrackingAverage()
+    self.trackingAverage = false
     self:SaveAverageChunk()
-
+    
     local fpsTotal = 0
     for index, fps in pairs(self.averageFPSTotals) do
         fpsTotal = fpsTotal + fps
     end
-
+    
     return fpsTotal / #self.averageFPSTotals
-
 end
 
 function FPSMonitor:GetAverageFPS()
@@ -58,17 +59,14 @@ function FPSMonitor:GetAverageFPS()
         fpsTotal = fpsTotal + fps
     end
 
-    return fpsTotal / #self.averageFPSChunk
+    if(#self.averageFPSChunk > 0) then
+        return fpsTotal / #self.averageFPSChunk
+    end
 end
 
 function FPSMonitor:Update()
     while self.active do
-        Citizen.Wait(250)
-        deltaFrames = GetFrameCount()
-        deltaTime = GetGameTimer()
-    end
-
-    while self.active do
+        Citizen.Wait(0)
         currentTime = GetGameTimer()
         currentFrames = GetFrameCount()
 
@@ -81,15 +79,17 @@ function FPSMonitor:Update()
 
             deltaTime = currentTime
             deltaFrames = currentFrames
+            self:UpdateFPS(GetPlayerServerId(PlayerId()), self.fps)
         end
-
-        if self.fps >= 0 then
-            print(("FPS:%i"):format(self.fps))
-        end
-
-        if self.trackingAverage and #self.averageFPSChunk > 0 then
-            print(("Average FPS:%i"):format(self:GetAverageFPS()))
-        end
-        Citizen.Wait(1)
     end
+end
+
+function FPSMonitor:UpdateFPS(source, fps)
+
+    SendNUIMessage({
+        type = "leaderboard",
+        action = "update_fps",
+        fps = fps,
+        source = source
+    })
 end

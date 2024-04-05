@@ -887,7 +887,7 @@ RegisterNetEvent("races:updatefps")
 AddEventHandler("races:updatefps", function(raceIndex, fps)
     local source = source
     if races[raceIndex] == nil then
-        print("can't find race to ready")
+        print("can't find race to updateFPS")
         return
     end
 
@@ -1090,10 +1090,10 @@ AddEventHandler("races:join", function(raceIndex)
 end)
 
 RegisterNetEvent("races:finish")
-AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSource)
+AddEventHandler("races:finish", function(rIndex, finishData, altSource)
     local source = altSource or source
 
-    if rIndex == nil or source == nil or numWaypointsPassed == nil then
+    if rIndex == nil or source == nil or finishData == nil then
         notifyPlayer(source, "Ignoring finish event.  Invalid parameters.\n")
         return
     end
@@ -1104,7 +1104,7 @@ AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSou
         return
     end
 
-    if(race:Finish(source, numWaypointsPassed, dnf, altSource)) then
+    if(race:Finish(source, finishData, altSource)) then
 
         local track = loadTrack(race.isPublic, rIndex, race.trackName)
 
