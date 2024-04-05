@@ -13,13 +13,13 @@ let dummy_data = [
     source: 1
   },
   {
-    playerName: "Mitchell19",
+    playerName: "Rusty",
     vehicleName: "A4 Tempesta Competizone Evo",
     source: 2
   }
 ];
 
-// AddRacerToleaderboard(dummy_data, 1);
+// AddRacersToleaderboard(dummy_data, 1);
 
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
@@ -97,7 +97,14 @@ function readLeaderBoardEvents(event) {
     case "start_lights_countdown":
       StartLightsCountdown(data.time);
       break;
+    case "update_fps":
+      UpdateFPS(data.source, data.fps)
   }
+}
+
+function UpdateFPS(source, fps) {
+  let racerFPS = leaderboard.find(`#${source}`).find('.fps');
+  racerFPS.text(`FPS:${fps}`);
 }
 
 function StartLightsCountdown(seconds) {
@@ -387,6 +394,10 @@ function AddRacerToleaderboard(source, name, ownSource) {
     class: 'lap_times'
   });
 
+  let fps = $("<div/>", {
+    class: 'fps',
+  });
+
   let best_lap = $("<div/>", {
     class: 'best',
     text: '00:00.00'
@@ -404,6 +415,7 @@ function AddRacerToleaderboard(source, name, ownSource) {
     text: '0.00'
   });
 
+  lap_times.append(fps);
   lap_times.append(best_lap);
   lap_times.append(current_lap);
   lap_times.append(time_split);

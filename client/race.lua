@@ -96,6 +96,8 @@ local currentLapTimer = Timer:New()
 local currentTrack = Track:New()
 local trackEditor = TrackEditor:New()
 
+local fpsMonitor = FPSMonitor:New()
+
 local configData
 
 local boost_active = false
@@ -370,9 +372,17 @@ local function StopRaceEffects()
 end
 
 local function finishRace(dnf)
+
     PlaySoundFrontend(-1, "CHECKPOINT_UNDER_THE_BRIDGE", "HUD_MINI_GAME_SOUNDSET", true)
     StopRaceEffects()
-    TriggerServerEvent("races:finish", raceIndex, numWaypointsPassed, dnf, nil)
+
+    local finishData = {
+        numWaypointsPassed = numWaypointsPassed,
+        raceAverageFPS = fpsMonitor:StopTrackingAverage(),
+        dnf = dnf
+    }
+
+    TriggerServerEvent("races:finish", raceIndex, finishData)
     ClearDNFTime()
     SetLeaderboardLower(true)
     ResetReady()
@@ -826,6 +836,9 @@ local function leave()
     currentVehicleName = nil
     raceVehicleHash = nil
     raceVehicleName = nil
+
+    fpsMonitor:StopTracking()
+
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
         ResetReady()
@@ -922,6 +935,9 @@ local function respawn()
 end
 
 local function viewResults(chatOnly)
+
+    print(dump(results))
+
     local msg = nil
     if #results > 0 then
         -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
@@ -938,8 +954,8 @@ local function viewResults(chatOnly)
                 local fMinutes, fSeconds = minutesSeconds(result.finishTime)
                 local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
                 msg = msg ..
-                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s\n"):format(pos, fMinutes, fSeconds,
-                result.playerName, lMinutes, lSeconds, result.vehicleName)
+                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s with and average FPS of %.2f\n"):format(pos, fMinutes, fSeconds,
+                result.playerName, lMinutes, lSeconds, result.vehicleName, result.averageFPS)
             end
         end
     else
@@ -1848,6 +1864,7 @@ AddEventHandler("races:greenflag", function()
     raceState = racingStates.Racing
     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
     currentLapTimer:Start()
+    fpsMonitor:StartTrackingAverage()
     if(currentRace.raceType ~= 'ghost') then
         ghosting:StartGhosting(configData['raceStartGhostingTime'])
     end
@@ -2025,6 +2042,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 SetRaceLeaderboard(true)
                 AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
 
+                fpsMonitor:StartTracking()
+
                 local msg = "Joined race using "
                 if nil == starts[rIndex].trackName then
                     msg = msg .. "unsaved track "
@@ -2105,6 +2124,7 @@ AddEventHandler("races:finish", function(finishData)
     local raceFinishTime = finishData.finishTime
     local raceBestLapTime = finishData.bestLapTime
     local raceVehicleName = finishData.bestLapVehicleName
+    local averageFPS = finishData.averageFPS
 
     if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
         if rIndex == raceIndex then
@@ -2124,8 +2144,8 @@ AddEventHandler("races:finish", function(finishData)
                 end
                 local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
                 local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
-                notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s.\n"):format(
-                playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName))
+                notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s with an average FPS of %.2f.\n"):format(
+                playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName, averageFPS))
             end
             ResetCarTier();
             playerDisplay:ResetRaceBlips()
@@ -2324,6 +2344,7 @@ function RacesReport()
             local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
             TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, distance)
+            TriggerServerEvent("races:updatefps", raceIndex, fpsMonitor.fps)
         end
     end
 end
@@ -2532,6 +2553,11 @@ AddEventHandler("races:compareTimeSplit", function(racersAhead)
     })
 end)
 
+RegisterNetEvent("races:updatefps")
+AddEventHandler("races:updatefps", function(source, fps)
+    fpsMonitor:UpdateFPS(source, fps)
+end)
+
 function RaceStartCameraTransition()
 
     local player = PlayerPedId()
@@ -2601,9 +2627,11 @@ end
 
 --Returns true when the race is finished
 function OnNewLap(player)
+    print("New Lap")
     currentWaypoint = 1
     currentLapTimer:Reset()
     TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
+    fpsMonitor:SaveAverageChunk()
 
     if currentLap < numLaps then
         currentLap = currentLap + 1
@@ -2637,6 +2665,7 @@ function OnNewLap(player)
 end
 
 function OnHitCheckpoint(player)
+    print("Hit Checkpoint")
     local vehicle = GetVehiclePedIsIn(player, false)
 
     if restrictedHash ~= nil then
@@ -2852,8 +2881,6 @@ function MainUpdate()
         local heading = GetEntityHeading(player)
 
         local currentTime = GetGameTimer()
-
-        ghosting:Update()
 
         if racingStates.Editing == raceState then
             trackEditor:Update(playerCoord, heading)
