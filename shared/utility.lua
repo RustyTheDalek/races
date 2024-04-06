@@ -207,3 +207,13 @@ function AddBlipForCoordVector3(coord)
     local x, y, z = table.unpack(coord)
     return AddBlipForCoord(x, y, z)
 end
+
+function SetBlipCoordsVector3(blip, coord)
+    local x, y, z = table.unpack(coord)
+    return SetBlipCoords(blip, x, y, z)
+end
+
+function Clamp(num, lower, upper)
+	assert(num and lower and upper, 'error: Clamp(num, lower, upper)')
+	return math.max(lower, math.min(upper, num))
+end
