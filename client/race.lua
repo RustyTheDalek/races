@@ -24,7 +24,6 @@ local defaultLaps <const> = 3             -- default number of laps in a race
 local defaultTimeout <const> = 1200       -- default DNF timeout
 local defaultDelay <const> = 5            -- default race start delay
 local defaultVehicle <const> = "adder"    -- default spawned vehicle
-local defaultRadius <const> = 8.0         -- default waypoint radius
 
 local raceIndex = -1                      -- index of race player has joined
 
@@ -1771,7 +1770,7 @@ function(rIndex, coord, isPublic, trackName, owner, rdata)
     AddTextComponentSubstringPlayerName(msg)
     EndTextCommandSetBlipName(blip)
 
-    coord.r = defaultRadius
+    coord.r = Config.data.editing.defaultRadius
     local checkpoint = MakeCheckpoint(plainCheckpoint, coord, coord, colour.purple, 0) -- registration checkpoint
 
     starts[rIndex] = {
@@ -1974,7 +1973,7 @@ end)
 
 function UpdateRegistrationCheckpoint(raceIndex, coords, numRacing)
     DeleteCheckpoint(starts[raceIndex].checkpoint);
-    coords.r = defaultRadius
+    coords.r = Config.data.editing.defaultRadius
     local checkpoint = MakeCheckpoint(plainCheckpoint, coords, coords, colour.purple, numRacing)
     starts[raceIndex].checkpoint = checkpoint
 end
@@ -2702,7 +2701,7 @@ end
 
 function IdleUpdate(player, playerCoord)
     local closestIndex = -1
-    local minDist = defaultRadius
+    local minDist = Config.data.editing.defaultRadius
     for rIndex, start in pairs(starts) do
         local dist = #(playerCoord - GetBlipCoords(start.blip))
         if dist < minDist then

@@ -1,5 +1,3 @@
-local defaultRadius <const> = 5.0                 -- default waypoint radius
-
 local READY_RACERS_COUNTDOWN = 5000
 local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
 
@@ -128,7 +126,7 @@ local function updateRaceData()
                 for i, waypointCoord in ipairs(track.waypointCoords) do
                     local coordRad = waypointCoord
                     if nil == waypointCoord.r then
-                        coordRad.r = defaultRadius
+                        coordRad.r = Config.data.editing.defaultRadius
                         update = true
                     end
                     newWaypointCoords[i] = coordRad
@@ -173,7 +171,7 @@ local function updateTrack(trackName)
                         local coordRad = waypointCoord
                         if nil == waypointCoord.r then
                             update = true
-                            coordRad.r = defaultRadius
+                            coordRad.r = Config.data.editing.defaultRadius
                         elseif type(waypointCoord.r) ~= "number" then
                             print("updateTrack: waypointCoord.r not a number.")
                             return

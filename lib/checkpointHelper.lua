@@ -1,6 +1,5 @@
 
 local checkpointAlpha <const> = 127
-local defaultRadius <const> = 8.0   -- default waypoint radius
 
 function MakeCheckpoint(checkpointType, coord, nextCoord, color, num, alpha)
     --The -1 represents the roughly half the height of the ped
@@ -8,7 +7,7 @@ function MakeCheckpoint(checkpointType, coord, nextCoord, color, num, alpha)
     --Because it's actually the diameter or because 2 is actually the ped height?
 
     if(coord.r == nil ) then
-        coord.r = defaultRadius
+        coord.r = Config.data.editing.defaultRadius
     end
 
     if(alpha == nil) then
