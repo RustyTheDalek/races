@@ -856,9 +856,9 @@ AddEventHandler("races:autojoin", function()
 
     local playersToJoin = {}
 
-    if(ResourceActive('Party-System') and exports['Party-System']:HostingParty()) then
+    if(ResourceActive('Party-System') and exports['Party-System']:HostingParty(source)) then
         print("Using Party")
-        playersToJoin = exports['Party-System']:HostingParty()
+        playersToJoin = exports['Party-System']:GetPartySources(source)
     else
         print("Using All players")
         playersToJoin = GetPlayers()
