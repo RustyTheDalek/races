@@ -1976,7 +1976,6 @@ AddEventHandler("races:joinnotification", function(joinNotificationData)
     local racerDictionary = joinNotificationData.racerDictionary
 
     UpdateRegistrationCheckpoint(raceIndex, registrationCoords, numRacing)
-    sendMessage(string.format("%s has joined Race %s", playerName, trackName))
 end)
 
 RegisterNetEvent("races:onleave")
