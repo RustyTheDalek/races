@@ -231,40 +231,6 @@ local function TriggerEventForRacers(raceIndex, event, ...)
 
 end
 
-local function GenerateStartingGrid(startWaypoint, numRacers)
-    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
-
-    --Calculate the forwardVector of the starting Waypoint
-    local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
-    local y = math.cos(math.rad(startWaypoint.heading)) * math.cos(0)
-    local z = math.sin(0);
-    local forwardVector = vector3(x, y, z)
-
-    local leftVector = vector3(
-        math.cos(math.rad(startWaypoint.heading)),
-        math.sin(math.rad(startWaypoint.heading)),
-        0.0
-    )
-
-    local gridPositions = {}
-
-    for i = 1, numRacers do
-        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
-
-        if math.fmod(i, 2) == 0 then
-            -- print("Right Grid")
-            gridPosition = gridPosition + -leftVector * 3
-        else
-            -- print("Left Grid")
-            gridPosition = gridPosition + leftVector * 3
-        end
-
-        table.insert(gridPositions, gridPosition)
-    end
-
-    return gridPositions
-end
-
 local function AddNewRace(waypoints, isPublic, trackName, owner, tier, timeout, laps, rdata)
 
     races[source] = RaceEvent:New({
@@ -461,6 +427,11 @@ AddEventHandler("races:load", function(isPublic, trackName)
 
     local track = loadTrack(isPublic, source, trackName)
 
+    if track == nil then
+        notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
+        return
+    end
+
     track.version = track.version or 0
 
     print(("Latest Track version:%i"):format(latestTrackVersion))
@@ -474,11 +445,6 @@ AddEventHandler("races:load", function(isPublic, trackName)
         if(saveTrack(isPublic, source, trackName, newTrack)) then
             print("New Track Vesion saved")
         end
-    end
-
-    if track == nil then
-        notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
-        return
     end
     
     TriggerClientEvent("races:load", source, isPublic, trackName, track)
