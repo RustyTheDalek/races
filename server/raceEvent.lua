@@ -7,7 +7,7 @@ RaceEvent = {
     raceStart = 0,
     raceTime = 0,
     state = racingStates.Registering,
-    waypointCoords = {},
+    waypoints = {},
     isPublic = false,
     trackName = '',
     owner = '',
@@ -61,7 +61,7 @@ function RaceEvent:Setup(source)
             timeout = self.timeout
         }
 
-        TriggerClientEvent("races:register", source, self.index, self.waypointCoords[1], self.isPublic, self.trackName, self.owner, rdata)
+        TriggerClientEvent("races:register", source, self.index, self.waypoints[1], self.isPublic, self.trackName, self.owner, rdata)
     end
 end
 
@@ -135,7 +135,7 @@ function RaceEvent:GenerateStartingGrid(startWaypoint, numRacers)
 end
 
 function RaceEvent:SetupGrid()
-    local gridPositions = self:GenerateStartingGrid(self.waypointCoords[1], self.numRacing)
+    local gridPositions = self:GenerateStartingGrid(self.waypoints[1], self.numRacing)
 
     if (gridPositions ~= nil) then
         self:TriggerEventForRacers("races:spawncheckpoints", gridPositions)
@@ -145,7 +145,7 @@ end
 
 function RaceEvent:PlaceRacersOnGrid(gridPositions)
 
-    local heading = self.waypointCoords[1].heading
+    local heading = self.waypoints[1].heading
     
     local index = 1
     for _, player in pairs(self.gridLineup) do
@@ -370,7 +370,7 @@ function RaceEvent:Finish(source, numWaypointsPassed, dnf)
 end
 
 function RaceEvent:SaveResults()
-    -- races[playerID] = {state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
+    -- races[playerID] = {state, waypoints[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
     local msg = "Race using "
     if nil == self.trackName then
         msg = msg .. "unsaved track "
@@ -485,13 +485,13 @@ function RaceEvent:JoinRacer(source)
         raceIndex = self.index,
         trackName = self.trackName,
         numRacing = self.numRacing,
-        waypointCoords = self.waypointCoords[1]
+        waypoints = self.waypoints[1]
     }
 
     TriggerClientEvent("races:joinnotification", -1, joinNotificationData)
 
     TriggerClientEvent("races:join", source, self.index, self.tier, self.specialClass,
-    self.waypointCoords, racerDictionary)
+    self.waypoints, racerDictionary)
 
 end
 
@@ -506,7 +506,7 @@ function RaceEvent:OnPlayerLeave(source)
 
     TriggerClientEvent("races:leavenotification", -1,
         string.format("%s has left Race %s", self.players[source].playerName, self.trackName), self.index,
-        self.numRacing, self.waypointCoords[1])
+        self.numRacing, self.waypoints[1])
 
     TriggerClientEvent("races:onleave", source)
 

@@ -1,19 +1,5 @@
-local startFinishSprite<const> = 38 -- checkered flag
-local startSprite<const> = 38 -- checkered flag
-local finishSprite<const> = 38 -- checkered flag
-local midSprite<const> = 1 -- numbered circle
-
-local startFinishBlipColor<const> = 5 -- yellow
-local startBlipColor<const> = 2 -- green
-local finishBlipColor<const> = 0 -- white
-local midBlipColor<const> = 38 -- dark blue
-local blipRouteColor<const> = 18 -- light blue
-local registerBlipColor<const> = 83 -- purple
-
-local finishCheckpoint<const> = 4 -- cylinder checkered flag
-local midCheckpoint<const> = 42 -- cylinder with number
-local plainCheckpoint<const> = 45 -- cylinder
-local arrow3Checkpoint<const> = 0 -- cylinder with 3 arrows
+local arrow3Checkpoint <const> = 0        -- cylinder with 3 arrows
+local blipRouteColor <const> = 18         -- light blue
 
 local gridRadius<const> = 5.0
 local gridSeparation<const> = 5
@@ -39,12 +25,83 @@ function Track:New(o)
     return o
 end
 
-function Track:Load(public, trackName, waypointCoords, map)
+function Track:SerialiseWaypoints()
+    return map(self.waypoints, function(waypoint)
+        return {
+            coord = waypoint.coord,
+            heading = waypoint.heading,
+            radius = waypoint.radius,
+            next = waypoint.next
+        }
+    end)
+end
+
+function Track:Load(public, trackName, track)
+
+    print("Loading track")
+
     self.public = public
     self.savedTrackName = trackName
-    self.map = map
+    self.map = track.map
 
-    self:LoadWaypointBlips(waypointCoords)
+    print("Loaded metadata")
+
+    self:LoadWaypointBlips(track.waypoints)
+end
+
+function Track:AddNewWaypointAtIndex(coord, heading, index)
+
+    self.waypoints[index] = Waypoint:New({
+        coord = coord,
+        heading = heading,
+        radius = Config.data.editing.defaultRadius
+    })
+
+    -- If Waypoint behind exists then set it's next waypoint to this one
+    if (self.waypoints[index - 1] ~= nil) then
+        -- TODO: Add to next, don't replace
+        self.waypoints[index - 1].next = {index}
+    end
+
+    -- If Next waypoint exists then set this waypoint to next one 
+    if (self.waypoints[index + 1] ~= nil) then
+        -- TODO: Add to next, don't replace
+        self.waypoints[index].next = {index + 1}
+    end
+
+    self.startIsFinish = 1 == #self.waypoints
+
+    self.waypoints[index]:CreateBlip(index, #self.waypoints, self.startIsFinish)
+
+    self:SetStartToFinishBlips()
+    self:DeleteCheckpoints()
+    self:SetStartToFinishCheckpoints()
+end
+
+function Track:AddNewWaypoint(coord, heading)
+    self:AddNewWaypointAtIndex(coord, index, #self.waypoints + 1)
+end
+
+function Track:MoveWaypoint(index, coord, heading)
+
+    self.waypoints[index]:MoveWaypoint(coord, heading)
+    self:UpdateStartingGrid()
+
+end
+
+function Track:ShiftWaypointsForward(stopIndex)
+    for i = #self.waypoints, stopIndex, -1 do
+        if (not self.waypoints[i]:NextEmpty()) then
+            self.waypoints[i].next[1] = self.waypoints[i].next[1] + 1
+        end
+        self.waypoints[i + 1] = self.waypoints[i]
+    end
+end
+
+function Track:AddWaypointBetween(coord, heading, selectedIndex)
+    self:ShiftWaypointsForward(selectedIndex)
+    self:AddNewWaypointAtIndex(coord, heading, selectedIndex)
+    self:UpdateTrackDisplay()
 end
 
 function Track:GetWaypoint(index)
@@ -56,7 +113,9 @@ function Track:GetTotalWaypoints()
 end
 
 function Track:UpdateTrackDisplay()
-    self:SetStartToFinishBlips()
+    for index, waypoint in ipairs(self.waypoints) do
+        waypoint:SetBlipProperties()
+    end
     self:DeleteCheckpoints()
     self:SetStartToFinishCheckpoints()
 end
@@ -69,160 +128,118 @@ function Track:UpdateTrackDisplayFull()
         self:UpdateTrackDisplay()
         SetBlipRoute(self.waypoints[1].blip, true)
         SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
-        self:GenerateStartingGrid(self.waypoints[1].coord, 8)
+        self:GenerateStartingGrid(self.waypoints[1], 8)
     end
 end
 
 function Track:StartEditing()
     if (#self.waypoints > 0) then
-        self:GenerateStartingGrid(self.waypoints[1].coord, 8)
+        self:GenerateStartingGrid(self.waypoints[1], 8)
     end
     self:SetStartToFinishCheckpoints()
 end
 
 function Track:StopEditing()
-    self:DeleteCheckpoints()
     self:DeleteGridCheckPoints()
-    self:LoadWaypointBlips(self:WaypointsToCoords())
+    self:DeleteCheckpoints()
 end
 
 function Track:SetFirstWaypointAsStart()
-    self.waypoints[1].sprite = startSprite
-    self.waypoints[1].color = startBlipColor
-    self.waypoints[1].number = -1
-    self.waypoints[1].name = "Start"
+    self.waypoints[1]:SetAsStart()
 end
 
 -- For when Track is multiple laps
 function Track:SetFirstWaypointAsLoop()
-    self.waypoints[1].sprite = startFinishSprite
-    self.waypoints[1].color = startFinishBlipColor
-    self.waypoints[1].number = -1
-    self.waypoints[1].name = "Start/Finish"
+    self.waypoints[1]:SetAsStartLoop()
 end
 
 function Track:SetLastWaypointAsLoop()
-    self.waypoints[#self.waypoints].sprite = midSprite
-    self.waypoints[#self.waypoints].color = midBlipColor
-    self.waypoints[#self.waypoints].number = #self.waypoints - 1
-    self.waypoints[#self.waypoints].name = "Waypoint"
+    self.waypoints[#self.waypoints]:SetLastWaypointAsLoop(#self.waypoints - 1)
 end
 
 function Track:SetLastWaypointAsFinish()
-    self.waypoints[#self.waypoints].sprite = finishSprite
-    self.waypoints[#self.waypoints].color = finishBlipColor
-    self.waypoints[#self.waypoints].number = -1
-    self.waypoints[#self.waypoints].name = "Finish"
+    self.waypoints[#self.waypoints]:SetLastWaypointAsFinish()
 end
 
 function Track:SetStartFinishCheckpoints(checkpointType)
-    self:SetBlipProperties(1)
-    self:SetBlipProperties(#self.waypoints)
+    self.waypoints[1]:SetBlipProperties()
+    self.waypoints[#self.waypoints]:SetBlipProperties()
 
-    local color = getCheckpointColor(self.waypoints[1].color)
-    SetCheckpointRgba(self.waypoints[1].checkpoint, color.r, color.g, color.b, 127)
-    SetCheckpointRgba2(self.waypoints[1].checkpoint, color.r, color.g, color.b, 127)
-
-    DeleteCheckpoint(self.waypoints[#self.waypoints].checkpoint)
-    color = getCheckpointColor(self.waypoints[#self.waypoints].color)
-    self.waypoints[#self.waypoints].checkpoint = MakeCheckpoint(checkpointType, self.waypoints[#self.waypoints].coord,
-        self.waypoints[#self.waypoints].coord, color, #self.waypoints - 1)
-
+    self.waypoints[1]:UpdateCheckPointColour()
+    self.waypoints[#self.waypoints]:UpdateLastCheckpoint(checkpointType)
 end
 
-function Track:UpdateCheckpoint(checkpoint, color, index)
-    DeleteCheckpoint(checkpoint.checkpoint)
-    local color = getCheckpointColor(color)
-    local checkpointType = 38 == checkpoint.sprite and finishCheckpoint or midCheckpoint
-    checkpoint.checkpoint = MakeCheckpoint(checkpointType, checkpoint.coord, checkpoint.coord, color, index - 1)
-    self.savedTrackName = nil
+function Track:AdjustCheckpointRadius(index, adjustment)
+    if (self.waypoints[index] == nil) then
+        print("Checkpoint nil")
+        return
+    end
+
+    self.waypoints[index]:AdjustCheckpointRadius(adjustment)
 end
 
 function Track:SetStartToFinishCheckpoints()
-    for i = 1, #self.waypoints do
-        local color = getCheckpointColor(self.waypoints[i].color)
-        local checkpointType = 38 == self.waypoints[i].sprite and finishCheckpoint or midCheckpoint
-        self.waypoints[i].checkpoint = MakeCheckpoint(checkpointType, self.waypoints[i].coord, self.waypoints[i].coord,
-            color, i - 1)
+    for index, waypoint in ipairs(self.waypoints) do
+        waypoint:MakeCheckpoint(waypoint.coord, index - 1)
     end
 end
 
-function Track:LoadWaypointBlips(waypointCoords)
+function Track:LoadWaypointBlips(waypoints)
+
+    print("Loading waypoint blips")
+
     self:DeleteWaypointBlips()
     self.waypoints = {}
 
-    for i = 1, #waypointCoords - 1 do
-        local blip = AddBlipForCoord(waypointCoords[i].x, waypointCoords[i].y, waypointCoords[i].z)
-        self.waypoints[i] = {
-            coord = waypointCoords[i],
-            checkpoint = nil,
-            blip = blip,
-            sprite = -1,
-            color = -1,
-            number = -1,
-            name = nil
-        }
+    if (waypoints == nil or #waypoints == 0) then
+        print("No Waypoints to load")
+        return
     end
 
-    self.startIsFinish = waypointCoords[1].x == waypointCoords[#waypointCoords].x and waypointCoords[1].y ==
-                             waypointCoords[#waypointCoords].y and waypointCoords[1].z ==
-                             waypointCoords[#waypointCoords].z
+    self.startIsFinish = waypoints[#waypoints].next ~= nil and #waypoints[#waypoints].next > 0
 
-    if false == self.startIsFinish then
-        local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
-            waypointCoords[#waypointCoords].z)
-        self.waypoints[#waypointCoords] = {
-            coord = waypointCoords[#waypointCoords],
-            checkpoint = nil,
-            blip = blip,
-            sprite = -1,
-            color = -1,
-            number = -1,
-            name = nil
-        }
-    else
-        print("Start is finish")
+    for index, waypoint in ipairs(waypoints) do
+
+        if (self.startIsFinish and index == #waypoints and 
+            waypoint.coord.x == self.waypoints[1].coord.x and
+            waypoint.coord.y == self.waypoints[1].coord.y and 
+            waypoint.coord.z == self.waypoints[1].coord.z) then
+            print("Skipping last checkpoint as track is a loop")
+            goto continue
+        end
+
+        print(dump(waypoint.next))
+
+        self.waypoints[index] = Waypoint:New({
+            coord = vector3(waypoint.coord.x, waypoint.coord.y, waypoint.coord.z),
+            heading = waypoint.heading,
+            radius = waypoint.radius,
+            next = waypoint.next
+        })
+
+        self.waypoints[index]:CreateBlip(index, #waypoints, self.startIsFinish)
+
+        ::continue::
     end
-
-    self:SetStartToFinishBlips()
+    print("Loaded waypoint blips")
     SetBlipRoute(self.waypoints[1].blip, true)
     SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
 end
 
 function Track:SetStartToFinishBlips()
-    if true == self.startIsFinish then
-        self.waypoints[1].sprite = startFinishSprite
-        self.waypoints[1].color = startFinishBlipColor
-        self.waypoints[1].number = -1
-        self.waypoints[1].name = "Start/Finish"
+    for index, waypoint in ipairs(self.waypoints) do
 
-        if #self.waypoints > 1 then
-            self.waypoints[#self.waypoints].sprite = midSprite
-            self.waypoints[#self.waypoints].color = midBlipColor
-            self.waypoints[#self.waypoints].number = #self.waypoints - 1
-            self.waypoints[#self.waypoints].name = "Waypoint"
+        if (self.startIsFinish and index == #self.waypoints and
+            waypoint.coord.x == self.waypoints[1].coord.x and
+            waypoint.coord.y == self.waypoints[1].coord.y and 
+            waypoint.coord.z == self.waypoints[1].coord.z) then
+            print("Skipping last checkpoint as track is a loop")
+            goto continue
         end
-    else -- #waypoints should be > 1
-        self.waypoints[1].sprite = startSprite
-        self.waypoints[1].color = startBlipColor
-        self.waypoints[1].number = -1
-        self.waypoints[1].name = "Start"
 
-        self.waypoints[#self.waypoints].sprite = finishSprite
-        self.waypoints[#self.waypoints].color = finishBlipColor
-        self.waypoints[#self.waypoints].number = -1
-        self.waypoints[#self.waypoints].name = "Finish"
-    end
+        self.waypoints[index]:UpdateBlip(index, #self.waypoints, self.startIsFinish)
 
-    for i = 2, #self.waypoints - 1 do
-        self.waypoints[i].sprite = midSprite
-        self.waypoints[i].color = midBlipColor
-        self.waypoints[i].number = i - 1
-        self.waypoints[i].name = "Waypoint"
-    end
-
-    for i = 1, #self.waypoints do
-        self:SetBlipProperties(i)
+        ::continue::
     end
 end
 
@@ -245,18 +262,16 @@ function Track:SetBlipProperties(index)
     EndTextCommandSetBlipName(self.waypoints[index].blip)
 end
 
-function Track:GetClosestWaypoint(coord, maxRadius)
-    local selectedIndex = 0
-    local minDist = maxRadius
-    for index, waypoint in ipairs(self.waypoints) do
-        local dist = #(coord - vector3(waypoint.coord.x, waypoint.coord.y, waypoint.coord.z))
-        if dist < waypoint.coord.r and dist < minDist then
-            minDist = dist
-            selectedIndex = index
-        end
-    end
+function Track:UpdateHeading(index, heading)
+    self.waypoints[index].heading = heading
+end
 
-    return selectedIndex
+function Track:SelectWaypoint(index)
+    self.waypoints[index]:SelectWaypoint()
+end
+
+function Track:DeselectSelectedWaypoint(index)
+    self.waypoints[index]:DeselectSelectedWaypoint()
 end
 
 function Track:DeleteCheckpoints()
@@ -271,62 +286,7 @@ function Track:DeleteWaypointBlips()
     end
 end
 
-function Track:LoadWaypointBlips(waypointCoords)
-    self:DeleteWaypointBlips()
-    self.waypoints = {}
-
-    if (waypointCoords == nil or #waypointCoords == 0) then
-        return
-    end
-
-    for i = 1, #waypointCoords - 1 do
-        local blip = AddBlipForCoord(waypointCoords[i].x, waypointCoords[i].y, waypointCoords[i].z)
-        self.waypoints[i] = {
-            coord = waypointCoords[i],
-            checkpoint = nil,
-            blip = blip,
-            sprite = -1,
-            color = -1,
-            number = -1,
-            name = nil
-        }
-    end
-
-    self.startIsFinish = #waypointCoords > 1 and waypointCoords[1].x == waypointCoords[#waypointCoords].x and
-                             waypointCoords[1].y == waypointCoords[#waypointCoords].y and waypointCoords[1].z ==
-                             waypointCoords[#waypointCoords].z
-
-    if false == self.startIsFinish then
-        local blip = AddBlipForCoord(waypointCoords[#waypointCoords].x, waypointCoords[#waypointCoords].y,
-            waypointCoords[#waypointCoords].z)
-        self.waypoints[#waypointCoords] = {
-            coord = waypointCoords[#waypointCoords],
-            checkpoint = nil,
-            blip = blip,
-            sprite = -1,
-            color = -1,
-            number = -1,
-            name = nil
-        }
-    end
-
-    self:SetStartToFinishBlips()
-
-    SetBlipRoute(self.waypoints[1].blip, true)
-    SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
-end
-
-function Track:WaypointsToCoords()
-    local waypointCoords = {}
-    for i = 1, #self.waypoints do
-        waypointCoords[i] = self.waypoints[i].coord
-    end
-    if true == self.startIsFinish then
-        waypointCoords[#waypointCoords + 1] = waypointCoords[1]
-    end
-    return waypointCoords
-end
-
+-- To reverse waypoints need to me much more complicated
 function Track:WaypointsToCoordsRev()
     local waypointCoords = {}
     if true == self.startIsFinish then
@@ -343,7 +303,7 @@ function Track:Reverse()
     self:DeleteCheckpoints()
     self:LoadWaypointBlips(self:WaypointsToCoordsRev())
     self:SetStartFinishCheckpoints()
-    self:GenerateStartingGrid(self.waypoints[1].coord, 8)
+    self:GenerateStartingGrid(self.waypoints[1], 8)
 end
 
 function Track:Clear()
@@ -369,7 +329,6 @@ function Track:GenerateStartingGrid(startWaypoint, totalGridPositions)
     self:DeleteGridCheckPoints()
 
     print("Generating starting grid")
-    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
 
     -- print(string.format("Starting Grid: %.2f, %.2f, %.2f", startPoint.x, startPoint.y, startPoint.z))
     -- print(string.format("Starting Heading: %.2f", startWaypoint.heading))
@@ -388,7 +347,7 @@ function Track:GenerateStartingGrid(startWaypoint, totalGridPositions)
 
     for i = 1, totalGridPositions do
 
-        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
+        local gridPosition = startWaypoint.coord - forwardVector * (i + 1) * gridSeparation
 
         -- print(string.format("Initial grid position Position(%.2f,%.2f,%.2f)", gridPosition.x, gridPosition.y,
         -- gridPosition.z))
@@ -407,7 +366,7 @@ end
 
 function Track:UpdateStartingGrid()
     if (#self.waypoints > 0) then
-        self:GenerateStartingGrid(self.waypoints[1].coord, 8)
+        self:GenerateStartingGrid(self.waypoints[1], 8)
     end
 end
 
@@ -432,8 +391,37 @@ function Track:SpawnCheckpoints(gridPositions)
     end
 end
 
-function Track:RemoveWaypoint(waypointIndex)
-    table.remove(self.waypoints, waypointIndex)
+function Track:RemoveWaypoint(waypointIndexToDelete)
+
+    local waypointToDelete = self.waypoints[waypointIndexToDelete]
+
+    print(("Deleting waypoint %i"):format(waypointIndexToDelete))
+    print(dump(waypointToDelete.next))
+
+    -- Find all waypoints that point to the one being Deleted
+    -- Point them to what the deleted waypoint points to
+    for waypointIndex, waypoint in ipairs(self.waypoints) do
+        print(("Checking waypoint %i"):format(waypointIndex))
+        print(dump(waypoint.next))
+
+        for pointsToIndex, pointsTo in ipairs(waypoint.next) do
+            --Waypoints that are aheead of the one deleted will need to point one waypoint back
+            if(waypointIndex > waypointIndexToDelete) then
+                print("Shifting point down")
+                waypoint.next[pointsToIndex] = pointsTo - 1
+            elseif (pointsTo == waypointIndexToDelete) then
+                print("waypoint points to deleted waypoint")
+                table.remove(waypoint.next, pointsToIndex)
+                for _, next in ipairs(waypointToDelete.next) do
+                    print(("Now pointing to %i"):format(next))
+                    --Will not be shifted one back as well
+                    table.insert(waypoint.next, next -1)
+                end
+            end
+        end
+    end
+
+    table.remove(self.waypoints, waypointIndexToDelete)
 end
 
 function Track:RouteToTrack()
@@ -482,13 +470,13 @@ function Track:OnHitCheckpoint(currentWaypoint, currentLap, numLaps)
     if arrow3Checkpoint == checkpointType then
         nextCoord = curr < #self.waypoints and self.waypoints[curr + 1].coord or self.waypoints[1].coord
     end
-    local raceCheckpoint = MakeCheckpoint(checkpointType, waypointCoord, nextCoord, colour.yellow, 0)
+    local raceCheckpoint = MakeCheckpoint(checkpointType, waypointCoord, nextCoord, color.yellow, 0)
 
     return waypointCoord, raceCheckpoint
 end
 
 function Track:Register(rData)
-    TriggerServerEvent("races:register", self:WaypointsToCoords(), self.public, self.savedTrackName, rData)
+    TriggerServerEvent("races:register", self:SerialiseWaypoints(), self.public, self.savedTrackName, rData)
 end
 
 function Track:Unregister()
@@ -507,17 +495,25 @@ end
 function Track:OnStartRace()
 
     self:SetVisibleBlips()
-    local currentWaypoint = true == self.startIsFinish and 0 or 1
+    local currentWaypoint = 1
 
     local waypointCoord = self.waypoints[1].coord
-    local raceCheckpoint = MakeCheckpoint(arrow3Checkpoint, waypointCoord, self.waypoints[2].coord, colour.yellow, 0)
+
+    local nextCheckpoints = {}
+
+    for index, next in ipairs(self.waypoints[1].next) do
+
+        local nextWaypointCoords = self.waypoints[next].coord
+
+        table.insert(nextCheckpoints, MakeCheckpoint(arrow3Checkpoint, waypointCoord, nextWaypointCoords, color.yellow, 0))
+    end
 
     SetBlipRoute(waypointCoord, true)
     SetBlipRouteColour(waypointCoord, blipRouteColor)
 
     self:DeleteGridCheckPoints()
 
-    return currentWaypoint, waypointCoord, raceCheckpoint
+    return currentWaypoint, waypointCoord, nextCheckpoints
 end
 
 function Track:GetTrackRespawnPosition(index)
@@ -562,10 +558,10 @@ Track.UpdateWaypointCoords = function(waypointCoords)
         local next
 
         if (index < #waypointCoords) then
-            next = { index + 1}
+            next = {index + 1}
         else
-            if(newCoord == newWaypoints[1].coord) then
-                --Looping track
+            if (newCoord == newWaypoints[1].coord) then
+                -- Looping track
                 print("Track Loops")
                 next = 1
             end
