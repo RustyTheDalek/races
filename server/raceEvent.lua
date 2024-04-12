@@ -431,7 +431,7 @@ function RaceEvent:SaveResults()
             end
             msg = msg .. "\n"
 
-            local race_results_line = ("%d,%s,%02d:%05.2f,%.2f\n"):format(pos, result.playerName, best_minutes, best_seconds, result.averageFPS)
+            local race_results_line = ("%d,%s,%02d:%05.3f,%.2f\n"):format(pos, result.playerName, best_minutes, best_seconds, result.averageFPS)
             race_results_data = race_results_data .. race_results_line
         end
     else
