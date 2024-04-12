@@ -11,13 +11,13 @@ function MakeCheckpoint(checkpointType, coord, radius, nextCoord, color, num, al
     end
 
     if(alpha == nil) then
-        alpha = checkpointAlpha
+        alpha = checkpointAlpha 
     end
 
     local checkpoint = CreateCheckpoint(checkpointType,
-        coord.x, coord.y, coord.z -1 / (coord.r / 2),
-        nextCoord.x, nextCoord.y, nextCoord.z -1 / (coord.r / 2) ,
-        coord.r * 2.0, color.r, color.g, color.b, 
+        coord.x, coord.y, coord.z -1 / (radius / 2),
+        nextCoord.x, nextCoord.y, nextCoord.z -1 / (radius / 2) ,
+        radius * 2.0, color.r, color.g, color.b, 
         alpha, num)
     SetCheckpointIconHeight(checkpoint, 0.3)
     return checkpoint
