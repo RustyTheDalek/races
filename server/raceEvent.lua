@@ -101,7 +101,8 @@ function RaceEvent:Update()
 end
 
 function RaceEvent:GenerateStartingGrid(startWaypoint, numRacers)
-    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
+
+    local startPoint = vector3(startWaypoint.coord.x, startWaypoint.coord.y, startWaypoint.coord.z)
 
     --Calculate the forwardVector of the starting Waypoint
     local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
