@@ -406,7 +406,7 @@ function RaceEvent:SaveResults()
     end
     msg = msg .. "\n"
 
-    local race_results_data = ""
+    local race_results_data = ("%s,%i\n"):format(self.trackName, self.laps)
 
     if #self.results > 0 then
         -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
