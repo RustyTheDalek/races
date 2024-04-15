@@ -247,48 +247,53 @@ local function switchVehicle(ped, vehicleHash)
     sendMessage("Vehicle Display name " .. GetDisplayNameFromVehicleModel(vehicleHash))
     sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
-    if vehicleHash ~= nil then
-        if(CarTierUIActive()) then
-            print("cartierspawn")
-            vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
-            raceVehicleHash = GetEntityModel(vehicle)
-            raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
-        else
-            print("defaultspawn")
-            local pedVehicle = GetVehiclePedIsIn(ped, false)
-            if pedVehicle ~= 0 then
-                if GetPedInVehicleSeat(pedVehicle, -1) == ped then
-                    RequestModel(vehicleHash)
-                    while HasModelLoaded(vehicleHash) == false do
-                        Citizen.Wait(0)
-                    end
-                    local passengers = {}
-                    for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(pedVehicle)) - 2 do
-                        local passenger = GetPedInVehicleSeat(pedVehicle, i)
-                        if passenger ~= 0 then
-                            passengers[#passengers + 1] = { ped = passenger, seat = i }
-                        end
-                    end
-                    local coord = GetEntityCoords(pedVehicle)
-                    local speed = GetEntitySpeed(ped)
-                    SetEntityAsMissionEntity(pedVehicle, true, true)
-                    DeleteVehicle(pedVehicle)
-                    vehicle = putPedInVehicle(ped, vehicleHash, coord)
-                    SetVehicleForwardSpeed(vehicle, speed)
-                    for _, passenger in pairs(passengers) do
-                        SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
-                    end
-                end
-            else
+
+    if(vehicleHash == nil) then
+        sendMessage("Vehicle Hash nil, not swapping")
+        return
+    end
+
+    if(CarTierUIActive()) then
+        print("cartierspawn")
+        vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
+        raceVehicleHash = GetEntityModel(vehicle)
+        raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
+    else
+        print("defaultspawn")
+        local pedVehicle = GetVehiclePedIsIn(ped, false)
+        if pedVehicle ~= 0 then
+            if GetPedInVehicleSeat(pedVehicle, -1) == ped then
                 RequestModel(vehicleHash)
                 while HasModelLoaded(vehicleHash) == false do
                     Citizen.Wait(0)
                 end
-                vehicle = putPedInVehicle(ped, vehicleHash, nil)
+                local passengers = {}
+                for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(pedVehicle)) - 2 do
+                    local passenger = GetPedInVehicleSeat(pedVehicle, i)
+                    if passenger ~= 0 then
+                        passengers[#passengers + 1] = { ped = passenger, seat = i }
+                    end
+                end
+                local coord = GetEntityCoords(pedVehicle)
+                local speed = GetEntitySpeed(ped)
+                SetEntityAsMissionEntity(pedVehicle, true, true)
+                DeleteVehicle(pedVehicle)
+                vehicle = putPedInVehicle(ped, vehicleHash, coord)
+                SetVehicleForwardSpeed(vehicle, speed)
+                for _, passenger in pairs(passengers) do
+                    SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
+                end
             end
+        else
+            RequestModel(vehicleHash)
+            while HasModelLoaded(vehicleHash) == false do
+                Citizen.Wait(0)
+            end
+            vehicle = putPedInVehicle(ped, vehicleHash, nil)
         end
     end
-    return vehicle
+
+        return vehicle
 end
 
 local function getClassName(vclass)
