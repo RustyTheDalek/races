@@ -382,6 +382,8 @@ local function finishRace(dnf)
         dnf = dnf
     }
 
+    ghosting:StopGhosting()
+
     TriggerServerEvent("races:finish", raceIndex, finishData)
     ClearDNFTime()
     SetLeaderboardLower(true)
