@@ -1207,7 +1207,7 @@ function GetVehicleListNames(isPublic, source)
     local lists = vehicleListData[license]
 
     if lists == nil then
-        notifyPlayer(source, ("%s Vehicle List empty.\n"):format(isPublic and "Public" or "Private"))
+        print(("%s Vehicle List empty.\n"):format(isPublic and "Public" or "Private"))
         return
     end
 
