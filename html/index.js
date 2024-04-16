@@ -210,11 +210,6 @@ $(function () {
     if (publicList !== undefined)
       publicListOptionGroup.append(MakeOptions(publicList));
 
-    console.log(registerPanel);
-
-    console.log(privateListOptionGroup);
-    console.log(publicListOptionGroup);
-
     registerPanel
       .find("[name=vehicle-list]")
       .append(privateListOptionGroup)
@@ -223,8 +218,6 @@ $(function () {
 
   function MakeOptions(list) {
     let options = [];
-
-    console.log(list);
 
     list.forEach((name) => {
       options.push(
@@ -553,24 +546,23 @@ $(function () {
       "<option value = 21>21:Trains</option>";
     if ($("#rtype").val() == "norm") {
       $("#rest").hide();
+			$("#vehicle-list-options").hide();
       $("#vclass").hide();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "rest") {
       $("#rest").show();
+			registerPanel.find("#vehicle-list-options").show();
       $("#vclass").hide();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "class") {
       $("#rest").hide();
       document.getElementById("register_vclass").innerHTML =
         "<option value = -1>-1:Custom</option>" + html;
-      $("#vclass").show();
+			registerPanel.find("#vehicle-list-options").show();
+			$("#vclass").show();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "rand") {
-      $("#rest").hide();
-      document.getElementById("register_vclass").innerHTML =
-        "<option value = -2>Any</option>" + html;
-      $("#vclass").show();
-      $("#sveh").show();
+      DisplayRandomOptions(html);
     }
   });
 
@@ -883,6 +875,15 @@ $(function () {
     }
   };
 });
+
+function DisplayRandomOptions(html) {
+    $("#rest").hide();
+    document.getElementById("register_vclass").innerHTML =
+        "<option value = -2>Any</option>" + html;
+    $("#vehicle-list-options").show();
+    $("#vclass").show();
+    $("#sveh").show();
+}
 
 function OpenRegisterPanel(data, openPanel) {
   $("#tier").change();
