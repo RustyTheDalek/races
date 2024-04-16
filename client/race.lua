@@ -2297,18 +2297,12 @@ end)
 
 RegisterNetEvent("races:vehicleLists")
 AddEventHandler("races:vehicleLists", function(publicVehicleListNames, privateVehicleListNames)
-    print('Recieving vehicle lists')
-
-    print(dump(publicVehicleListNames))
-    print(dump(privateVehicleListNames))
-
     SendNUIMessage({
         update = "vehicleListNames",
         public = publicVehicleListNames,
         private = privateVehicleListNames
     })
 end)
-
 
 RegisterNetEvent("races:spawncheckpoint")
 AddEventHandler("races:spawncheckpoint", function(position, gridNumber)
