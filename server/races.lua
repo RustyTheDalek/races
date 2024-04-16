@@ -543,6 +543,11 @@ AddEventHandler("races:init", function()
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 
+    local publicVehicleListNames = GetVehicleListNames(true, source)
+    local privateVehicleListNames = GetVehicleListNames(false, source)
+
+    TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
+
     local configData = FileManager.LoadCurrentResourceFileJson('config')
 
     racesMapManager:LoadConfig(configData['mapManager'])
@@ -1169,35 +1174,50 @@ end)
 RegisterNetEvent("races:listNames")
 AddEventHandler("races:listNames", function(isPublic, altSource)
     local source = altSource or source
-    if isPublic ~= nil then
-        local listNames = {}
 
-        local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
-        if license ~= nil then
-            local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
-            if vehicleListData ~= nil then
-                if license ~= "PUBLIC" then
-                    license = string.sub(license, 9)
-                end
-                local lists = vehicleListData[license]
-                if lists ~= nil then
-                    for listName in pairs(lists) do
-                        listNames[#listNames + 1] = listName
-                    end
-                    table.sort(listNames)
-                end
-            else
-                notifyPlayer(source, "Could not load vehicle list data.\n")
-            end
-        else
-            notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
-        end
-
-        TriggerClientEvent("races:listNames", source, isPublic, listNames)
-    else
-        notifyPlayer(source, "Ignoring list vehicle lists event.  Invalid parameters.\n")
-    end
+    TriggerClientEvent("races:listNames", source, isPublic, GetVehicleListNames(isPublic, source))
 end)
+
+function GetVehicleListNames(isPublic, source)
+    if isPublic == nil then
+        notifyPlayer(source, "Ignoring list vehicle lists event.  Invalid parameters.\n")
+        return
+    end
+
+    local listNames = {}
+
+    local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
+
+    if license == nil then
+        notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
+        return
+    end
+
+    local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
+
+    if vehicleListData == nil then
+        notifyPlayer(source, "Could not load vehicle list data.\n")
+        return
+    end
+
+    if license ~= "PUBLIC" then
+        license = string.sub(license, 9)
+    end
+
+    local lists = vehicleListData[license]
+
+    if lists == nil then
+        notifyPlayer(source, ("%s Vehicle List empty.\n"):format(isPublic and "Public" or "Private"))
+        return
+    end
+
+    for listName in pairs(lists) do
+        table.insert(listNames, listName)
+    end
+    table.sort(listNames)
+
+    return listNames
+end
 
 RegisterNetEvent("races:sendvehiclename")
 AddEventHandler("races:sendvehiclename", function(raceIndex, currentVehicleName)
