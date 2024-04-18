@@ -268,25 +268,25 @@ local function loadVehicleList(isPublic, source, name)
         return
     end
 
-        local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
+    local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
     if vehicleListData == nil then
         notifyPlayer(source, "loadVehicleList: Could not load vehicle list data.\n")
         return
     end
 
-            if license ~= "PUBLIC" then
-                license = string.sub(license, 9)
-            end
+    if license ~= "PUBLIC" then
+        license = string.sub(license, 9)
+    end
 
     if vehicleListData[license] == nil then
         notifyPlayer(source, "loadVehicleList: No vehicle lists.\n")
         return
-            end
+    end
 
     if(vehicleListData[license][name] == nil) then
         notifyPlayer(source, "loadVehicleList: No vehicle with that name.\n")
         return
-        end
+    end
 
     return vehicleListData[license][name]
 
@@ -759,14 +759,14 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
             notifyPlayer(source, "Cannot register.  Invalid vehicle class.\n")
             return
         end
-        if -1 == rdata.vclass and #rdata.vehicleList == 0 then
-            notifyPlayer(source, "Cannot register.  Vehicle list is empty.\n")
+        if -1 == rdata.vclass and #rdata.randomVehicleListName == nil then
+            notifyPlayer(source, "Cannot register.  No vehicle list.\n")
             return
         end
         umsg = " : using " .. getClassName(rdata.vclass) .. " vehicle class"
     elseif "rand" == rdata.rtype then
-        if #rdata.vehicleList == 0 then
-            notifyPlayer(source, "Cannot register.  Vehicle list is empty.\n")
+        if rdata.randomVehicleListName == nil then
+            notifyPlayer(source, "Cannot register.  No vehicle list.\n")
             return
         end
         umsg = " : using random "
@@ -808,6 +808,11 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
 
     if(rdata.map ~= "") then
         msg = msg .. (" with map %s"):format(rdata.map);
+    end
+
+    if(rdata.randomVehicleListName ~= nil) then
+        print("Loading vehicle list")
+        rdata.vehicleList = loadVehicleList(rdata.randomVehicleListAccess, source, rdata.randomVehicleListName)
     end
 
     notifyPlayer(source, msg)
