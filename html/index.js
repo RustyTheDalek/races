@@ -198,8 +198,8 @@ $(function () {
   });
 
   function UpdateVehicleLists(publicList, privateList) {
-    pvtListNames = publicList;
-    pubListNames = privateList;
+    pvtListNames = privateList;
+    pubListNames = publicList;
 
     let privateListOptionGroup = $("<optgroup/>", { label: "Private" });
 
@@ -212,8 +212,7 @@ $(function () {
 
     registerPanel
       .find("[name=vehicle-list]")
-      .append(privateListOptionGroup)
-      .append(publicListOptionGroup);
+      .append([ privateListOptionGroup, publicListOptionGroup ] );
   }
 
   function MakeOptions(list) {
@@ -567,6 +566,9 @@ $(function () {
   });
 
   $("#register").click(function () {
+
+    let selectedVehicleList = registerPanel.find("[name=vehicle-list]").find(":selected");
+
     $.post(
       "https://races/register",
       JSON.stringify({
@@ -578,6 +580,8 @@ $(function () {
         restrict: $("#register_rest_vehicle").val(),
         vclass: $("#register_vclass").val(),
         svehicle: $("#register_start_vehicle").val(),
+        randomVehicleList: selectedVehicleList.val(),
+        randomVehicleListPublic : selectedVehicleList.parent().attr('label') == "Public" ? true : false
       })
     );
   });
