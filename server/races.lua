@@ -261,23 +261,35 @@ end
 
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
-    if license ~= nil then
+
+    --Check Public then private
+    if GetPlayerIdentifier(source, 0) == nil then
+        notifyPlayer(source, "loadVehicleList: Could not get license for player source ID: " .. source .. "\n")
+        return
+    end
+
         local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
-        if vehicleListData ~= nil then
+    if vehicleListData == nil then
+        notifyPlayer(source, "loadVehicleList: Could not load vehicle list data.\n")
+        return
+    end
+
             if license ~= "PUBLIC" then
                 license = string.sub(license, 9)
             end
-            local lists = vehicleListData[license]
-            if lists ~= nil then
-                return lists[name]
+
+    if vehicleListData[license] == nil then
+        notifyPlayer(source, "loadVehicleList: No vehicle lists.\n")
+        return
             end
-        else
-            notifyPlayer(source, "loadVehicleList: Could not load vehicle list data.\n")
+
+    if(vehicleListData[license][name] == nil) then
+        notifyPlayer(source, "loadVehicleList: No vehicle with that name.\n")
+        return
         end
-    else
-        notifyPlayer(source, "loadVehicleList: Could not get license for player source ID: " .. source .. "\n")
-    end
-    return nil
+
+    return vehicleListData[license][name]
+
 end
 
 local function saveVehicleList(isPublic, source, name, vehicleList)
