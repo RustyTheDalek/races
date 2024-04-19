@@ -1149,10 +1149,12 @@ AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance)
     local source = source
     if rIndex == nil or numWaypointsPassed == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
+        return
     end
 
     if races[rIndex] == nil then
         notifyPlayer(source, "Cannot report.  Race does not exist.\n")
+        return
     end
 
     races[rIndex]:Report(source, numWaypointsPassed, distance)
