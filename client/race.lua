@@ -1184,6 +1184,10 @@ end
 
 --#region NUI callbacks
 
+RegisterNUICallback("uiReady", function()
+    TriggerServerEvent("races:recieveUIData")
+end)
+
 RegisterNUICallback("edit", function()
     edit()
 end)

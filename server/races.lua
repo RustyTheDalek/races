@@ -555,16 +555,19 @@ AddEventHandler("races:init", function()
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 
-    local publicVehicleListNames = GetVehicleListNames(true, source)
-    local privateVehicleListNames = GetVehicleListNames(false, source)
-
-    TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
-
     local configData = FileManager.LoadCurrentResourceFileJson('config')
 
     racesMapManager:LoadConfig(configData['mapManager'])
 
     TriggerClientEvent("races:config", source, configData)
+end)
+
+RegisterNetEvent("races:recieveUIData")
+AddEventHandler("races:recieveUIData", function()
+    local publicVehicleListNames = GetVehicleListNames(true, source)
+    local privateVehicleListNames = GetVehicleListNames(false, source)
+
+    TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
 end)
 
 RegisterNetEvent("races:load")

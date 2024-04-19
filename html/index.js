@@ -878,6 +878,9 @@ $(function () {
       }
     }
   };
+
+  $.post("https://races/uiReady");
+
 });
 
 function DisplayRandomOptions(html) {
