@@ -74,10 +74,6 @@ body {
     width: 20%;
 }
 
-#main_track_access {
-    height: 44px;
-}
-
 .medium-width { 
     width: 500px;
     height: 44px;
@@ -85,18 +81,6 @@ body {
 
 #main_vehicle {
     width: 25%;
-    height: 44px;
-}
-
-#main_vclass {
-    height: 44px;
-}
-
-#unit {
-    height: 44px;
-}
-
-#edit_track_access0 {
     height: 44px;
 }
 
@@ -120,20 +104,12 @@ body {
     width: 15%;
 }
 
-#edit_track_access1 {
-    height: 44px;
-}
-
 #edit_unsaved {
     width: 500px;
 }
 
 #edit_save {
     width: 15%;
-}
-
-#register_track_access {
-    height: 44px;
 }
 
 #register {
@@ -162,10 +138,6 @@ select {
     width: 10%;
 }
 
-#rtype {
-    height: 44px;
-}
-
 #register_rest_vehicle {
     height: 44px;
 }
@@ -180,14 +152,6 @@ select {
 
 #delay {
     width: 10%;
-}
-
-#grp_access0 {
-    height: 44px;
-}
-
-#grp_access1 {
-    height: 44px;
 }
 
 #grp_unsaved {
