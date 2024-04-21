@@ -66,7 +66,7 @@ body {
     border-radius: 7px;
 }
 
-#main_clear {
+.quarter-width {
     width: 25%;
 }
 
@@ -83,14 +83,6 @@ body {
     width: 25%
 }
 
-#main_blt {
-    width: 25%;
-}
-
-#main_list {
-    width: 25%;
-}
-
 #leave {
     width: 20%;
 }
@@ -103,57 +95,17 @@ body {
     width: 20%;
 }
 
-#spawn {
-    width: 25%;
-}
-
 #main_vehicle {
     width: 25%;
     height: 44px;
-}
-
-#lvehicles {
-    width: 25%;
 }
 
 #main_vclass {
     height: 44px;
 }
 
-#speedo {
-    width: 25%;
-}
-
-#change {
-    width: 25%;
-}
-
 #unit {
     height: 44px;
-}
-
-#main_edit {
-    width: 25%;
-}
-
-#main_register {
-    width: 25%;
-}
-
-#main_vlist {
-    width: 25%;
-}
-
-#edit {
-    width: 25%;
-}
-
-#edit_clear {
-    width: 25%;
-}
-
-#edit_reverse {
-    width: 25%;
 }
 
 #edit_track_access0 {
@@ -197,18 +149,6 @@ body {
     width: 15%;
 }
 
-#edit_main {
-    width: 25%;
-}
-
-#edit_register {
-    width: 25%;
-}
-
-#edit_vlist {
-    width: 25%;
-}
-
 #register_track_access {
     height: 44px;
 }
@@ -216,18 +156,6 @@ body {
 #register_name {
     width: 500px;
     height: 44px;
-}
-
-#register_load {
-    width: 25%;
-}
-
-#register_blt {
-    width: 25%;
-}
-
-#register_list {
-    width: 25%;
 }
 
 #register {
@@ -272,29 +200,8 @@ select {
     height: 44px;
 }
 
-#unregister {
-    width: 25%;
-}
-
-#start {
-    width: 25%;
-}
-
 #delay {
     width: 10%;
-}
-
-#register_main {
-    width: 25%;
-}
-
-#register_edit {
-    width: 25%;
-}
-
-
-#register_vlist {
-    width: 25%;
 }
 
 #grp_access0 {
@@ -425,18 +332,6 @@ select {
 
 #save_list {
     width: 20%;
-}
-
-#vlist_main {
-    width: 25%;
-}
-
-#vlist_edit {
-    width: 25%;
-}
-
-#vlist_register {
-    width: 25%;
 }
 
 #scroll {
