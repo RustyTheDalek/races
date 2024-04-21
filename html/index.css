@@ -52,6 +52,10 @@ body {
     padding: 5px 0px;
 }
 
+.row > * {
+    flex-grow: 1;
+}
+
 .panel { 
     text-align: center;
     font-size: 25px;
@@ -79,36 +83,8 @@ body {
     height: 44px;
 }
 
-#edit_load {
-    width: 15%;
-}
-
-#edit_overwrite {
-    width: 15%;
-}
-
-#edit_delete {
-    width: 15%;
-}
-
-#edit_blt {
-    width: 15%;
-}
-
-#edit_list {
-    width: 15%;
-}
-
 #edit_unsaved {
     width: 500px;
-}
-
-#edit_save {
-    width: 15%;
-}
-
-#register {
-    width: 15%;
 }
 
 select {
@@ -165,14 +141,6 @@ select {
     background-color: rgba(0, 0, 0, 0.5);
     border: 2px solid rgb(255, 255, 255);
     border-radius: 7px;
-}
-
-#add_veh {
-    width: 15%;
-}
-
-#delete_veh {
-    width: 15%;
 }
 
 #list_vclass {
