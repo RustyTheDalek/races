@@ -74,7 +74,7 @@ body {
     height: 44px;
 }
 
-#main_name {
+.medium-width { 
     width: 500px;
     height: 44px;
 }
@@ -112,11 +112,6 @@ body {
     height: 44px;
 }
 
-#edit_name {
-    width: 500px;
-    height: 44px;
-}
-
 #edit_load {
     width: 15%;
 }
@@ -150,11 +145,6 @@ body {
 }
 
 #register_track_access {
-    height: 44px;
-}
-
-#register_name {
-    width: 500px;
     height: 44px;
 }
 
@@ -208,11 +198,6 @@ select {
     height: 44px;
 }
 
-#grp_name {
-    width: 500px;
-    height: 44px;
-}
-
 #load_grp {
     width: 20%;
 }
@@ -259,18 +244,8 @@ select {
     width: 15%;
 }
 
-#list_vehicle {
-    width: 500px;
-    height: 44px;
-}
-
 #delete_veh {
     width: 15%;
-}
-
-#veh_list {
-    width: 500px;
-    height: 44px;
 }
 
 #add_class {
@@ -298,11 +273,6 @@ select {
 }
 
 #list_access0 {
-    height: 44px;
-}
-
-#list_name {
-    width: 500px;
     height: 44px;
 }
 
