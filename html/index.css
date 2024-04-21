@@ -70,6 +70,10 @@ body {
     width: 25%;
 }
 
+.fifth-width {
+    width: 20%;
+}
+
 #main_track_access {
     height: 44px;
 }
@@ -77,18 +81,6 @@ body {
 .medium-width { 
     width: 500px;
     height: 44px;
-}
-
-#leave {
-    width: 20%;
-}
-
-#respawn {
-    width: 20%;
-}
-
-#results {
-    width: 20%;
 }
 
 #main_vehicle {
@@ -194,32 +186,12 @@ select {
     height: 44px;
 }
 
-#load_grp {
-    width: 20%;
-}
-
-#overwrite_grp {
-    width: 20%;
-}
-
-#delete_grp {
-    width: 20%;
-}
-
-#list_grps {
-    width: 20%;
-}
-
 #grp_access1 {
     height: 44px;
 }
 
 #grp_unsaved {
     width: 500px;
-}
-
-#save_grp {
-    width: 20%;
 }
 
 #listPanel {
@@ -244,48 +216,12 @@ select {
     width: 15%;
 }
 
-#add_class {
-    width: 20%;
-}
-
-#delete_class {
-    width: 20%;
-}
-
 #list_vclass {
     height: 44px;
 }
 
-#add_all_veh {
-    width: 20%;
-}
-
-#delete_all_veh {
-    width: 20%;
-}
-
-#list_veh {
-    width: 20%;
-}
-
 #list_access0 {
     height: 44px;
-}
-
-#load_list {
-    width: 20%;
-}
-
-#overwrite_list {
-    width: 20%;
-}
-
-#delete_list {
-    width: 20%;
-}
-
-#list_lists {
-    width: 20%;
 }
 
 #list_access1 {
@@ -294,10 +230,6 @@ select {
 
 #list_unsaved {
     width: 500px;
-}
-
-#save_list {
-    width: 20%;
 }
 
 #scroll {
