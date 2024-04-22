@@ -1944,7 +1944,7 @@ RegisterNetEvent("races:joinnotification")
 AddEventHandler("races:joinnotification", function(joinNotificationData)
 
     local raceIndex = joinNotificationData.raceIndex
-    local registrationCoords = joinNotificationData.waypointCoords
+    local registrationCoords = joinNotificationData.waypoints
     local numRacing = joinNotificationData.numRacing
     local playerName = joinNotificationData.playerName
     local trackName = joinNotificationData.trackName
@@ -1971,10 +1971,9 @@ AddEventHandler("races:leave", function()
     leave()
 end)
 
-function UpdateRegistrationCheckpoint(raceIndex, coords, numRacing)
+function UpdateRegistrationCheckpoint(raceIndex, waypoint, numRacing)
     DeleteCheckpoint(starts[raceIndex].checkpoint);
-    coords.r = Config.data.editing.defaultRadius
-    local checkpoint = MakeCheckpoint(plainCheckpoint, coords, coords, colour.purple, numRacing)
+    local checkpoint = MakeCheckpoint(plainCheckpoint, waypoint.coord, Config.data.editing.defaultRadius, waypoint.coord, color.purple, numRacing)
     starts[raceIndex].checkpoint = checkpoint
 end
 
