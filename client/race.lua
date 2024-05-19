@@ -1887,6 +1887,7 @@ AddEventHandler("races:greenflag", function()
     currentLapTimer:Start()
     fpsMonitor:StartTrackingAverage()
     if(currentRace.raceType ~= 'ghost') then
+        print(("Starting ghost with %i seconds"):format(configData['raceStartGhostingTime']))
         ghosting:StartGhosting(configData['raceStartGhostingTime'])
     end
 end)
@@ -2740,6 +2741,7 @@ end
 function RaceUpdate(player, playerCoord, currentTime)
     HandleRespawn(currentTime)
 
+    ghosting:Update();
     currentLapTimer:Update()
     local minutes, seconds = minutesSeconds(currentLapTimer.length)
     SendCurrentLapTime(minutes, seconds)
