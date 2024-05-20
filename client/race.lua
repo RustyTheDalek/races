@@ -634,6 +634,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
         vclass = vclass,
         svehicle = svehicle,
         randomVehicleListName = randomVehicleListName,
+        randomVehicleListAccess = randomVehicleListPublic,
         specialClass = specialClass,
         map = currentTrack.map
     }
@@ -1831,6 +1832,7 @@ function(rIndex, coord, isPublic, trackName, owner, rdata)
         vclass = rdata.vclass,
         svehicle = rdata.svehicle,
         vehicleList = rdata.vehicleList,
+        randomVehicleListName = rdata.randomVehicleListName,
         blip = blip,
         checkpoint = checkpoint,
         registerPosition = coord,
@@ -2093,6 +2095,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                         msg = msg .. " : '" .. startVehicle .. "'"
                     end
                     randVehicles = starts[rIndex].vehicleList
+                    print(dump(starts[rIndex].vehicleList))
+                    print(dump(starts[rIndex]))
                 elseif "wanted" == starts[rIndex].rtype then
                     msg = msg .. " : using wanted race mode"
                     currentRace.raceType = 'wanted'

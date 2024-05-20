@@ -393,6 +393,7 @@ local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, time
         restrict = rdata.restrict,
         vclass = rdata.vclass,
         svehicle = rdata.svehicle,
+        randomVehicleListName = rdata.randomVehicleListName,
         vehicleList = rdata.vehicleList,
         numRacing = 0,
         numReady = 0,
@@ -815,7 +816,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
 
     if(rdata.randomVehicleListName ~= nil) then
         print("Loading vehicle list")
-        rdata.vehicleList = loadVehicleList(rdata.randomVehicleListAccess, source, rdata.randomVehicleListName)
+        local vehicleList = loadVehicleList(rdata.randomVehicleListAccess, source, rdata.randomVehicleListName)
+        rdata.vehicleList = vehicleList
     end
 
     notifyPlayer(source, msg)
