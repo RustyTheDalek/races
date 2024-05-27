@@ -964,6 +964,16 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
                 TriggerEvent("races:listNames", isPublic, source)
                 notifyPlayer(source,
                     "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+
+                local publicVehicleListNames = GetVehicleListNames(true, source)
+                local privateVehicleListNames = GetVehicleListNames(false, source)
+
+                if(isPublic) then
+                    TriggerClientEvent("races:vehicleLists", -1, publicVehicleListNames, privateVehicleListNames)
+                else
+                    TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
+                end
+
             else
                 notifyPlayer(source,
                     "Error saving " ..
