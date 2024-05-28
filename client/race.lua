@@ -2374,12 +2374,27 @@ end
 function RacesReport()
     while true do
         Citizen.Wait(500)
+
+        local player = PlayerPedId()
+
         if racingStates.Racing == raceState then
-            local player = PlayerPedId()
             local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
             TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, distance)
             TriggerServerEvent("races:updatefps", raceIndex, fpsMonitor.fps)
         end
+
+        if(not CarTierUIActive()) then
+            local vehicle = GetVehiclePedIsIn(player, false)
+
+            if vehicle ~= 0 then
+                currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(GetEntityModel(vehicle)))
+            else
+                currentVehicleName = "On foot"
+            end
+
+            UpdateVehicleName(currentVehicleName)
+        end
+
     end
 end
 
@@ -2505,7 +2520,6 @@ function UpdateVehicleName(vehicleName)
             SendVehicleName()
         end
     else
-
         if(currentVehicleName ~= nil) then
             print("Already have car name, ignoring")
             return
