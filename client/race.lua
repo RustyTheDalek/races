@@ -503,12 +503,37 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
     specialClass = (nil == specialClass or "." == specialClass) and defaultSpecialClass or specialClass
 
     laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
-    if laps ~= nil and laps > 0 then
+
+    if(laps == nil or laps <= 0) then
+        sendMessage("Invalid number of laps.\n")
+        return
+    end
+
         timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
-        if timeout ~= nil and timeout >= 0 then
-            if racingStates.Idle == raceState then
-                if currentTrack:GetTotalWaypoints() > 1 then
-                    if laps == 1 or (laps > 1 and true == currentTrack.startIsFinish) then
+
+    if timeout == nil or timeout <= 0 then
+        sendMessage("Invalid DNF timeout.\n")
+        return
+    end
+
+    if raceState == racingStates.Editing then
+        sendMessage("Cannot register.  Stop editing first.\n")
+        return
+    elseif (raceState ~= racingStates.Idle) then
+        sendMessage("Cannot register.  Leave race first.\n")
+        return
+    end
+
+    if currentTrack:GetTotalWaypoints() <= 1 then
+        sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
+        return
+    end
+
+    if (laps > 1 and currentTrack.startIsFinish == false) then
+        sendMessage(
+            "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
+    end
+
                         if "." == arg7 then
                             arg7 = nil
                         end
@@ -519,6 +544,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                         local vclass = nil
                         local svehicle = nil
                         local vehList = nil
+    
                         if "rest" == rtype then
                             restrict = arg7
                             if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
@@ -595,24 +621,6 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
                         }
 
                         currentTrack:Register(rdata)
-                    else
-                        sendMessage(
-                        "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
-                    end
-                else
-                    sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
-                end
-            elseif racingStates.Editing == raceState then
-                sendMessage("Cannot register.  Stop editing first.\n")
-            else
-                sendMessage("Cannot register.  Leave race first.\n")
-            end
-        else
-            sendMessage("Invalid DNF timeout.\n")
-        end
-    else
-        sendMessage("Invalid number of laps.\n")
-    end
 end
 
 local function unregister()
