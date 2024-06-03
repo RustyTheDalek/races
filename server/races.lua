@@ -832,6 +832,7 @@ AddEventHandler("races:unregister", function()
     local source = source
     if races[source] == nil then
         notifyPlayer(source, "Cannot unregister.  No race registered.\n")
+        return
     end
 
     races[source]:Unregister()
