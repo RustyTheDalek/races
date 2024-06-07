@@ -1195,7 +1195,7 @@ RegisterNUICallback("overwrite", function(data)
         if "pvt" == data.access or "pub" == data.access then
             if data.trackName ~= nil then
                 if currentTrack:GetTotalWaypoints() > 1 then
-                    TriggerServerEvent("races:overwrite", "pub" == data.access, data.trackName, currentTrack:WaypointsToCoords(), data.map)
+                    TriggerServerEvent("races:overwrite", "pub" == data.access, data.trackName, currentTrack:SerialiseWaypoints(), data.map)
                 else
                     sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
                 end
@@ -1533,7 +1533,7 @@ RegisterCommand("races", function(_, args)
             if "pvt" == args[2] or "pub" == args[2] then
                 if args[3] ~= nil then
                     if currentTrack:GetTotalWaypoints() > 1 then
-                        TriggerServerEvent("races:overwrite", "pub" == args[2], args[3], currentTrack:WaypointsToCoords(), args[4])
+                        TriggerServerEvent("races:overwrite", "pub" == args[2], args[3], currentTrack:SerialiseWaypoints(), args[4])
                     else
                         sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
                     end
