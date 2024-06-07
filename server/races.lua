@@ -998,7 +998,7 @@ AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSou
 end)
 
 RegisterNetEvent("races:report")
-AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance)
+AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance, closestWaypointIndex)
     local source = source
     if rIndex == nil or numWaypointsPassed == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
