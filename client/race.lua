@@ -509,7 +509,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
         return
     end
 
-        timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
+    timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
 
     if timeout == nil or timeout <= 0 then
         sendMessage("Invalid DNF timeout.\n")
@@ -534,93 +534,93 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8)
             "For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
     end
 
-                        if "." == arg7 then
-                            arg7 = nil
-                        end
-                        if "." == arg8 then
-                            arg8 = nil
-                        end
-                        local restrict = nil
-                        local vclass = nil
-                        local svehicle = nil
-                        local vehList = nil
+    if "." == arg7 then
+        arg7 = nil
+    end
+    if "." == arg8 then
+        arg8 = nil
+    end
+    local restrict = nil
+    local vclass = nil
+    local svehicle = nil
+    local vehList = nil
     
-                        if "rest" == rtype then
-                            restrict = arg7
-                            if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
-                                sendMessage("Cannot register.  Invalid restricted vehicle.\n")
-                                return
-                            end
-                        elseif "class" == rtype then
-                            vclass = math.tointeger(tonumber(arg7))
-                            if nil == vclass or vclass < -1 or vclass > 21 then
-                                sendMessage("Cannot register.  Invalid vehicle class.\n")
-                                return
-                            end
-                            if -1 == vclass then
-                                if #vehicleList == 0 then
-                                    sendMessage("Cannot register.  Vehicle list is empty.\n")
-                                    return
-                                end
-                                vehList = vehicleList
-                            end
-                        elseif "rand" == rtype then
-                            if #vehicleList == 0 then
-                                sendMessage("Cannot register.  Vehicle list is empty.\n")
-                                return
-                            end
-                            vclass = math.tointeger(tonumber(arg7))
-                            if nil == vclass then
-                                vehList = vehicleList
-                            else
-                                if vclass < 0 or vclass > 21 then
-                                    sendMessage("Cannot register.  Invalid vehicle class.\n")
-                                    return
-                                end
-                                vehList = {}
-                                for _, vehicle in pairs(vehicleList) do
-                                    if GetVehicleClassFromName(vehicle) == vclass then
-                                        vehList[#vehList + 1] = vehicle
-                                    end
-                                end
-                                if #vehList == 0 then
-                                    sendMessage("Cannot register.  Vehicle list is empty.\n")
-                                    return
-                                end
-                            end
-                            svehicle = arg8
-                            if svehicle ~= nil then
-                                if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
-                                    sendMessage("Cannot register.  Invalid start vehicle.\n")
-                                    return
-                                elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
-                                    sendMessage(
-                                    "Cannot register.  Start vehicle not of restricted vehicle class.\n")
-                                    return
-                                end
-                            end
-                        elseif "wanted" == rtype then
-                            print("wanted race type")
-                        elseif "ghost" == rtype then
-                            print("ghost race type")
-                        elseif rtype ~= nil then
-                            sendMessage("Cannot register.  Unknown race type.\n")
-                            return
-                        end
-                        local rdata = {
-                            tier = tier,
-                            laps = laps,
-                            timeout = timeout,
-                            rtype = rtype,
-                            restrict = restrict,
-                            vclass = vclass,
-                            svehicle = svehicle,
-                            vehicleList = vehList,
-                            specialClass = specialClass,
-                            map = currentTrack.map
-                        }
+    if "rest" == rtype then
+        restrict = arg7
+        if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
+            sendMessage("Cannot register.  Invalid restricted vehicle.\n")
+            return
+        end
+    elseif "class" == rtype then
+        vclass = math.tointeger(tonumber(arg7))
+        if nil == vclass or vclass < -1 or vclass > 21 then
+            sendMessage("Cannot register.  Invalid vehicle class.\n")
+            return
+        end
+        if -1 == vclass then
+            if #vehicleList == 0 then
+                sendMessage("Cannot register.  Vehicle list is empty.\n")
+                return
+            end
+            vehList = vehicleList
+        end
+    elseif "rand" == rtype then
+        if #vehicleList == 0 then
+            sendMessage("Cannot register.  Vehicle list is empty.\n")
+            return
+        end
+        vclass = math.tointeger(tonumber(arg7))
+        if nil == vclass then
+            vehList = vehicleList
+        else
+            if vclass < 0 or vclass > 21 then
+                sendMessage("Cannot register.  Invalid vehicle class.\n")
+                return
+            end
+            vehList = {}
+            for _, vehicle in pairs(vehicleList) do
+                if GetVehicleClassFromName(vehicle) == vclass then
+                    vehList[#vehList + 1] = vehicle
+                end
+            end
+            if #vehList == 0 then
+                sendMessage("Cannot register.  Vehicle list is empty.\n")
+                return
+            end
+        end
+        svehicle = arg8
+        if svehicle ~= nil then
+            if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
+                sendMessage("Cannot register.  Invalid start vehicle.\n")
+                return
+            elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
+                sendMessage(
+                "Cannot register.  Start vehicle not of restricted vehicle class.\n")
+                return
+            end
+        end
+    elseif "wanted" == rtype then
+        print("wanted race type")
+    elseif "ghost" == rtype then
+        print("ghost race type")
+    elseif rtype ~= nil then
+        sendMessage("Cannot register.  Unknown race type.\n")
+        return
+    end
+    local rdata = {
+        tier = tier,
+        laps = laps,
+        timeout = timeout,
+        rtype = rtype,
+        restrict = restrict,
+        vclass = vclass,
+        svehicle = svehicle,
+        vehicleList = vehList,
+        specialClass = specialClass,
+        map = currentTrack.map
+    }
 
-                        currentTrack:Register(rdata)
+    currentTrack:Register(rdata)
 end
 
 local function unregister()
