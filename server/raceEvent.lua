@@ -596,10 +596,11 @@ function RaceEvent:SendCheckpointTime(source, waypointsPassed)
         end
     end
 
-    if (#self.players == 1) then
+    if (getTableSize(self.players) <= 1) then
+        print("Solo race")
         table.insert(self.checkpointTimes, {})
     end
-
+    
     self.checkpointTimes[waypointsPassed][source] = self.raceTime
 end
 
