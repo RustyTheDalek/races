@@ -19,6 +19,6 @@ end
 
 FileManager.CreateFileIfEmpty = function(fileName)
     if FileManager.LoadCurrentResourceFile(fileName) == nil then
-        FileManager.SaveCurrentResourceFile(fileName, {})
+        FileManager.SaveCurrentResourceFile(fileName, "{}")
     end
 end
