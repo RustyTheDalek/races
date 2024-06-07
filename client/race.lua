@@ -31,13 +31,13 @@ local numLaps = -1                        -- number of laps in current race
 local currentLap = -1                     -- current lap
 
 local numWaypointsPassed = -1             -- number of waypoints player has passed
-local currentWaypoint = -1                -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
-local waypointCoord = nil                 -- coordinates of current waypoint
+local previousWaypoint = -1
+local currentWaypoints = {}               -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
 
 local position = -1                       -- position in race out of numRacers players
 local numRacers = -1                      -- number of players in race - no DNF players included
 
-local raceCheckpoint = nil                -- race checkpoint in world
+local nextWaypoints = {}                   -- Next checkpoints in world
 
 local DNFTimeout = -1                     -- DNF timeout after first player finishes the race
 local beginDNFTimeout = false             -- flag indicating if DNF timeout should begin
@@ -132,7 +132,7 @@ function SetSpawning()
 
         if racingStates.Racing == raceState then
             spawnPosition = startCoord
-            spawnPosition = currentTrack:GetTrackRespawnPosition(currentWaypoint)
+            spawnPosition = currentTrack:GetTrackRespawnPosition(previousWaypoint)
         elseif racingStates.Registering == raceState then
             spawnPosition = startCoord
         elseif racingStates.Joining == raceState then
@@ -826,6 +826,15 @@ local function listLsts(access)
     end
 end
 
+local function ClearCurrentWaypoints()
+    for _, currentWaypoint in ipairs(currentWaypoints) do
+        DeleteCheckpoint(currentWaypoint.checkpoint)
+    end
+
+    for k in next, currentWaypoints do rawset(currentWaypoints, k, nil) end
+
+end
+
 local function leave()
     local player = PlayerPedId()
     currentVehicleName = nil
@@ -843,7 +852,7 @@ local function leave()
             FreezeEntityPosition(GetVehiclePedIsIn(player, false), false)
         end
         RenderScriptCams(false, false, 0, true, true)
-        DeleteCheckpoint(raceCheckpoint)
+        ClearCurrentWaypoints()
         finishRace(true)
         playerDisplay:ResetRaceBlips()
         ResetReady()
@@ -878,7 +887,7 @@ local function respawn()
         local vehicle = GetVehiclePedIsIn(player, true)
         local currentVehicleHash = GetEntityModel(vehicle)
         local coord = startCoord
-        coord = currentTrack:GetTrackRespawnPosition(currentWaypoint)
+        coord = currentTrack:GetTrackRespawnPosition(previousWaypoint)
 
         print(vehicle)
         print(currentVehicleHash)
@@ -1094,7 +1103,7 @@ function UpdateCurrentCheckpoint()
     SendNUIMessage({
         type = "leaderboard",
         action = "updatecurrentcheckpoint",
-        current_checkpoint = currentTrack.startIsFinish == true and currentWaypoint or currentWaypoint - 1
+        current_checkpoint = currentTrack.startIsFinish == true and previousWaypoint or previousWaypoint - 1
     })
 end
 
@@ -1663,7 +1672,7 @@ end)
 
 RegisterNetEvent("races:load")
 AddEventHandler("races:load", function(isPublic, trackName, track)
-    if isPublic == nil or trackName == nil and waypointCoords == nil then
+    if isPublic == nil or trackName == nil and track.waypoints == nil then
         notifyPlayer("Ignoring load event.  Invalid parameters.\n")
         return
     end
@@ -1738,14 +1747,14 @@ end)
 
 RegisterNetEvent("races:register")
 AddEventHandler("races:register",
-function(rIndex, coord, isPublic, trackName, owner, rdata)
+function(rIndex, waypoint, isPublic, trackName, owner, rdata)
 
-    if rIndex == nil and coord == nil and isPublic == nil and owner == nil and rdata.tier == nil and rdata.laps == nil and rdata.timeout == nil and rdata == nil then
+    if rIndex == nil and waypoint == nil and isPublic == nil and owner == nil and rdata.tier == nil and rdata.laps == nil and rdata.timeout == nil and rdata == nil then
         notifyPlayer("[R]Ignoring register event.  Invalid parameters.\n")
         return
     end
 
-    local blip = AddBlipForCoord(coord.x, coord.y, coord.z) -- registration blip
+    local blip = AddBlipForCoordVector3(waypoint.coord) -- registration blip
     SetBlipSprite(blip, registerSprite)
     SetBlipColour(blip, registerBlipColor)
     BeginTextCommandSetBlipName("STRING")
@@ -1778,8 +1787,7 @@ function(rIndex, coord, isPublic, trackName, owner, rdata)
     AddTextComponentSubstringPlayerName(msg)
     EndTextCommandSetBlipName(blip)
 
-    coord.r = Config.data.editing.defaultRadius
-    local checkpoint = MakeCheckpoint(plainCheckpoint, coord, coord, colour.purple, 0) -- registration checkpoint
+    local checkpoint = MakeCheckpoint(plainCheckpoint, waypoint.coord, waypoint.radius, waypoint.coord, color.purple, 0) -- registration checkpoint
 
     starts[rIndex] = {
         isPublic = isPublic,
@@ -1796,7 +1804,7 @@ function(rIndex, coord, isPublic, trackName, owner, rdata)
         vehicleList = rdata.vehicleList,
         blip = blip,
         checkpoint = checkpoint,
-        registerPosition = coord,
+        registerPosition = waypoint.coord,
         map = rdata.map
     }
 end)
@@ -1816,7 +1824,7 @@ AddEventHandler("races:unregister", function(rIndex)
                 notifyPlayer("Race canceled.\n")
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
-                DeleteCheckpoint(raceCheckpoint)
+                ClearCurrentWaypoints()
                 currentTrack:Unegister()
                 --Shouldn't need to reset here, but just incase
                 playerDisplay:ResetRaceBlips()
@@ -1875,7 +1883,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                         end
                     end
 
-                    currentWaypoint, waypointCoord, raceCheckpoint = currentTrack:OnStartRace()
+                    currentWaypoints = currentTrack:OnStartRace()
 
                     raceState = racingStates.RaceCountdown
 
@@ -1997,8 +2005,8 @@ AddEventHandler("races:removeFromLeaderboard", function(source)
 end)
 
 RegisterNetEvent("races:join")
-AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoords, racerDictionary)
-    if rIndex ~= nil and waypointCoords ~= nil then
+AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, racerDictionary)
+    if rIndex ~= nil and waypoints ~= nil then
         if starts[rIndex] ~= nil then
             if racingStates.Idle == raceState then
                 SetJoinMessage('')
@@ -2011,7 +2019,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypointCoord
                 customClassVehicleList = {}
                 startVehicle = starts[rIndex].svehicle
                 randVehicles = {}
-                currentTrack:LoadWaypointBlips(waypointCoords)
+                currentTrack:LoadWaypointBlips(waypoints)
                 playerDisplay:SetOwnRacerBlip()
 
                 currentRace.trackName = starts[rIndex].trackName
@@ -2321,8 +2329,19 @@ function RacesReport()
         Citizen.Wait(500)
         if racingStates.Racing == raceState then
             local player = PlayerPedId()
-            local distance = #(GetEntityCoords(player) - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z))
-            TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, distance)
+            --TODO:Send current waypoint index as well as distance
+            local closestWaypoint = -1
+            local closestWaypointDistance = 99999;
+            for _, currentWaypoint in pairs(currentWaypoints) do
+                local distance = #(GetEntityCoords(player) - currentWaypoint.coord)
+
+                if(distance < closestWaypointDistance) then
+                    closestWaypointDistance = distance
+                    closestWaypoint = currentWaypoint.index
+                end
+            end
+
+            TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, closestWaypointDistance,closestWaypoint)
         end
     end
 end
@@ -2600,7 +2619,7 @@ end
 
 --Returns true when the race is finished
 function OnNewLap(player)
-    currentWaypoint = 1
+    previousWaypoint = 1
     currentLapTimer:Reset()
     TriggerServerEvent("races:lapcompleted", raceIndex, currentVehicleName)
 
@@ -2636,7 +2655,7 @@ function OnNewLap(player)
     end
 end
 
-function OnHitCheckpoint(player)
+function OnHitCheckpoint(player, waypointHit)
     local vehicle = GetVehiclePedIsIn(player, false)
 
     if restrictedHash ~= nil then
@@ -2657,15 +2676,17 @@ function OnHitCheckpoint(player)
         end
     end
 
-
     resetupgrades(vehicle)
-    DeleteCheckpoint(raceCheckpoint)
+    ClearCurrentWaypoints()
 
     numWaypointsPassed = numWaypointsPassed + 1
 
     SendCheckpointTime(numWaypointsPassed)
 
-    if currentWaypoint < currentTrack:GetTotalWaypoints() then
+    previousWaypoint = waypointHit
+
+    --If the waypoint points to at least one other waypoint
+    if not currentTrack:AtEnd(waypointHit, numWaypointsPassed) then
         PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
         currentWaypoint = currentWaypoint + 1
     else
@@ -2676,7 +2697,8 @@ function OnHitCheckpoint(player)
 
     UpdateCurrentCheckpoint()
 
-    waypointCoord, raceCheckpoint = currentTrack:OnHitCheckpoint(currentWaypoint, currentLap, numLaps)
+    --TODO:Make sure next waypoints are retrieved not just one
+    currentWaypoints = currentTrack:OnHitCheckpoint(waypointHit, currentLap, numLaps)
 end
 
 function RaceUpdate(player, playerCoord, currentTime)
@@ -2695,14 +2717,16 @@ function RaceUpdate(player, playerCoord, currentTime)
             minutes, seconds = minutesSeconds(milliseconds)
             UpdateDNFTime(minutes, seconds)
         else -- DNF
-            DeleteCheckpoint(raceCheckpoint)
+            ClearCurrentWaypoints()
             finishRace(true)
             return
         end
     end
 
-    if #(playerCoord - vector3(waypointCoord.x, waypointCoord.y, waypointCoord.z)) < waypointCoord.r then
-        OnHitCheckpoint(player)
+    for _,currentWaypoint in ipairs(currentWaypoints) do
+        if #(playerCoord - currentWaypoint.coord) < currentWaypoint.radius then
+            OnHitCheckpoint(player, currentWaypoint.index)
+        end
     end
 end
 
