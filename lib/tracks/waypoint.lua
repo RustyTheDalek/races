@@ -51,6 +51,15 @@ function Waypoint:NextEmpty()
     return self.next == nil or #self.next < 1
 end
 
+function Waypoint:Loops()
+    return not self:NextEmpty() and #self.next > 0 and #self.next == 1 and self.next[1] == 1
+end
+
+function Waypoint:AtEnd()
+    --If waypoint doesn't point to any waypoiunt or it points to the first
+    return self.next == nil or #self.next < 1
+end
+
 function Waypoint:SetAsStart()
     self.sprite = startSprite
     self.color = startBlipColor
