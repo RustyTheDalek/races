@@ -1,5 +1,7 @@
-local arrow3Checkpoint <const> = 0        -- cylinder with 3 arrows
-local blipRouteColor <const> = 18         -- light blue
+local finishCheckpoint <const> = 4         -- cylinder checkered flag
+local arrow3Checkpoint <const> = 0         -- cylinder with 3 arrows
+local loopCheckpoint <const> = 3           -- cyling with loop icon
+local blipRouteColor <const> = 18          -- light blue
 
 local gridRadius<const> = 5.0
 local gridSeparation<const> = 5
@@ -429,50 +431,57 @@ function Track:RouteToTrack()
     SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
 end
 
-function Track:OnHitCheckpoint(currentWaypoint, currentLap, numLaps)
+function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
 
-    local prev = currentWaypoint - 1
-    local last = currentWaypoint + numVisible - 1
-    local addLast = true
-    local curr = currentWaypoint
+    SetBlipDisplay(self.waypoints[waypointHit].blip, 0)
+
     local checkpointType = -1
 
-    if true == self.startIsFinish then
-        prev = currentWaypoint
-        if currentLap ~= numLaps then
-            last = last % #self.waypoints + 1
-        elseif last < #self.waypoints then
-            last = last + 1
-        elseif #self.waypoints == last then
-            last = 1
+    local nextCheckpoints = {}
+
+    for _, nextWaypointIndex in ipairs(self.waypoints[waypointHit].next) do
+
+        local nextWaypoint = self.waypoints[nextWaypointIndex]
+
+        print(dump(nextWaypoint))
+
+        if(nextWaypoint.next == nil or (nextWaypointIndex == 1 and currentLap == numLaps))then
+            checkpointType = finishCheckpoint
+        elseif(nextWaypointIndex == 1 and currentLap < numLaps) then
+            checkpointType = loopCheckpoint
         else
-            addLast = false
+            checkpointType = arrow3Checkpoint
         end
-        curr = curr % #self.waypoints + 1
-        checkpointType = (1 == curr and numLaps == currentLap) and finishCheckpoint or arrow3Checkpoint
-    else
-        if last > #self.waypoints then
-            addLast = false
-        end
-        checkpointType = #self.waypoints == curr and finishCheckpoint or arrow3Checkpoint
+
+        SetBlipDisplay(nextWaypoint.blip, 2)
+        
+        local coord = nextWaypoint.coord
+        local radius = nextWaypoint.radius
+
+        print(dump(coord))
+
+        --Point to next Waypoint if only points to one
+        --TODO: Fix this
+        local nextCoord = (nextWaypoint.next ~= nil and getTableSize(nextWaypoint.next) == 1 ) and self.waypoints[nextWaypoint.next[1]].coord or coord
+
+        print(dump(coord))
+
+        print(nextWaypoint.next ~= nil)
+        print(getTableSize(nextWaypoint.next))
+        print(self.waypoints[nextWaypoint.next[1]].coord)
+
+        table.insert(nextCheckpoints, {
+            checkpoint = MakeCheckpoint(checkpointType, coord, radius, coord, color.yellow, 0),
+            coord = coord,
+            radius = radius,
+            index = nextWaypointIndex
+        })
+
+        SetBlipRoute(nextWaypoint.blip, true)
+        SetBlipRouteColour(nextWaypoint.blip, blipRouteColor)
     end
 
-    SetBlipDisplay(self.waypoints[prev].blip, 0)
-
-    if true == addLast then
-        SetBlipDisplay(self.waypoints[last].blip, 2)
-    end
-
-    SetBlipRoute(self.waypoints[curr].blip, true)
-    SetBlipRouteColour(self.waypoints[curr].blip, blipRouteColor)
-    local waypointCoord = self.waypoints[curr].coord
-    local nextCoord = waypointCoord
-    if arrow3Checkpoint == checkpointType then
-        nextCoord = curr < #self.waypoints and self.waypoints[curr + 1].coord or self.waypoints[1].coord
-    end
-    local raceCheckpoint = MakeCheckpoint(checkpointType, waypointCoord, nextCoord, color.yellow, 0)
-
-    return waypointCoord, raceCheckpoint
+    return nextCheckpoints
 end
 
 function Track:Register(rData)
@@ -495,25 +504,20 @@ end
 function Track:OnStartRace()
 
     self:SetVisibleBlips()
-    local currentWaypoint = 1
 
-    local waypointCoord = self.waypoints[1].coord
+    local startWaypoint = {
+        checkpoint = MakeCheckpoint(finishCheckpoint, self.waypoints[1].coord, self.waypoints[1].radius, self.waypoints[1].coord, color.yellow, 0),
+        coord = self.waypoints[1].coord,
+        radius = self.waypoints[1].radius,
+        index = 1
+    }
 
-    local nextCheckpoints = {}
-
-    for index, next in ipairs(self.waypoints[1].next) do
-
-        local nextWaypointCoords = self.waypoints[next].coord
-
-        table.insert(nextCheckpoints, MakeCheckpoint(arrow3Checkpoint, waypointCoord, nextWaypointCoords, color.yellow, 0))
-    end
-
-    SetBlipRoute(waypointCoord, true)
-    SetBlipRouteColour(waypointCoord, blipRouteColor)
+    SetBlipRoute(self.waypoints[1].coord, true)
+    SetBlipRouteColour(self.waypoints[1].coord, blipRouteColor)
 
     self:DeleteGridCheckPoints()
 
-    return currentWaypoint, waypointCoord, nextCheckpoints
+    return { startWaypoint }
 end
 
 function Track:GetTrackRespawnPosition(index)
@@ -526,6 +530,14 @@ function Track:GetTrackRespawnPosition(index)
             return self:GetWaypoint(index - 1).coord
         end
     end
+end
+
+function Track:WaypointLoops(currentWaypoint)
+    return self.waypoints[currentWaypoint]:Loops()
+end
+
+function Track:AtEnd(currentWaypoint, waypointsPassed)
+    return self.waypoints[currentWaypoint]:AtEnd() or (currentWaypoint == 1 and waypointsPassed > 1)
 end
 
 Track.UpdateTrack = function(track)
