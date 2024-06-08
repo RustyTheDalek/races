@@ -258,3 +258,21 @@ function Waypoint:DeselectSelectedWaypoint()
     SetCheckpointRgba(self.checkpoint, color.r, color.g, color.b, 127)
     SetCheckpointRgba2(self.checkpoint, color.r, color.g, color.b, 127)
 end
+
+function Waypoint:ShiftNextsForward()
+
+    if (self:NextEmpty()) then
+        return
+    end
+
+    print("Waypoint has nexts")
+
+    print(dump(self.next))
+
+    for index, waypointIndex in pairs(self.next) do
+        print(("Pushing %i forward"):format(waypointIndex))
+        self.next[index] = waypointIndex + 1
+    end
+
+    print(dump(self.next))
+end

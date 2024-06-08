@@ -44,7 +44,7 @@ function TrackEditor:StopEditing(waypoints)
     end
 
     self.highlightedCheckpoint = 0
-    
+
     self.track:StopEditing(waypoints)
 end
 
@@ -286,7 +286,7 @@ function TrackEditor:Update(playerCoord, heading)
 
     self.closestWaypointIndex = closestIndex
 
-    SendNUIMessage( { type = "editor", action = "update_closest_waypoint", closestWaypoint = closestIndex })
+    SendNUIMessage( { type = "editor", action = "update_closest_waypoint", waypointIndex = closestIndex })
 
     self:UpdateClosestCheckpointDisplay(closestIndex)
 
@@ -315,19 +315,29 @@ function TrackEditor:Update(playerCoord, heading)
     elseif self.selectedIndex0 ~= 0 and 0 == self.selectedIndex1 then
         local selectedWaypoint0 = self.track:GetWaypoint(self.selectedIndex0)
         if IsControlJustReleased(2, 216) == 1 then -- space key or X button or square button
-            DeleteCheckpoint(selectedWaypoint0.checkpoint)
-            RemoveBlip(selectedWaypoint0.blip)
-            self.track:RemoveWaypoint(self.selectedIndex0)
 
-            if self.highlightedCheckpoint == self.selectedIndex0 then
-                self.highlightedCheckpoint = 0
+            if(self.closestWaypointIndex == self.selectedIndex0) then
+                DeleteCheckpoint(selectedWaypoint0.checkpoint)
+                RemoveBlip(selectedWaypoint0.blip)
+                self.track:RemoveWaypoint(self.selectedIndex0)
+
+                if self.highlightedCheckpoint == self.selectedIndex0 then
+                    self.highlightedCheckpoint = 0
+                end
+                self.selectedIndex0 = 0
+                self.track.savedTrackName = nil
+                self.track:UpdateTrackDisplayFull()
+            else
+
+                print("Splitting track")
+                self.track:Split(playerCoord, heading, self.selectedIndex01)
+
+                self.selectedIndex0 = self.selectedIndex0 + 1
+                self.track:SelectWaypoint(self.selectedIndex0)
+                self.track.savedTrackName = nil
+                self.track:UpdateTrackDisplayFull()
+
             end
-            self.selectedIndex0 = 0
-
-            self.track.savedTrackName = nil
-
-            self.track:UpdateTrackDisplayFull()
-
         elseif IsControlJustReleased(0, 187) == 1  then -- arrow down or DPAD DOWN
             self.track:AdjustCheckpointRadius(self.selectedIndex0, -0.5)
         elseif IsControlJustReleased(0, 188) == 1 and selectedWaypoint0.coord.r < maxRadius then -- arrow up or DPAD UP

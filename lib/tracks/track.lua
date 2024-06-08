@@ -51,7 +51,7 @@ function Track:Load(public, trackName, track)
     self:LoadWaypointBlips(track.waypoints)
 end
 
-function Track:AddNewWaypointAtIndex(coord, heading, index)
+function Track:AddNewWaypointAtIndex(coord, heading, index, linkWaypointInFront)
 
     self.waypoints[index] = Waypoint:New({
         coord = coord,
@@ -62,13 +62,18 @@ function Track:AddNewWaypointAtIndex(coord, heading, index)
     -- If Waypoint behind exists then set it's next waypoint to this one
     if (self.waypoints[index - 1] ~= nil) then
         -- TODO: Add to next, don't replace
-        self.waypoints[index - 1].next = {index}
+        print("Pointing previous waypoint to this")
+        table.insert(self.waypoints[index - 1].next, index)
     end
 
-    -- If Next waypoint exists then set this waypoint to next one 
-    if (self.waypoints[index + 1] ~= nil) then
-        -- TODO: Add to next, don't replace
-        self.waypoints[index].next = {index + 1}
+    if(linkWaypointInFront) then
+        print("Linking forwards")
+        -- If Next waypoint exists then set this waypoint to next one 
+        if (self.waypoints[index + 1] ~= nil) then
+            -- TODO: Add to next, don't replace
+            print("Link found pointing")
+            table.insert(self.waypoints[index].next, index + 1)
+        end
     end
 
     self.startIsFinish = 1 == #self.waypoints
@@ -81,7 +86,7 @@ function Track:AddNewWaypointAtIndex(coord, heading, index)
 end
 
 function Track:AddNewWaypoint(coord, heading)
-    self:AddNewWaypointAtIndex(coord, index, #self.waypoints + 1)
+    self:AddNewWaypointAtIndex(coord, heading, #self.waypoints + 1, true)
 end
 
 function Track:MoveWaypoint(index, coord, heading)
@@ -93,16 +98,21 @@ end
 
 function Track:ShiftWaypointsForward(stopIndex)
     for i = #self.waypoints, stopIndex, -1 do
-        if (not self.waypoints[i]:NextEmpty()) then
-            self.waypoints[i].next[1] = self.waypoints[i].next[1] + 1
-        end
+        print(("Shifting Waypoint %i forward"):format(i))
+        self.waypoints[i]:ShiftNextsForward()
         self.waypoints[i + 1] = self.waypoints[i]
     end
 end
 
+function Track:Split(coord, heading, index)
+    self:ShiftWaypointsForward(index)
+    self:AddNewWaypointAtIndex(coord, heading, index + 1, false)
+    self:UpdateTrackDisplay()
+end
+
 function Track:AddWaypointBetween(coord, heading, selectedIndex)
     self:ShiftWaypointsForward(selectedIndex)
-    self:AddNewWaypointAtIndex(coord, heading, selectedIndex)
+    self:AddNewWaypointAtIndex(coord, heading, selectedIndex, true)
     self:UpdateTrackDisplay()
 end
 
@@ -276,10 +286,12 @@ end
 
 function Track:SelectWaypoint(index)
     self.waypoints[index]:SelectWaypoint()
+    SendNUIMessage( { type = "editor", action = "update_selected_waypoint", waypointIndex = index })
 end
 
 function Track:DeselectSelectedWaypoint(index)
     self.waypoints[index]:DeselectSelectedWaypoint()
+    SendNUIMessage( { type = "editor", action = "update_selected_waypoint", waypointIndex = 'none' })
 end
 
 function Track:DeleteCheckpoints()
