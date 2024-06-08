@@ -454,24 +454,16 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
         end
 
         SetBlipDisplay(nextWaypoint.blip, 2)
-        
+
         local coord = nextWaypoint.coord
         local radius = nextWaypoint.radius
 
-        print(dump(coord))
-
         --Point to next Waypoint if only points to one
-        --TODO: Fix this
+        --TODO: Handle multiple waypoints
         local nextCoord = (nextWaypoint.next ~= nil and getTableSize(nextWaypoint.next) == 1 ) and self.waypoints[nextWaypoint.next[1]].coord or coord
 
-        print(dump(coord))
-
-        print(nextWaypoint.next ~= nil)
-        print(getTableSize(nextWaypoint.next))
-        print(self.waypoints[nextWaypoint.next[1]].coord)
-
         table.insert(nextCheckpoints, {
-            checkpoint = MakeCheckpoint(checkpointType, coord, radius, coord, color.yellow, 0),
+            checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.yellow, 0),
             coord = coord,
             radius = radius,
             index = nextWaypointIndex
