@@ -2688,7 +2688,6 @@ function OnHitCheckpoint(player, waypointHit)
     --If the waypoint points to at least one other waypoint
     if not currentTrack:AtEnd(waypointHit, numWaypointsPassed) then
         PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
-        currentWaypoint = currentWaypoint + 1
     else
         if (OnNewLap(player)) then
             return
