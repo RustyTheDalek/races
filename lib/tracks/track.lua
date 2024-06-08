@@ -198,7 +198,13 @@ function Track:LoadWaypointBlips(waypoints)
         return
     end
 
-    self.startIsFinish = waypoints[#waypoints].next ~= nil and #waypoints[#waypoints].next > 0
+    if (waypoints[#waypoints].next ~= nil) then
+        if(type(waypoints[#waypoints].next) == 'table' and getTableSize(waypoints[#waypoints].next) > 0) then
+            self.startIsFinish = true
+        elseif (type(waypoints[#waypoints].next) == 'number') then
+            self.startIsFinish = true
+        end
+    end
 
     for index, waypoint in ipairs(waypoints) do
 
