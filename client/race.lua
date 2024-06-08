@@ -1070,7 +1070,7 @@ function SendToRaceTier(tier, specialClass)
     if (raceIndex ~= -1) then 
         if(#randVehicles > 0) then
             carTierRaceType = 3
-        elseif (string.find(string.lower(currentRace.trackName), 'wacky')) then
+        elseif (currentRace.trackName and string.find(string.lower(currentRace.trackName), 'wacky')) then
             carTierRaceType = 2
         end
     end
