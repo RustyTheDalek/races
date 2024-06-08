@@ -986,10 +986,12 @@ AddEventHandler("races:finish", function(rIndex, numWaypointsPassed, dnf, altSou
 
         local track = loadTrack(race.isPublic, rIndex, race.trackName)
 
-        track.bestLaps = race:GetBestLaps(track.bestLaps)
+        if(track) then
+            track.bestLaps = race:GetBestLaps(track.bestLaps)
 
-        if false == saveTrack(race.isPublic, rIndex, race.trackName, track) then
-            notifyPlayer(rIndex, "Save error updating best lap times.\n")
+            if false == saveTrack(race.isPublic, rIndex, race.trackName, track) then
+                notifyPlayer(rIndex, "Save error updating best lap times.\n")
+            end
         end
 
         racesMapManager:UnloadMap(race.map)
