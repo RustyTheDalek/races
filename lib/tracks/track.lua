@@ -444,8 +444,8 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
         local nextWaypoint = self.waypoints[nextWaypointIndex]
 
         print(dump(nextWaypoint))
-
-        if(nextWaypoint.next == nil or (nextWaypointIndex == 1 and currentLap == numLaps))then
+        
+        if(getTableSize(nextWaypoint.next) == 0 or (nextWaypointIndex == 1 and currentLap == numLaps)) then
             checkpointType = finishCheckpoint
         elseif(nextWaypointIndex == 1 and currentLap < numLaps) then
             checkpointType = loopCheckpoint
