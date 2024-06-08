@@ -569,26 +569,37 @@ Track.UpdateWaypointCoords = function(waypointCoords)
 
         if (index < #waypointCoords) then
             next = {index + 1}
+
+            newWaypoints[index] = Track.AddWaypoint(newCoord, waypointCoord, next)
+
         else
             if (newCoord == newWaypoints[1].coord) then
                 -- Looping track
                 print("Track Loops")
-                next = 1
+                --If the track loops then we ignore the last checkpoint, in the old style there 2 checkpoints for start and finish but this is no longer done that way, so we point the previous waypoint to the start and skip the last
+                newWaypoints[index-1].next = {1}
+            else
+                newWaypoints[index] = Track.AddWaypoint(newCoord, waypointCoord, {})
             end
         end
 
-        local newWaypoint = Waypoint:New({
-            coord = newCoord,
-            radius = waypointCoord.r,
-            heading = waypointCoord.heading,
-            next = next
-        })
-
-        newWaypoints[index] = newWaypoint
 
     end
 
     print(json.encode(newWaypoints))
 
     return newWaypoints
+end
+
+Track.AddWaypoint = function(newCoord, waypointCoord, next)
+
+    local newWaypoint = Waypoint:New({
+        coord = newCoord,
+        radius = waypointCoord.r,
+        heading = waypointCoord.heading,
+        next = next
+    })
+
+    return  newWaypoint
+
 end
