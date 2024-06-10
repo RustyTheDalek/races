@@ -113,6 +113,8 @@ function Track:Split(coord, heading, index)
 
     --We only want to shift what's ahead of the waypoint
     self:ShiftWaypointsForward(index + 1)
+    --Shift the seleced waypoints nexts forward
+    self.waypoints[index]:ShiftNextsForward()
     self:AddNewWaypointAtIndex(coord, heading, index + 1, false)
     self:UpdateTrackDisplay()
 
