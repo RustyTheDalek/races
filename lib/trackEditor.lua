@@ -332,10 +332,12 @@ function TrackEditor:Update(playerCoord, heading)
                 print("Splitting track")
                 self.track:Split(playerCoord, heading, self.selectedIndex01)
 
-                self.selectedIndex0 = self.selectedIndex0 + 1
-                self.track:SelectWaypoint(self.selectedIndex0)
-                self.track.savedTrackName = nil
-                self.track:UpdateTrackDisplayFull()
+                if(self.track:Split(playerCoord, heading, self.selectedIndex0)) then
+                    self.selectedIndex0 = self.selectedIndex0 + 1
+                    self.track:SelectWaypoint(self.selectedIndex0)
+                    self.track.savedTrackName = nil
+                    self.track:UpdateTrackDisplayFull()
+                end
 
             end
         elseif IsControlJustReleased(0, 187) == 1  then -- arrow down or DPAD DOWN

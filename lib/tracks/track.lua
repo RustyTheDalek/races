@@ -105,9 +105,18 @@ function Track:ShiftWaypointsForward(stopIndex)
 end
 
 function Track:Split(coord, heading, index)
-    self:ShiftWaypointsForward(index)
+
+    if(self.waypoints[index]:NextEmpty()) then
+        print("Can't split waypoint when it doesn't point to anything")
+        return false
+    end
+
+    --We only want to shift what's ahead of the waypoint
+    self:ShiftWaypointsForward(index + 1)
     self:AddNewWaypointAtIndex(coord, heading, index + 1, false)
     self:UpdateTrackDisplay()
+
+    return true
 end
 
 function Track:AddWaypointBetween(coord, heading, selectedIndex)
