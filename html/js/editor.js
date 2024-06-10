@@ -12,7 +12,7 @@ function readEditorEvent(event) {
             updateClosestWaypoint(data.waypointIndex);
             break;
         case "update_selected_waypoint":
-            updateSelectedWaypoint(data.waypointIndex);
+            updateSelectedWaypoint(data.waypointIndex, data.pointsTo);
             break;
         default:
             console.warn(`${data.action} isn't accounted for`);
@@ -24,6 +24,7 @@ function updateClosestWaypoint(waypointIndex) {
     $('#closest-waypoint').text(waypointIndex);
 }
 
-function updateSelectedWaypoint(waypointIndex) {
+function updateSelectedWaypoint(waypointIndex, pointsTo) {
     $('#selected-waypoint').text(waypointIndex);
+    $('#points-to').text(pointsTo ?? 'none');
 }

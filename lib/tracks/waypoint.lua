@@ -51,6 +51,14 @@ function Waypoint:NextEmpty()
     return self.next == nil or #self.next < 1
 end
 
+function Waypoint:GetNextAsString()
+    if(self:NextEmpty()) then
+        return nil
+    else
+        return table.concat(self.next, ',')
+    end
+end
+
 function Waypoint:Loops()
     return not self:NextEmpty() and #self.next > 0 and #self.next == 1 and self.next[1] == 1
 end

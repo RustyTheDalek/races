@@ -295,12 +295,17 @@ end
 
 function Track:SelectWaypoint(index)
     self.waypoints[index]:SelectWaypoint()
-    SendNUIMessage( { type = "editor", action = "update_selected_waypoint", waypointIndex = index })
+    SendNUIMessage( {
+        type = "editor",
+        action = "update_selected_waypoint",
+        waypointIndex = index,
+        pointsTo = self.waypoints[index]:GetNextAsString()
+    })
 end
 
 function Track:DeselectSelectedWaypoint(index)
     self.waypoints[index]:DeselectSelectedWaypoint()
-    SendNUIMessage( { type = "editor", action = "update_selected_waypoint", waypointIndex = 'none' })
+    SendNUIMessage( { type = "editor", action = "update_selected_waypoint", waypointIndex = 'none', pointsTo = nil })
 end
 
 function Track:DeleteCheckpoints()
