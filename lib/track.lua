@@ -500,10 +500,14 @@ function Track:GetTrackRespawnPosition(index)
     if self.startIsFinish == true then
         if index > 0 then
             return self:GetWaypoint(index).coord
+        else
+            return self:GetWaypoint(1).coord
         end
     else
         if index > 1 then
             return self:GetWaypoint(index - 1).coord
+        else
+            return self:GetWaypoint(1).coord
         end
     end
 end
