@@ -450,8 +450,8 @@ function Track:RemoveWaypoint(waypointIndexToDelete)
         print(dump(waypoint.next))
 
         for pointsToIndex, pointsTo in ipairs(waypoint.next) do
-            --Waypoints that are aheead of the one deleted will need to point one waypoint back
-            if(waypointIndex > waypointIndexToDelete) then
+            --Waypoints that are ahead of the one deleted will need to point one waypoint back
+            if(pointsTo > waypointIndexToDelete) then
                 print("Shifting point down")
                 waypoint.next[pointsToIndex] = pointsTo - 1
             elseif (pointsTo == waypointIndexToDelete) then
