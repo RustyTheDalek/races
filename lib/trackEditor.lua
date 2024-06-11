@@ -338,7 +338,6 @@ function TrackEditor:Update(playerCoord, heading)
             else
 
                 print("Splitting track")
-                self.track:Split(playerCoord, heading, self.selectedIndex01)
 
                 if (not self.track:Split(playerCoord, heading, self.selectedIndex0)) then
                     notifyPlayer("Couldn't split track")
