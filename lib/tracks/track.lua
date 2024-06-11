@@ -59,14 +59,18 @@ function Track:AddNewWaypointAtIndex(coord, heading, index, linkWaypointInFront)
         radius = Config.data.editing.defaultRadius
     })
 
-    -- If Waypoint behind exists then set it's next waypoint to this one
-    if (self.waypoints[index - 1] ~= nil) then
+    local previousWaypoint = self.waypoints[index - 1]
+    if (previousWaypoint ~= nil and previousWaypoint.next[index] == nil) then
+        print(("Pointing waypoint %i to %i"):format(index - 1, index))
+        --Stop this line adding multiple links to future waypoints
         -- TODO: Add to next, don't replace
         print("Pointing previous waypoint to this")
         table.insert(self.waypoints[index - 1].next, index)
     end
 
-    if(linkWaypointInFront) then
+    self.waypoints[index].next = {}
+
+    if (linkWaypointInFront) then
         print("Linking forwards")
         -- If Next waypoint exists then set this waypoint to next one 
         if (self.waypoints[index + 1] ~= nil) then
@@ -102,6 +106,7 @@ function Track:ShiftWaypointsForward(stopIndex)
         self.waypoints[i]:ShiftNextsForward()
         self.waypoints[i + 1] = self.waypoints[i]
     end
+    self.waypoints[stopIndex] = nil
 end
 
 function Track:Split(coord, heading, index)
