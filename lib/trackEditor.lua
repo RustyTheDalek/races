@@ -152,6 +152,14 @@ function TrackEditor:OnNoSecondSelectedWaypoint()
         end
     end
 
+    if(self.track:GetWaypoint(self.selectedIndex0):NextEmpty()) then
+        print("Completing split")
+        print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+        self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
+        print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+        return
+    end
+
     --If Selected waypoint is one in front of the second selected
     if self.closestWaypointIndex == self.selectedIndex0 + 1 then
         self.track:SelectWaypoint(self.closestWaypointIndex)
