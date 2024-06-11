@@ -105,10 +105,17 @@ function TrackEditor:OnClosestWaypointExists(coord, heading)
     local selectedWaypoint = self.track:GetWaypoint(self.closestWaypointIndex)
 
     if 0 == self.selectedIndex0 then -- no previous selected waypoint exists, show that waypoint is selected
+        print("Print No previous waypoint, selecting new")
         self.track:SelectWaypoint(self.closestWaypointIndex)
         self.selectedIndex0 = self.closestWaypointIndex
     else  -- first selected waypoint exists
+
+        print("First selected waypoint exists")
+
         if self.closestWaypointIndex == self.selectedIndex0 then -- selected waypoint and first selected waypoint are the same, unselect
+
+            print("Deselecting")
+
             self.track:DeselectSelectedWaypoint(self.closestWaypointIndex)
 
             if self.selectedIndex1 ~= 0 then
@@ -119,9 +126,15 @@ function TrackEditor:OnClosestWaypointExists(coord, heading)
             end
 
         elseif self.closestWaypointIndex == self.selectedIndex1 then -- selected waypoint and second selected waypoint are the same
+
+            print("Deselecting")
+
             self.track:DeselectSelectedWaypoint(self.closestWaypointIndex)
             self.selectedIndex1 = 0
         else                            -- selected waypoint and first and second selected waypoints are different
+
+            print("no matching waypoints selected")
+
             if 0 == self.selectedIndex1 then -- second selected waypoint does not exist
                 self:OnNoSecondSelectedWaypoint()
             else -- second selected waypoint exists
@@ -132,6 +145,9 @@ function TrackEditor:OnClosestWaypointExists(coord, heading)
 end
 
 function TrackEditor:OnNoSecondSelectedWaypoint()
+
+    print("No second waypoint selected")
+
     local checkpointType = finishCheckpoint
     local waypointNum = 0
     if true == self.track.startIsFinish then
@@ -198,6 +214,9 @@ function TrackEditor:SplitCombineTrack(checkpointType)
 end
 
 function TrackEditor:OnSecondSelectedWaypoint()
+
+    print("Second waypoint selected")
+
     if self.closestWaypointIndex == self.selectedIndex1 + 1 then
         self.track:SelectWaypoint(self.closestWaypointIndex)
         local selectedWaypoint0 = self.track:GetWaypoint(self.selectedIndex0)
