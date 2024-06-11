@@ -60,15 +60,26 @@ function Track:AddNewWaypointAtIndex(coord, heading, index, linkWaypointInFront)
     })
 
     local previousWaypoint = self.waypoints[index - 1]
-    if (previousWaypoint ~= nil and previousWaypoint.next[index] == nil) then
+
+    if (previousWaypoint ~= nil and not previousWaypoint:HasNext(index)) then
         print(("Pointing waypoint %i to %i"):format(index - 1, index))
         --Stop this line adding multiple links to future waypoints
         -- TODO: Add to next, don't replace
         print("Pointing previous waypoint to this")
-        table.insert(self.waypoints[index - 1].next, index)
+
+        print(dump(self.waypoints[index - 1].next))
+        self.waypoints[index - 1]:AddNext(index)
+        print(dump(self.waypoints[index - 1].next))
+
     end
 
-    self.waypoints[index].next = {}
+    print("checking current waypoint")
+
+    print(dump(self.waypoints[index].next))
+    
+    self.waypoints[index]:ClearNext()
+    
+    print(dump(self.waypoints[index].next))
 
     if (linkWaypointInFront) then
         print("Linking forwards")
@@ -76,7 +87,7 @@ function Track:AddNewWaypointAtIndex(coord, heading, index, linkWaypointInFront)
         if (self.waypoints[index + 1] ~= nil) then
             -- TODO: Add to next, don't replace
             print("Link found pointing")
-            table.insert(self.waypoints[index].next, index + 1)
+            self.waypoints[index]:AddNext(index + 1)
         end
     end
 
@@ -228,17 +239,11 @@ function Track:LoadWaypointBlips(waypoints)
         return
     end
 
-    if (waypoints[#waypoints].next ~= nil) then
-        if(type(waypoints[#waypoints].next) == 'table' and getTableSize(waypoints[#waypoints].next) > 0) then
-            self.startIsFinish = true
-        elseif (type(waypoints[#waypoints].next) == 'number') then
-            self.startIsFinish = true
-        end
-    end
+    print(dump(waypoints))
 
     for index, waypoint in ipairs(waypoints) do
 
-        if (self.startIsFinish and index == #waypoints and 
+        if (index == #waypoints and 
             waypoint.coord.x == self.waypoints[1].coord.x and
             waypoint.coord.y == self.waypoints[1].coord.y and 
             waypoint.coord.z == self.waypoints[1].coord.z) then
@@ -259,6 +264,9 @@ function Track:LoadWaypointBlips(waypoints)
 
         ::continue::
     end
+
+    self.startIsFinish = self.waypoints[#self.waypoints]:NextIsLinked()
+
     print("Loaded waypoint blips")
     SetBlipRoute(self.waypoints[1].blip, true)
     SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
@@ -449,21 +457,7 @@ function Track:RemoveWaypoint(waypointIndexToDelete)
         print(("Checking waypoint %i"):format(waypointIndex))
         print(dump(waypoint.next))
 
-        for pointsToIndex, pointsTo in ipairs(waypoint.next) do
-            --Waypoints that are ahead of the one deleted will need to point one waypoint back
-            if(pointsTo > waypointIndexToDelete) then
-                print("Shifting point down")
-                waypoint.next[pointsToIndex] = pointsTo - 1
-            elseif (pointsTo == waypointIndexToDelete) then
-                print("waypoint points to deleted waypoint")
-                table.remove(waypoint.next, pointsToIndex)
-                for _, next in ipairs(waypointToDelete.next) do
-                    print(("Now pointing to %i"):format(next))
-                    --Will not be shifted one back as well
-                    table.insert(waypoint.next, next -1)
-                end
-            end
-        end
+        waypoint:RemoveNextLinks(waypointIndexToDelete, waypointToDelete.next)
     end
 
     table.remove(self.waypoints, waypointIndexToDelete)
@@ -539,6 +533,11 @@ end
 function Track:OnStartRace()
 
     self:SetVisibleBlips()
+
+    if (self.waypoints == nil or self.waypoints[1] == nil or self.waypoints[1].coord == nil) then
+        notifyPlayer("Could not start race no start waypoint");
+        return nil
+    end
 
     local startWaypoint = {
         checkpoint = MakeCheckpoint(finishCheckpoint, self.waypoints[1].coord, self.waypoints[1].radius, self.waypoints[1].coord, color.yellow, 0),

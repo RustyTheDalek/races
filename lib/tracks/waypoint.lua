@@ -47,18 +47,6 @@ function Waypoint:New(o)
     return o
 end
 
-function Waypoint:NextEmpty() 
-    return self.next == nil or #self.next < 1
-end
-
-function Waypoint:GetNextAsString()
-    if(self:NextEmpty()) then
-        return nil
-    else
-        return table.concat(self.next, ',')
-    end
-end
-
 function Waypoint:Loops()
     return not self:NextEmpty() and #self.next > 0 and #self.next == 1 and self.next[1] == 1
 end
@@ -267,8 +255,63 @@ function Waypoint:DeselectSelectedWaypoint()
     SetCheckpointRgba2(self.checkpoint, color.r, color.g, color.b, 127)
 end
 
+--#region Next
+
 function Waypoint:AddNext(index)
     table.insert(self.next, index)
+end
+
+function Waypoint:RemoveNext(nextToRemove)
+    for index, next in ipairs(self.next) do
+        if (nextToRemove == next) then
+            table.remove(self.next, index)
+            return
+        end
+    end
+end
+
+function Waypoint:ClearNext()
+    self.next = {}
+end
+
+function Waypoint:NextEmpty()
+    return self.next == nil or #self.next < 1
+end
+
+function Waypoint:HasNext(nextIndex)
+    for _, next in ipairs(self.next) do
+        if (next == nextIndex) then
+            return true
+        end
+    end
+    return false
+end
+
+function Waypoint:NextIsLinked()
+    return
+        self.next ~= nil and
+        (
+            (type(self.next) == 'table' and getTableSize(self.next) > 0) or
+            ((self.next) == 'number' and self.next > 0)
+        )
+end
+
+function Waypoint:RemoveNextLinks(waypointIndexToDelete, nextsBeingDeleted)
+    for pointsToIndex, pointsTo in ipairs(self.next) do
+        --Waypoints that are ahead of the one deleted will need to point one waypoint back
+        if(pointsTo > waypointIndexToDelete) then
+            print("Shifting point down")
+            self.next[pointsToIndex] = pointsTo - 1
+        elseif (pointsTo == waypointIndexToDelete) then
+            print("waypoint points to deleted waypoint")
+            self:RemoveNext(pointsToIndex)
+            for _, next in pairs(nextsBeingDeleted) do
+                print(("Now pointing to %i"):format(next))
+                --Will not be shifted one back as well
+                self:AddNext(next - 1)
+            end
+        end
+    end
 end
 
 function Waypoint:ShiftNextsForward()
@@ -308,3 +351,13 @@ function Waypoint:ShiftNextsIfFurtherAhead(newIndex)
 
     print(dump(self.next))
 end
+
+function Waypoint:GetNextAsString()
+    if(self:NextEmpty()) then
+        return nil
+    else
+        return table.concat(self.next, ',')
+    end
+end
+
+--#endregion
