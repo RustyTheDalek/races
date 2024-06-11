@@ -267,6 +267,10 @@ function Waypoint:DeselectSelectedWaypoint()
     SetCheckpointRgba2(self.checkpoint, color.r, color.g, color.b, 127)
 end
 
+function Waypoint:AddNext(index)
+    table.insert(self.next, index)
+end
+
 function Waypoint:ShiftNextsForward()
 
     if (self:NextEmpty()) then
@@ -280,6 +284,26 @@ function Waypoint:ShiftNextsForward()
     for index, waypointIndex in pairs(self.next) do
         print(("Pushing %i forward"):format(waypointIndex))
         self.next[index] = waypointIndex + 1
+    end
+
+    print(dump(self.next))
+end
+
+function Waypoint:ShiftNextsIfFurtherAhead(newIndex)
+
+    if (self:NextEmpty()) then
+        return
+    end
+
+    print("Waypoint has nexts")
+
+    print(dump(self.next))
+
+    for index, waypointIndex in pairs(self.next) do
+        if(waypointIndex > newIndex) then
+            print(("Pushing %i forward"):format(waypointIndex))
+            self.next[index] = waypointIndex + 1
+        end
     end
 
     print(dump(self.next))

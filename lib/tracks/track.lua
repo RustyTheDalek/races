@@ -111,19 +111,23 @@ end
 
 function Track:Split(coord, heading, index)
 
-    if(self.waypoints[index]:NextEmpty()) then
-        print("Can't split waypoint when it doesn't point to anything")
-        return false
-    end
-
     --We only want to shift what's ahead of the waypoint
     self:ShiftWaypointsForward(index + 1)
-    --Shift the seleced waypoints nexts forward
-    self.waypoints[index]:ShiftNextsForward()
+
+    self:IncrementNextsAtIndex(index)
+
     self:AddNewWaypointAtIndex(coord, heading, index + 1, false)
     self:UpdateTrackDisplay()
 
     return true
+end
+
+--Loop through the track and increment links on waypoints that point to the old
+function Track:IncrementNextsAtIndex(index)
+    print("Incrementing nexts")
+    for _, waypoint in ipairs(self.waypoints) do
+        waypoint:ShiftNextsIfFurtherAhead(index)
+    end
 end
 
 function Track:AddWaypointBetween(coord, heading, selectedIndex)
