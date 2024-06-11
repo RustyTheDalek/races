@@ -1677,7 +1677,7 @@ AddEventHandler("races:load", function(isPublic, trackName, track)
         return
     end
 
-    if racingStates.Idle ~= raceState or racingStates.Editing == raceState then
+    if racingStates.Idle ~= raceState and racingStates.Editing ~= raceState then
         notifyPlayer("Ignoring load event.  Currently joined to race.\n")
         return
     end
