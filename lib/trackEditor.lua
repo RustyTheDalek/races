@@ -354,6 +354,26 @@ function TrackEditor:Update(playerCoord, heading)
                 self.selectedIndex0 = 0
                 self.track.savedTrackName = nil
                 self.track:UpdateTrackDisplayFull()
+            elseif (self.closestWaypointIndex ~= 0) then
+
+                print("Connecting / splitting waypoint")
+
+                print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+                print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+
+                --If They're already linked then unlink them
+                if(self.track:GetWaypoint(self.selectedIndex0):HasNext(self.closestWaypointIndex)) then
+                    print("Unlinking")
+                    self.track:GetWaypoint(self.selectedIndex0):RemoveNext(self.closestWaypointIndex)
+                else --Link them
+                    print("Linking")
+                    self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
+                end
+
+                self.track:SelectWaypoint(self.selectedIndex0);
+
+                print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+
             else
 
                 print("Splitting track")
