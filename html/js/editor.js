@@ -8,6 +8,9 @@ function readEditorEvent(event) {
     if (data.type !== "editor") return;
 
     switch (data.action) {
+        case "toggle_editor_view":
+            toggleEditorView();
+            break;
         case "update_closest_waypoint":
             updateClosestWaypoint(data.waypointIndex);
             break;
@@ -18,6 +21,10 @@ function readEditorEvent(event) {
             console.warn(`${data.action} isn't accounted for`);
             break;
     }
+}
+
+function toggleEditorView() {
+    $('#editor-info').toggle();
 }
 
 function updateClosestWaypoint(waypointIndex) {

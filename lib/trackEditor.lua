@@ -30,6 +30,7 @@ function TrackEditor:StartEditing(track)
     self.track = track
     self.track:StartEditing()
     self.editStartTime = GetGameTimer()
+    SendNUIMessage( { type = "editor", action = "toggle_editor_view" })
 end
 
 function TrackEditor:StopEditing(waypoints)
@@ -46,6 +47,8 @@ function TrackEditor:StopEditing(waypoints)
     self.highlightedCheckpoint = 0
 
     self.track:StopEditing(waypoints)
+
+    SendNUIMessage( { type = "editor", action = "toggle_editor_view" })
 end
 
 function TrackEditor:EditWaypoints(coord, heading)
