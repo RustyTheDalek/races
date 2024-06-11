@@ -254,7 +254,7 @@ end
 
 function TrackEditor:Clear()
     self.highlightedCheckpoint = 0
-    self.selfselectedIndex0 = 0
+    self.selectedIndex0 = 0
     self.selectedIndex1 = 0
 
     self.track:Clear()
@@ -404,6 +404,7 @@ function TrackEditor:Load(isPublic, trackName, track)
     self.track:SetStartToFinishCheckpoints()
 end
 
+--TODO: Try to check track is valid before saving/overwriting
 function TrackEditor:TrySave(access, name)
     if "pvt" == access or "pub" == access then
         if name ~= nil then
