@@ -403,7 +403,7 @@ end
 function TrackEditor:Load(isPublic, trackName, track)
     self.track:Load(isPublic, trackName, track)
     self.highlightedCheckpoint = 0
-    self.track:DeleteTrackCheckpoints()
+    self:DeleteTrackCheckpoints()
     self.track:SetStartToFinishCheckpoints()
 end
 
