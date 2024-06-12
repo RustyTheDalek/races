@@ -495,19 +495,40 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
         local coord = nextWaypoint.coord
         local radius = nextWaypoint.radius
 
-        --Point to next Waypoint if only points to one
-        --TODO: Handle multiple waypoints
-        local nextCoord = (nextWaypoint.next ~= nil and getTableSize(nextWaypoint.next) == 1 ) and self.waypoints[nextWaypoint.next[1]].coord or coord
+        if(getTableSize(nextWaypoint.next) > 1) then
 
-        table.insert(nextCheckpoints, {
-            checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.yellow, 0),
-            coord = coord,
-            radius = radius,
-            index = nextWaypointIndex
-        })
+            for index, splitWaypointIndex in ipairs(nextWaypoint.next) do
+                local nextCoord = self.waypoints[splitWaypointIndex].coord
 
-        SetBlipRoute(nextWaypoint.blip, true)
-        SetBlipRouteColour(nextWaypoint.blip, blipRouteColor)
+                table.insert(nextCheckpoints, {
+                    checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.orange, 0),
+                    coord = coord,
+                    radius = radius,
+                    index = nextWaypointIndex
+                })
+
+                --We only really want the arrow to show, but overlapping checkpoints makes the the checpoint 'thicker'
+                --The Fix is to hide the cylinder of the checkpoints that follow
+                if(checkpointType == arrow3Checkpoint and index > 1 ) then
+                    SetCheckpointCylinderHeight(nextCheckpoints[#nextCheckpoints].checkpoint, 0.0, 0.0, 0.0)
+                end
+
+                SetCheckpointIconHeight(nextCheckpoints[#nextCheckpoints].checkpoint, 0.15 * #nextCheckpoints)
+                SetCheckpointIconScale(nextCheckpoints[#nextCheckpoints].checkpoint, 0.5)
+            end
+        else
+            local nextCoord = (nextWaypoint.next ~= nil and getTableSize(nextWaypoint.next) == 1 ) and self.waypoints[nextWaypoint.next[1]].coord or coord
+
+            table.insert(nextCheckpoints, {
+                checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.yellow, 0),
+                coord = coord,
+                radius = radius,
+                index = nextWaypointIndex
+            })
+
+            SetBlipRoute(nextWaypoint.blip, true)
+            SetBlipRouteColour(nextWaypoint.blip, blipRouteColor)
+        end
     end
 
     return nextCheckpoints
