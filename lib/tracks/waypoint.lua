@@ -11,7 +11,7 @@ local blipRouteColor<const> = 18 -- light blue
 local registerBlipColor<const> = 83 -- purple
 
 local finishCheckpoint<const> = 4 -- cylinder checkered flag
-local midCheckpoint<const> = 42 -- cylinder with number
+local midCheckpoint<const> = 47 -- cylinder with number
 local plainCheckpoint<const> = 45 -- cylinder
 local arrow3Checkpoint<const> = 0 -- cylinder with 3 arrows
 
