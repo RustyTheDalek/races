@@ -1,5 +1,6 @@
 local finishCheckpoint <const> = 4         -- cylinder checkered flag
 local arrow3Checkpoint <const> = 0         -- cylinder with 3 arrows
+local noArrowCheckpoint <const> = 47       -- cylinder with 3 arrows
 local loopCheckpoint <const> = 3           -- cyling with loop icon
 local blipRouteColor <const> = 18          -- light blue
 
@@ -495,13 +496,20 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
         local coord = nextWaypoint.coord
         local radius = nextWaypoint.radius
 
-        if(getTableSize(nextWaypoint.next) > 1) then
+        if(checkpointType == arrow3Checkpoint and getTableSize(nextWaypoint.next) > 1) then
+
+            table.insert(nextCheckpoints, {
+                checkpoint = MakeCheckpoint(noArrowCheckpoint, coord, radius, coord, color.orange, 0),
+                coord = coord,
+                radius = radius,
+                index = nextWaypointIndex
+            })
 
             for index, splitWaypointIndex in ipairs(nextWaypoint.next) do
                 local nextCoord = self.waypoints[splitWaypointIndex].coord
 
                 table.insert(nextCheckpoints, {
-                    checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.orange, 0),
+                    checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.lightBlue, 0, 255),
                     coord = coord,
                     radius = radius,
                     index = nextWaypointIndex
@@ -509,10 +517,7 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
 
                 --We only really want the arrow to show, but overlapping checkpoints makes the the checpoint 'thicker'
                 --The Fix is to hide the cylinder of the checkpoints that follow
-                if(checkpointType == arrow3Checkpoint and index > 1 ) then
-                    SetCheckpointCylinderHeight(nextCheckpoints[#nextCheckpoints].checkpoint, 0.0, 0.0, 0.0)
-                end
-
+                SetCheckpointCylinderHeight(nextCheckpoints[#nextCheckpoints].checkpoint, 0.0, 0.0, 0.0)
                 SetCheckpointIconHeight(nextCheckpoints[#nextCheckpoints].checkpoint, 0.15 * #nextCheckpoints)
                 SetCheckpointIconScale(nextCheckpoints[#nextCheckpoints].checkpoint, 0.5)
             end

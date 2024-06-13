@@ -3,6 +3,7 @@ color = {
     red = { r = 255, g = 0, b = 0 },
     green = { r = 0, g = 255, b = 0 },
     blue = { r = 0, g = 0, b = 255 },
+    lightBlue = { r = 75, g = 170, b = 200},
     yellow = { r = 255, g = 255, b = 0 },
     orange = { r= 255, g = 128, b = 0},
     purple = { r = 255, g = 0, b = 255 },
