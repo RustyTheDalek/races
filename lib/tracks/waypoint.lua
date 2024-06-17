@@ -329,8 +329,10 @@ function Waypoint:ShiftNextsForward()
     print(dump(self.next))
 
     for index, waypointIndex in pairs(self.next) do
-        print(("Pushing %i forward"):format(waypointIndex))
-        self.next[index] = waypointIndex + 1
+        if(waypointIndex ~= 1) then
+            print(("Pushing %i forward"):format(waypointIndex))
+            self.next[index] = waypointIndex + 1
+        end
     end
 
     print(dump(self.next))
