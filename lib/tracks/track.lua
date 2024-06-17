@@ -572,8 +572,8 @@ function Track:OnStartRace()
         index = 1
     }
 
-    SetBlipRoute(self.waypoints[1].coord, true)
-    SetBlipRouteColour(self.waypoints[1].coord, blipRouteColor)
+    SetBlipRoute(self.waypoints[1].blip, true)
+    SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
 
     self:DeleteGridCheckPoints()
 
