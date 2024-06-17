@@ -124,7 +124,7 @@ function Waypoint:GetBlipProperties(index, totalWaypoints, looping)
         end
     else
         print("Mid blip")
-        return midSprite, midBlipColor, index - 1, "Waypoint"
+        return midSprite, midBlipColor, index, "Waypoint"
     end
 end
 
@@ -242,7 +242,8 @@ function Waypoint:MoveWaypoint(coord, heading)
     DeleteCheckpoint(self.checkpoint)
     local color = getCheckpointColor(selectedBlipColor)
     local checkpointType = 38 == self.sprite and finishCheckpoint or midCheckpoint
-    self:MakeCheckpoint(self.coord, self.number, 127, checkpointType, color)
+    --Manually show CP number
+    self:MakeCheckpoint(self.coord, self.number, 127, 44, color)
 end
 
 function Waypoint:SelectWaypoint()

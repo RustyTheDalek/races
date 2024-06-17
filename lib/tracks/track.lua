@@ -224,7 +224,7 @@ end
 
 function Track:SetStartToFinishCheckpoints()
     for index, waypoint in ipairs(self.waypoints) do
-        waypoint:MakeCheckpoint(waypoint.coord, index - 1)
+        waypoint:MakeCheckpoint(waypoint.coord, index, 127, 44, nil)
     end
 end
 
