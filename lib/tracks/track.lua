@@ -600,6 +600,21 @@ function Track:AtEnd(currentWaypoint, waypointsPassed)
     return self.waypoints[currentWaypoint]:AtEnd() or (currentWaypoint == 1 and waypointsPassed > 1)
 end
 
+function Track:Validate()
+
+    for waypointIndex, waypoint in ipairs(self.waypoints) do
+        for nextIndex, pointsTo in ipairs(waypoint.next) do
+            if(self.waypoints[pointsTo] == nil) then
+                sendMessage(("Points to %i, but doesn't exist, removing..."):format(nextIndex))
+                table.remove(self.waypoints[waypointIndex].next[nextIndex])
+            end
+        end
+
+        waypoint:RemoveDuplicateNexts()
+    end
+
+end
+
 Track.UpdateTrack = function(track)
 
     print("Updating track...")

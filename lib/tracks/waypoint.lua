@@ -86,6 +86,10 @@ function Waypoint:SetLastWaypointAsFinish(number)
     self.next = nil
 end
 
+function Waypoint:RemoveDuplicateNexts()
+    removeDuplicates(self.next)
+end
+
 --#region Blips
 function Waypoint:CreateBlip(index, totalWaypoints, looping)
     self.blip = AddBlipForCoordVector3(self.coord)

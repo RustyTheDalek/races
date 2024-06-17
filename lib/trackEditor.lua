@@ -60,6 +60,8 @@ function TrackEditor:EditWaypoints(coord, heading)
     else                                            -- existing waypoint selected
         self:OnClosestWaypointExists(coord, heading)
     end
+
+    self.track:Validate()
 end
 
 function TrackEditor:OnNoClosestWaypoint(coord, heading)
@@ -382,7 +384,7 @@ function TrackEditor:Update(playerCoord, heading)
                 print("Splitting track")
 
                 if (not self.track:Split(playerCoord, heading, self.selectedIndex0)) then
-                    notifyPlayer("Couldn't split track")
+                    self.track:ValidateTrack()("Couldn't split track")
                     return
                 end
 
@@ -392,12 +394,16 @@ function TrackEditor:Update(playerCoord, heading)
                 self.track:UpdateTrackDisplayFull()
 
             end
+
+            self.track:Validate()
+
         elseif IsControlJustReleased(0, 187) == 1  then -- arrow down or DPAD DOWN
             self.track:AdjustCheckpointRadius(self.selectedIndex0, -0.5)
         elseif IsControlJustReleased(0, 188) == 1 and selectedWaypoint0.coord.r < maxRadius then -- arrow up or DPAD UP
             self.track:AdjustCheckpointRadius(self.selectedIndex0, 0.5)
         end
     end
+
 end
 
 function TrackEditor:Load(isPublic, trackName, track)
