@@ -8,7 +8,7 @@ local gridRadius<const> = 5.0
 local gridSeparation<const> = 5
 local gridCheckPointType<const> = 45
 
-local maxNumVisible<const> = 3 -- maximum number of waypoints visible during a race
+local maxNumVisible<const> = 5 -- maximum number of waypoints visible during a race
 local numVisible = maxNumVisible -- number of waypoints visible during a race - may be less than maxNumVisible
 
 Track = {
@@ -507,6 +507,8 @@ function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
 
             for index, splitWaypointIndex in ipairs(nextWaypoint.next) do
                 local nextCoord = self.waypoints[splitWaypointIndex].coord
+
+                SetBlipDisplay(self.waypoints[splitWaypointIndex].blip, 2)
 
                 table.insert(nextCheckpoints, {
                     checkpoint = MakeCheckpoint(checkpointType, coord, radius, nextCoord, color.lightBlue, 0, 255),
