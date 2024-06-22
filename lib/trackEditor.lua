@@ -174,10 +174,10 @@ function TrackEditor:OnNoSecondSelectedWaypoint()
     end
 
     if(self.track:GetWaypoint(self.selectedIndex0):NextEmpty()) then
+        sendMessage("Completing Split")
         print("Completing split")
-        print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
         self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
-        print(dump(self.track:GetWaypoint(self.selectedIndex0).next))
+        self.track:SelectWaypoint(self.selectedIndex0);
         return
     end
 
@@ -190,10 +190,9 @@ function TrackEditor:OnNoSecondSelectedWaypoint()
         self.selectedIndex1 = self.selectedIndex0
         self.selectedIndex0 = self.closestWaypointIndex
     else
-        self.track:SelectWaypoint(self.closestWaypointIndex)
-        local selectedWaypoint0 = self.track:GetWaypoint(self.selectedIndex0)
-        self.track:DeselectSelectedWaypoint(selectedWaypoint0)
+        self.track:DeselectSelectedWaypoint(self.selectedIndex0)
         self.selectedIndex0 = self.closestWaypointIndex
+        self.track:SelectWaypoint(self.selectedIndex0)
     end
 end
 
@@ -368,10 +367,10 @@ function TrackEditor:Update(playerCoord, heading)
 
                 --If They're already linked then unlink them
                 if(self.track:GetWaypoint(self.selectedIndex0):HasNext(self.closestWaypointIndex)) then
-                    print("Unlinking")
+                    sendMessage("Unlinking")
                     self.track:GetWaypoint(self.selectedIndex0):RemoveNext(self.closestWaypointIndex)
                 else --Link them
-                    print("Linking")
+                    sendMessage("Linking")
                     self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
                 end
 
