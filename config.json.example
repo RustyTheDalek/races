@@ -16,7 +16,8 @@
     },
     "playerDisplay" : {
         "raceDisplay" : {
-            "gamerTagInfix" : " | "
+            "gamerTagInfix" : " | ",
+            "splitTimes": false
         }
     },
     "mapManager" : {

@@ -2686,7 +2686,9 @@ function OnHitCheckpoint(player, waypointHit)
 
     numWaypointsPassed = numWaypointsPassed + 1
 
-    SendCheckpointTime(numWaypointsPassed)
+    if(Config.data.playerDisplay.raceDisplay.splitTimes) then
+        SendCheckpointTime(numWaypointsPassed)
+    end
 
     previousWaypoint = waypointHit
 
