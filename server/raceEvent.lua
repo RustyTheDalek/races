@@ -582,11 +582,11 @@ function RaceEvent:SendCheckpointTime(source, waypointsPassed)
                 --Other Racer hasn't hit a checkpoint use race Start time
                 table.insert(self.checkpointTimes, {})
                 racerTimeSplit = self.raceTime - self.raceStart
-                otherRacerTimeSplit = self.race.raceStart - self.raceTime
+                otherRacerTimeSplit = self.raceStart - self.raceTime
             else
                 --Racer is behind compare times at their waypoint
                 table.insert(self.checkpointTimes, {})
-                racerTimeSplit = self.raceTime - self.race.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
+                racerTimeSplit = self.raceTime - self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
                 otherRacerTimeSplit = self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - self.raceTime
             end
             TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
