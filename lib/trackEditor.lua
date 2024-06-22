@@ -399,7 +399,7 @@ function TrackEditor:Update(playerCoord, heading)
 
         elseif IsControlJustReleased(0, 187) == 1  then -- arrow down or DPAD DOWN
             self.track:AdjustCheckpointRadius(self.selectedIndex0, -0.5)
-        elseif IsControlJustReleased(0, 188) == 1 and selectedWaypoint0.coord.r < maxRadius then -- arrow up or DPAD UP
+        elseif IsControlJustReleased(0, 188) == 1 and selectedWaypoint0.radius < maxRadius then -- arrow up or DPAD UP
             self.track:AdjustCheckpointRadius(self.selectedIndex0, 0.5)
         end
     end
