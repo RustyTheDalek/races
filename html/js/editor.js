@@ -1,5 +1,10 @@
+var selectedWaypointContainer;
+
 $(function () {
     window.addEventListener("message", readEditorEvent);
+
+    selectedWaypointContainer = $('#selected-waypoint-container');
+
 });
 
 function readEditorEvent(event) {
@@ -32,6 +37,13 @@ function updateClosestWaypoint(waypointIndex) {
 }
 
 function updateSelectedWaypoint(waypointIndex, pointsTo) {
-    $('#selected-waypoint').text(waypointIndex);
-    $('#points-to').text(pointsTo ?? 'none');
+    if(waypointIndex == 'none') {
+        selectedWaypointContainer.hide();
+        selectedWaypointContainer.find('.waypoint').text('');
+        selectedWaypointContainer.find('.points-to').text('');
+    } else {     
+        selectedWaypointContainer.show();
+        selectedWaypointContainer.find('.waypoint').text(waypointIndex);
+        selectedWaypointContainer.find('.points-to').text(pointsTo ?? 'none');
+    }
 }
