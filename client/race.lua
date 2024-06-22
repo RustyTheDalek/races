@@ -406,6 +406,11 @@ local function edit()
     if racingStates.Idle == raceState then
         raceState = racingStates.Editing
         trackEditor:StartEditing(currentTrack)
+
+        local startWaypoint = currentTrack:GetWaypoint(1)
+
+        TeleportPlayer(startWaypoint.coord, startWaypoint.heading)
+
         sendMessage("Editing started.\n")
     elseif racingStates.Editing == raceState then
         raceState = racingStates.Idle
