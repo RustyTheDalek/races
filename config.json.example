@@ -4,6 +4,9 @@
     "races": {
         "defaultStartDelay": 5
     },
+    "editing": {
+        "defaultRadius": 8
+    },
     "ghosting" : {
         "lowGhostingAlpha": 50,
         "lowPlayerGhostingAlpha": 88,
@@ -13,7 +16,8 @@
     },
     "playerDisplay" : {
         "raceDisplay" : {
-            "gamerTagInfix" : " | "
+            "gamerTagInfix" : " | ",
+            "splitTimes": false
         }
     },
     "mapManager" : {

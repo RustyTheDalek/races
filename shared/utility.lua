@@ -4,6 +4,18 @@ function round(f)
     return (f - math.floor(f) >= 0.5) and math.ceil(f) or math.floor(f)
 end
 
+function getTableSize(table)
+    if(type(table) ~= 'table') then
+        return 0
+    end
+
+    local count = 0
+
+    for _ in pairs(table) do count = count + 1 end
+
+    return count
+end
+
 function dump(o)
     if type(o) == 'table' then
         local s = '{ '
@@ -201,6 +213,21 @@ function minutesSeconds(milliseconds)
     local minutes = math.floor(seconds / 60.0)
     seconds = seconds - minutes * 60.0
     return minutes, seconds
+end
+
+function AddBlipForCoordVector3(coord)
+    local x, y, z = table.unpack(coord)
+    return AddBlipForCoord(x, y, z)
+end
+
+function SetBlipCoordsVector3(blip, coord)
+    local x, y, z = table.unpack(coord)
+    return SetBlipCoords(blip, x, y, z)
+end
+
+function Clamp(num, lower, upper)
+	assert(num and lower and upper, 'error: Clamp(num, lower, upper)')
+	return math.max(lower, math.min(upper, num))
 end
 
 function getTableSize(table)

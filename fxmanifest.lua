@@ -3,6 +3,8 @@ game "gta5"
 
 lua54 "yes"
 
+track_version '1'
+
 dependency "chat"  
 
 loadscreen_manual_shutdown 'yes'
@@ -10,13 +12,13 @@ loadscreen_manual_shutdown 'yes'
 resource_type 'gametype' { name = 'Race' }
 
 shared_scripts {
-    "shared/**/*.lua"
+    "shared/**/*.lua",
+    "lib/tracks/*.lua"
 }
 
 client_scripts {
     "lib/*.lua",
-    "client/race.lua",
-    "client/editor.lua"
+    "client/race.lua"
 }
 
 server_scripts {
@@ -29,9 +31,9 @@ files {
     "html/index.css",
     "html/index.html",
     "html/index.js",
-    "html/js/leaderboard.js",
+    "html/js/*.js",
     "html/reset.css",
-    "html/css/leaderboard.css",
+    "html/css/*.css",
     "config.json"
 }
 

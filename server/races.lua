@@ -1,7 +1,5 @@
-local defaultRadius <const> = 5.0                 -- default waypoint radius
-
 local READY_RACERS_COUNTDOWN = 5000
-local races = {} -- races[playerID] = { raceTime, state, waypointCoords[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[source] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
+local races = {}
 
 local racesMapManager = RacesMapManager:New()
 
@@ -10,36 +8,40 @@ local fxdkMode = GetConvarInt('sv_fxdkMode', 0) == 1
 FileManager.CreateFileIfEmpty('raceData.json')
 FileManager.CreateFileIfEmpty('vehicleListData.json')
 
+local latestTrackVersion = tonumber(GetResourceMetadata(GetCurrentResourceName(), 'track_version'))
+
 local function getTrack(trackName)
     local track = FileManager:LoadCurrentResourceFileJson(trackName)
-    if track ~= nil then
-        if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
-            if #track.waypointCoords > 1 then
-                for _, waypointCoord in ipairs(track.waypointCoords) do
-                    if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" or type(waypointCoord.r) ~= "number" then
-                        print(
-                            "getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
-                        return nil
-                    end
-                end
-                for _, bestLap in ipairs(track.bestLaps) do
-                    if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
-                        print(
-                            "getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
-                        return nil
-                    end
-                end
-                return track
-            else
-                print("getTrack: number of waypoints is less than 2.")
-            end
-        else
-            print("getTrack: track or track.waypointCoords or track.bestLaps not a table.")
-        end
-    else
+    if track == nil then
         print("getTrack: Could not load track data.")
+        return
     end
-    return nil
+
+    if type(track) ~= "table" or type(track.waypoints) ~= "table" or type(track.bestLaps) ~= "table" then
+        print("getTrack: track or waypoints or best laps not a table.")
+        return
+    end
+
+    if #track.waypoints < 2 then
+        print("getTrack: number of waypoints is less than 2.")
+        return
+    end
+
+    for _, waypoint in ipairs(track.waypoints) do
+        if type(waypoint) ~= "table" or type(waypoint.x) ~= "number" or type(waypoint.y) ~= "number" or type(waypoint.z) ~= "number" or type(waypoint.r) ~= "number" then
+            print("getTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z or waypointCoord.r not a number.")
+            return
+        end
+    end
+
+    for _, bestLap in ipairs(track.bestLaps) do
+        if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
+            print("getTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
+            return
+        end
+    end
+
+    return track
 end
 
 local function export(trackName, withBLT)
@@ -111,104 +113,6 @@ local function import(trackName, withBLT)
         end
     else
         print("import: Name required.")
-    end
-end
-
-local function updateRaceData()
-    local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
-    if raceData ~= nil then
-        local update = false
-        local newRaceData = {}
-        for license, tracks in pairs(raceData) do
-            local newTracks = {}
-            for trackName, track in pairs(tracks) do
-                local newWaypointCoords = {}
-                for i, waypointCoord in ipairs(track.waypointCoords) do
-                    local coordRad = waypointCoord
-                    if nil == waypointCoord.r then
-                        coordRad.r = defaultRadius
-                        update = true
-                    end
-                    newWaypointCoords[i] = coordRad
-                end
-                if true == update then
-                    newTracks[trackName] = { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }
-                end
-            end
-            if true == update then
-                newRaceData[license] = newTracks
-            end
-        end
-        if true == update then
-            if true == FileManager.SaveCurrentResourceFileJson('raceData_updated', newRaceData) then
-                local msg = "updateRaceData: raceData.json updated to current format in 'raceData_updated.json'."
-                print(msg)
-            else
-                print("updateRaceData: Could not update raceData.json.")
-            end
-        else
-            print("updateRaceData: raceData.json not updated.")
-        end
-    else
-        print("updateRaceData: Could not load race data.")
-    end
-end
-
-local function updateTrack(trackName)
-    if trackName ~= nil then
-        local track = FileManager.LoadCurrentResourceFileJson(trackName)
-        if track ~= nil then
-            if type(track) == "table" and type(track.waypointCoords) == "table" and type(track.bestLaps) == "table" then
-                if #track.waypointCoords > 1 then
-                    local update = false
-                    local newWaypointCoords = {}
-                    for i, waypointCoord in ipairs(track.waypointCoords) do
-                        if type(waypointCoord) ~= "table" or type(waypointCoord.x) ~= "number" or type(waypointCoord.y) ~= "number" or type(waypointCoord.z) ~= "number" then
-                            print(
-                                "updateTrack: waypointCoord not a table or waypointCoord.x or waypointCoord.y or waypointCoord.z not a number.")
-                            return
-                        end
-                        local coordRad = waypointCoord
-                        if nil == waypointCoord.r then
-                            update = true
-                            coordRad.r = defaultRadius
-                        elseif type(waypointCoord.r) ~= "number" then
-                            print("updateTrack: waypointCoord.r not a number.")
-                            return
-                        end
-                        newWaypointCoords[i] = coordRad
-                    end
-
-                    if true == update then
-                        for _, bestLap in ipairs(track.bestLaps) do
-                            if type(bestLap) ~= "table" or type(bestLap.playerName) ~= "string" or type(bestLap.bestLapTime) ~= "number" or type(bestLap.vehicleName) ~= "string" then
-                                print(
-                                    "updateTrack: bestLap not a table or bestLap.playerName not a string or bestLap.bestLapTime not a number or bestLap.vehicleName not a string.")
-                                return
-                            end
-                        end
-
-                        if true == FileManager.SaveCurrentResourceFileJson(trackName, { waypointCoords = newWaypointCoords, bestLaps = track.bestLaps }) then
-                            local msg = "updateTrack: '" ..
-                                trackName .. ".json' updated to current format in '" .. trackName .. "_updated.json'."
-                            print(msg)
-                        else
-                            print("updateTrack: Could not update track.")
-                        end
-                    else
-                        print("updateTrack: '" .. trackName .. ".json' not updated.")
-                    end
-                else
-                    print("updateTrack: number of waypoints is less than 2.")
-                end
-            else
-                print("updateTrack: track or track.waypointCoords or track.bestLaps not a table.")
-            end
-        else
-            print("updateTrack: Could not load track data.")
-        end
-    else
-        print("updateTrack: Name required.")
     end
 end
 
@@ -340,48 +244,14 @@ local function TriggerEventForRacers(raceIndex, event, ...)
 
 end
 
-local function GenerateStartingGrid(startWaypoint, numRacers)
-    local startPoint = vector3(startWaypoint.x, startWaypoint.y, startWaypoint.z)
-
-    --Calculate the forwardVector of the starting Waypoint
-    local x = -math.sin(math.rad(startWaypoint.heading)) * math.cos(0)
-    local y = math.cos(math.rad(startWaypoint.heading)) * math.cos(0)
-    local z = math.sin(0);
-    local forwardVector = vector3(x, y, z)
-
-    local leftVector = vector3(
-        math.cos(math.rad(startWaypoint.heading)),
-        math.sin(math.rad(startWaypoint.heading)),
-        0.0
-    )
-
-    local gridPositions = {}
-
-    for i = 1, numRacers do
-        local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
-
-        if math.fmod(i, 2) == 0 then
-            -- print("Right Grid")
-            gridPosition = gridPosition + -leftVector * 3
-        else
-            -- print("Left Grid")
-            gridPosition = gridPosition + leftVector * 3
-        end
-
-        table.insert(gridPositions, gridPosition)
-    end
-
-    return gridPositions
-end
-
-local function AddNewRace(waypointCoords, isPublic, trackName, owner, tier, timeout, laps, rdata)
+local function AddNewRace(waypoints, isPublic, trackName, owner, tier, timeout, laps, rdata)
 
     races[source] = RaceEvent:New({
         index = source,
         raceStart = 0,
         raceTime = 0,
         state = racingStates.Registering,
-        waypointCoords = waypointCoords,
+        waypoints = waypoints,
         isPublic = isPublic,
         trackName = trackName,
         owner = owner,
@@ -468,8 +338,6 @@ RegisterCommand("races", function(_, args)
         export(args[2], true)
     elseif "importwblt" == args[1] then
         import(args[2], true)
-    elseif "updateRaceData" == args[1] then
-        updateRaceData()
     elseif "updateTrack" == args[1] then
         updateTrack(args[2])
     else
@@ -585,44 +453,73 @@ AddEventHandler("races:load", function(isPublic, trackName)
         notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' not found.\n")
         return
     end
+
+    track.version = track.version or 0
+
+    print(("Latest Track version:%i"):format(latestTrackVersion))
+    print(("Track version:%i"):format(track.version))
+
+    if(track.version == nil or track.version < latestTrackVersion) then
+        print("Need to update Track")
+
+        local newTrack = Track.UpdateTrack(track)
+
+        if(saveTrack(isPublic, source, trackName, newTrack)) then
+            print("New Track Vesion saved")
+        end
+    end
     
-    TriggerClientEvent("races:load", source, isPublic, trackName, track.waypointCoords, track.map)
+    TriggerClientEvent("races:load", source, isPublic, trackName, track)
 end)
 
 RegisterNetEvent("races:save")
-AddEventHandler("races:save", function(isPublic, trackName, waypointCoords, map)
+AddEventHandler("races:save", function(isPublic, trackName, waypoints, map)
     local source = source
-    if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
-        local track = loadTrack(isPublic, source, trackName)
-        if nil == track then
-            track = { waypointCoords = waypointCoords, bestLaps = {}, map = map }
-            if true == saveTrack(isPublic, source, trackName, track) then
-                TriggerClientEvent("races:save", source, isPublic, trackName)
-                TriggerEvent("races:trackNames", isPublic, source)
-            else
-                notifyPlayer(source,
-                    "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
-            end
-        else
-            notifyPlayer(source,
-                (true == isPublic and "Public" or "Private") ..
-                " track '" .. trackName .. "' exists.  Use 'overwrite' command instead.\n")
-        end
-    else
+
+    if isPublic == nil or trackName == nil or waypoints == nil then
         notifyPlayer(source, "Ignoring save track event.  Invalid parameters.\n")
+        return
+    end
+
+    local track = loadTrack(isPublic, source, trackName)
+
+    if track ~= nil then
+        notifyPlayer(source, (true == isPublic and "Public" or "Private") .. " track '" .. trackName .. "' exists.  Use 'overwrite' command instead.\n")
+        return
+    end
+
+    track = { 
+        waypoints = waypoints, 
+        bestLaps = {}, 
+        map = map,
+        version = latestTrackVersion
+    }
+
+
+    if true == saveTrack(isPublic, source, trackName, track) then
+        TriggerClientEvent("races:save", source, isPublic, trackName)
+        TriggerEvent("races:trackNames", isPublic, source)
+    else
+        notifyPlayer(source,
+            "Error saving " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
     end
 end)
 
 RegisterNetEvent("races:overwrite")
-AddEventHandler("races:overwrite", function(isPublic, trackName, waypointCoords, map)
+AddEventHandler("races:overwrite", function(isPublic, trackName, waypoints, map)
 
     print(("Recieved Overwrite with map %s"):format(map))
 
     local source = source
-    if isPublic ~= nil and trackName ~= nil and waypointCoords ~= nil then
+    if isPublic ~= nil and trackName ~= nil and waypoints ~= nil then
         local track = loadTrack(isPublic, source, trackName)
         if track ~= nil then
-            track = { waypointCoords = waypointCoords, bestLaps = {}, map = map}
+            track = { 
+                waypoints = waypoints, 
+                bestLaps = {}, 
+                map = map,
+                version = latestTrackVersion
+            }
             if true == saveTrack(isPublic, source, trackName, track) then
                 TriggerClientEvent("races:overwrite", source, isPublic, trackName)
             else
@@ -724,10 +621,10 @@ AddEventHandler("races:list", function(isPublic)
 end)
 
 RegisterNetEvent("races:register")
-AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, rdata)
+AddEventHandler("races:register", function(waypoints, isPublic, trackName, rdata)
     local source = source
 
-    if waypointCoords == nil or isPublic == nil or rdata == nil then
+    if waypoints == nil or isPublic == nil or rdata == nil then
         notifyPlayer(source, "Ignoring register event.  Invalid parameters.\n")
         return
     end
@@ -822,8 +719,8 @@ AddEventHandler("races:register", function(waypointCoords, isPublic, trackName, 
 
     notifyPlayer(source, msg)
 
-    AddNewRace(waypointCoords, isPublic, trackName, owner, rdata.tier, rdata.timeout, rdata.laps, rdata)
-    TriggerClientEvent("races:register", -1, source, waypointCoords[1], isPublic, trackName,
+    AddNewRace(waypoints, isPublic, trackName, owner, rdata.tier, rdata.timeout, rdata.laps, rdata)
+    TriggerClientEvent("races:register", -1, source, waypoints[1], isPublic, trackName,
         owner, rdata)
 end)
 
@@ -1146,10 +1043,12 @@ AddEventHandler("races:finish", function(rIndex, finishData, altSource)
 
         local track = loadTrack(race.isPublic, rIndex, race.trackName)
 
-        track.bestLaps = race:GetBestLaps(track.bestLaps)
+        if(track) then
+            track.bestLaps = race:GetBestLaps(track.bestLaps)
 
-        if false == saveTrack(race.isPublic, rIndex, race.trackName, track) then
-            notifyPlayer(rIndex, "Save error updating best lap times.\n")
+            if false == saveTrack(race.isPublic, rIndex, race.trackName, track) then
+                notifyPlayer(rIndex, "Save error updating best lap times.\n")
+            end
         end
 
         racesMapManager:UnloadMap(race.map)
@@ -1158,7 +1057,7 @@ AddEventHandler("races:finish", function(rIndex, finishData, altSource)
 end)
 
 RegisterNetEvent("races:report")
-AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance)
+AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance, closestWaypointIndex)
     local source = source
     if rIndex == nil or numWaypointsPassed == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
