@@ -314,22 +314,17 @@ end
 
 function RaceEvent:Finish(source, raceFinishData)
 
-    if self.state == racingStates.Racing then
+    if self.state ~= racingStates.Racing then
         notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
         return false
     end
 
-    if self.players[source] ~= nil then
+    if self.players[source] == nil then
         notifyPlayer(source, "Cannot finish.  Not a member of this race.\n")
         return false
     end
 
     local finishedRacer = self.players[source]
-
-    if(finishedRacer == nil) then
-        print("Racer nil")
-        return false
-    end
 
     if (raceFinishData.dnf) then
         finishedRacer.data = -1
