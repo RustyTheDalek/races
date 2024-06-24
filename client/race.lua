@@ -2060,6 +2060,11 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 restrictedClass = starts[rIndex].vclass
                 customClassVehicleList = {}
                 startVehicle = starts[rIndex].svehicle
+
+                RequestModel(startVehicle)
+                while HasModelLoaded(startVehicle) == false do
+                    Citizen.Wait(0)
+                end
                 randVehicles = {}
                 currentTrack:LoadWaypointBlips(waypoints)
                 playerDisplay:SetOwnRacerBlip()
