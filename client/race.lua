@@ -2769,8 +2769,6 @@ function OnHitCheckpoint(player, waypointHit)
         SendCheckpointTime(numWaypointsPassed)
     end
 
-    previousWaypoint = waypointHit
-
     --If the waypoint points to at least one other waypoint
     if not currentTrack:AtEnd(waypointHit, numWaypointsPassed) then
         PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
@@ -2783,7 +2781,9 @@ function OnHitCheckpoint(player, waypointHit)
     UpdateCurrentCheckpoint()
 
     --TODO:Make sure next waypoints are retrieved not just one
-    currentWaypoints = currentTrack:OnHitCheckpoint(waypointHit, currentLap, numLaps)
+    currentWaypoints = currentTrack:OnHitCheckpoint(waypointHit, previousWaypoint, currentLap, numLaps)
+
+    previousWaypoint = waypointHit
 end
 
 function RaceUpdate(player, playerCoord, currentTime)

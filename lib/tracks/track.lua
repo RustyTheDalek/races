@@ -469,9 +469,14 @@ function Track:RouteToTrack()
     SetBlipRouteColour(self.waypoints[1].blip, blipRouteColor)
 end
 
-function Track:OnHitCheckpoint(waypointHit, currentLap, numLaps)
+function Track:OnHitCheckpoint(waypointHit, previousWaypoint, currentLap, numLaps)
 
-    SetBlipDisplay(self.waypoints[waypointHit].blip, 0)
+    if(previousWaypoint >= 1) then
+        for _, previousWaypointIndex in ipairs(self.waypoints[previousWaypoint].next) do
+            SetBlipDisplay(self.waypoints[previousWaypointIndex].blip, 0)
+        end
+    end
+
 
     local checkpointType = -1
 
