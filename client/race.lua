@@ -2060,10 +2060,13 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 restrictedClass = starts[rIndex].vclass
                 customClassVehicleList = {}
                 startVehicle = starts[rIndex].svehicle
-
-                RequestModel(startVehicle)
-                while HasModelLoaded(startVehicle) == false do
-                    Citizen.Wait(0)
+                if (startVehicle ~= nil) then
+                    sendMessage("Pre-loading starting car...")
+                    RequestModel(startVehicle)
+                    while HasModelLoaded(startVehicle) == false do
+                        Citizen.Wait(0)
+                    end
+                    sendMessage("Starting car loaded...")
                 end
                 randVehicles = {}
                 currentTrack:LoadWaypointBlips(waypoints)
