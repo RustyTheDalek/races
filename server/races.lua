@@ -827,10 +827,12 @@ AddEventHandler("races:start", function(delay, override)
 
     if delay == nil then
         notifyPlayer(source, "Ignoring start event.  Invalid parameters.\n")
+        return
     end
 
     if race == nil then
         notifyPlayer(source, "Cannot start.  Race does not exist.\n")
+        return
     end
 
     race:Start(delay, override)
