@@ -428,7 +428,9 @@ local function edit()
 
         local startWaypoint = currentTrack:GetWaypoint(1)
 
-        TeleportPlayer(startWaypoint.coord, startWaypoint.heading)
+        if (startWaypoint ~= nil) then
+            TeleportPlayer(startWaypoint.coord, startWaypoint.heading)
+        end
 
         sendMessage("Editing started.\n")
     elseif racingStates.Editing == raceState then
