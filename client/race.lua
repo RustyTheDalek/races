@@ -2281,7 +2281,9 @@ end)
 
 RegisterNetEvent("races:updatePlayers")
 AddEventHandler("races:updatePlayers", function(players)
-    playerDisplay:UpdatePlayerNames(players)
+    if(raceState ~= racingStates.Racing) then
+        playerDisplay:UpdatePlayerNames(players)
+    end
 end)
 
 RegisterNetEvent("races:allVehicles")
