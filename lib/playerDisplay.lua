@@ -171,24 +171,18 @@ function PlayerDisplay:RemoveDisplay(source)
     self.players[source] = nil
 end
 
-function PlayerDisplay:ClearDisplay()
-
-    for _, displayData in pairs(self.players) do
-        RemoveBlip(displayData.blip)
-        RemoveMpGamerTag(displayData.nameTag)
-    end
-
-    self.players = {}
-end
 
 function PlayerDisplay:UpdatePlayerNames(players)
-    self:ClearPlayers()
-
     local ownSource = GetPlayerServerId(PlayerId())
 
     for _, player in pairs(players) do
         if(ownSource ~= player.source) then
-            self:AddDisplay(player.source, player.name)
+
+            local existingPlayer = self.players[player.source]
+
+            if(existingPlayer == nil or existingPlayer.playerName ~= player.name) then
+                self:AddDisplay(player.source, player.name)
+            end
         end
     end
 end
