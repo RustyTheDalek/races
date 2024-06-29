@@ -2279,6 +2279,11 @@ AddEventHandler("races:removeplayerdisplay", function(source)
     playerDisplay:RemoveDisplay(source)
 end)
 
+RegisterNetEvent("races:updatePlayers")
+AddEventHandler("races:updatePlayers", function(players)
+    playerDisplay:UpdatePlayerNames(players)
+end)
+
 RegisterNetEvent("races:allVehicles")
 AddEventHandler("races:allVehicles", function(allVehicles)
     if allVehicles ~= nil then
