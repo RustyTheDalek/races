@@ -283,7 +283,24 @@ local function AddNewRace(waypoints, isPublic, trackName, owner, tier, timeout, 
         racesMapManager:LoadMap(rdata.map)
     end
 
-end 
+end
+
+local function getAllPlayerNames()
+
+    local players = {}
+
+    for _, otherPlayerSource in pairs(GetPlayers()) do
+        local playerName = GetPlayerName(otherPlayerSource)
+        if(playerName ~= nil or playerName ~= '') then
+            table.insert(players, {
+                source = otherPlayerSource,
+                name = playerName  })
+        end
+    end
+
+    TriggerClientEvent("races:updatePlayers", 1, players)
+
+end
 
 RegisterNetEvent("ghosting:setplayeralpha")
 AddEventHandler('ghosting:setplayeralpha', function(alphaValue)
@@ -345,34 +362,6 @@ RegisterCommand("races", function(_, args)
     end
 end, true)
 
-function ProcessPlayers(source)
-    local playerName = GetPlayerName(source)
-
-    print("Processing player " .. source .. " " .. playerName)
-
-    for _, otherPlayerSource in pairs(GetPlayers()) do
-        local otherPlayerName = GetPlayerName(otherPlayerSource)
-
-        print("Other player " .. otherPlayerSource .. " " .. otherPlayerName)
-
-        if (source ~= tonumber(otherPlayerSource)) then
-            TriggerClientEvent("races:addplayerdisplay", tonumber(otherPlayerSource), tonumber(source), playerName)
-
-            TriggerClientEvent("races:addplayerdisplay", tonumber(source), tonumber(otherPlayerSource), otherPlayerName)
-        end
-    end
-end
-
-AddEventHandler("playerJoining", function()
-    local source = source
-
-    --Players are sometimes given a temporary source when they first join ignore that 
-    if (source < 100) then
-        print("Adding players from connecting event")
-        ProcessPlayers(source)
-    end
-end)
-
 AddEventHandler("playerDropped", function()
     print("playerDropped")
     local source = source
@@ -404,8 +393,6 @@ end)
 RegisterNetEvent("races:init")
 AddEventHandler("races:init", function()
     local source = source
-
-    ProcessPlayers(source)
 
     -- register any races created before player joined
     for rIndex, race in pairs(races) do
@@ -1242,6 +1229,12 @@ function MainServerUpdate()
     end
 end
 
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(5000)
+        getAllPlayerNames()
+    end
+end)
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(500)
