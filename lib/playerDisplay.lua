@@ -55,7 +55,6 @@ function PlayerDisplay:AddNameTag(ped, playerName)
     return gamerTag
 end
 
---TODO:Queue a request get the ped when it's valid
 function PlayerDisplay:GetPedFromPlayer(source)
 
     local player = GetPlayerFromServerId(source)
@@ -64,8 +63,6 @@ function PlayerDisplay:GetPedFromPlayer(source)
         print("No Player yet, waiting for range")
         return -1
     end
-
-    Citizen.Wait(5000)
 
     local ped = GetPlayerPed(player)
 
