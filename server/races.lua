@@ -293,7 +293,7 @@ local function getAllPlayerNames()
         local playerName = GetPlayerName(otherPlayerSource)
         if(playerName ~= nil or playerName ~= '') then
             table.insert(players, {
-                source = otherPlayerSource,
+                source = tonumber(otherPlayerSource),
                 name = playerName  })
         end
     end
