@@ -40,11 +40,15 @@
         </ul>
     </div>
     <div id="leaderboard_container">
-        <div class="leaderboard_chunk lobby-view" id="laps">
-            Lap:<span id="current_laps">0</span>/<span id="total_laps">0</span>
-        </div>
-        <div class="leaderboard_chunk lobby-view" id="checkpoints">
-            CP:<span id="current_checkpoint">0</span>/<span id="total_checkpoints">0</span>
+        <div class="progress_section">
+            <div class="leaderboard_chunk" id="laps">
+                <p>Lap</p>
+                <p><span id="current_laps">0</span>/<span id="total_laps">0</span></p>
+            </div>
+            <div class="leaderboard_chunk" id="progress">
+                <p>Section <span id="current_section"></span></p>
+                <p><span id="section_progress">-/-</span></p>
+            </div>
         </div>
         <ul id="leaderboard" class="lobby-view">
         </ul>
@@ -231,8 +235,8 @@
                 <option value="Drag">Drag</option>
                 <option value="Meme">Meme</option>
             </select>
-            Laps:<input id="laps" placeholder="Laps">
-            Timeout:<input id="timeout" placeholder="Timeout">
+            Laps:<input id="laps" class="width-10" placeholder="Laps">
+            Timeout:<input id="timeout" class="width-10" placeholder="Timeout">
             <label for="rtype">Race Type:</label>
             <select id="rtype">
                 <option value="norm">Normal</option>

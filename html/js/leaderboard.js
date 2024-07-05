@@ -1,7 +1,7 @@
 let leaderboard_container = $("#leaderboard_container");
 let leaderboard = $("#leaderboard");
 
-let topOffset = 6.5;
+let topOffset = 3.5;
 let spacing = 4.5;
 
 let laps_visible = false;
@@ -19,7 +19,7 @@ let dummy_data = [
   }
 ];
 
-// AddRacersToleaderboard(dummy_data, 1);
+//AddRacersToleaderboard(dummy_data, 1);
 
 $(function () {
   window.addEventListener("message", readLeaderBoardEvents);
@@ -55,8 +55,8 @@ function readLeaderBoardEvents(event) {
     case "updatecurrentlap":
       UpdateCurrentLap(data.current_lap);
       break;
-    case "updatecurrentcheckpoint":
-      UpdateCurrentCheckpoint(data.current_checkpoint);
+    case "updateCurrentProgress":
+      UpdateCurrentProgress(data.section, data.waypoint, data.totalWaypoints);
       break;
     case "updatecurrentlaptime":
       UpdateCurrentLapTime(data.source, data.minutes, data.seconds);
@@ -248,14 +248,12 @@ function SetLeaderboardLower(lower) {
   if (lower) {
 
     $('#leaderboard').addClass('lobby-view');
-    $('#laps').addClass('lobby-view');
-    $('#checkpoints').addClass('lobby-view');
+    $('.progress_section').addClass('lobby-view');
 
   } else {
 
     $('#leaderboard').removeClass('lobby-view');
-    $('#laps').removeClass('lobby-view');
-    $('#checkpoints').removeClass('lobby-view');
+    $('.progress_section').removeClass('lobby-view');
 
   }
 
@@ -299,8 +297,9 @@ function UpdateLapTimes(type, source, minutes, seconds) {
   lap_time.html(`${zeroPad(minutes, 10)}:${seconds_formatted}`);
 }
 
-function UpdateCurrentCheckpoint(current_checkpoint) {
-  $('#current_checkpoint').html(current_checkpoint);
+function UpdateCurrentProgress(section, waypoint, totalWaypoints) {
+  $('#current_section').html(section);
+  $('#section_progress').html(`${waypoint}/${totalWaypoints}`);
 }
 
 function UpdateCurrentLap(current_lap) {
@@ -321,6 +320,8 @@ function ClearLeaderboard() {
   leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
   $('#current_laps').html(0);
   $('#total_laps').html(0);
+  $('#current_section').html('');
+  $('#section_progress').html('-/-');
   leaderboard.empty();
   $('#dnf_timer_container').removeClass('top-visible');
   $('#dnf_timer_container').find('#dnf_timer').html('00:00.00');
@@ -337,12 +338,15 @@ function UpdatePositions(racePositions) {
 function SetRaceLeaderboard(enabled) {
   if (enabled) {
     leaderboard_container.find('#leaderboard').find('.leaderboard_chunk').addClass('right-visible');
-    leaderboard_container.find('#checkpoints').addClass('right-visible');
+    leaderboard_container.find('.progress_section').addClass('right-visible');
     if (laps_visible) {
-      leaderboard_container.find('#laps').addClass('right-visible');
+      leaderboard_container.find('#laps').show();
+    } else {
+      leaderboard_container.find('#laps').hide();
     }
   } else {
     leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
+    leaderboard_container.find('.progress_section').removeClass('right-visible');
   }
 }
 

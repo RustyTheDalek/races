@@ -276,11 +276,7 @@ select {
     height: 44px;
 }
 
-#laps {
-    width: 10%;
-}
-
-#timeout {
+.width-10 {
     width: 10%;
 }
 

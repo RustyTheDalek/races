@@ -30,7 +30,11 @@ local raceIndex = -1                      -- index of race player has joined
 local numLaps = -1                        -- number of laps in current race
 local currentLap = -1                     -- current lap
 
-local numWaypointsPassed = -1             -- number of waypoints player has passed
+local waypointsHit = -1
+local currentSection = -1
+local currentSectionLength = -1
+local currentWaypoint = -1
+
 local previousWaypoint = -1
 local currentWaypoints = {}               -- current waypoint - for multi-lap races, actual current waypoint is currentWaypoint % #waypoints + 1
 
@@ -118,7 +122,7 @@ local function getOffsetSpawn(startingSpawn)
     }
 end
 
-function SetSpawning()
+function SetSpawning(resourceRestarted)
 
     while(exports == nil) do
         print("Exports nil. waiting")
@@ -153,7 +157,7 @@ function SetSpawning()
     end)
 
     exports.spawnmanager:setAutoSpawn(true)
-    exports.spawnmanager:forceRespawn()
+        exports.spawnmanager:forceRespawn()
 end
 
 AddEventHandler('onClientGameTypeStart', SetSpawning)
@@ -381,7 +385,6 @@ local function finishRace(dnf)
     StopRaceEffects()
 
     local finishData = {
-        numWaypointsPassed = numWaypointsPassed,
         raceAverageFPS = fpsMonitor:StopTrackingAverage(),
         dnf = dnf
     }
@@ -1134,11 +1137,13 @@ function SendRaceData(raceData)
     })
 end
 
-function UpdateCurrentCheckpoint()
+function UpdateCurrentProgress()
     SendNUIMessage({
         type = "leaderboard",
-        action = "updatecurrentcheckpoint",
-        current_checkpoint = currentTrack.startIsFinish == true and previousWaypoint or previousWaypoint - 1
+        action = "updateCurrentProgress",
+        section = currentSection,
+        waypoint = currentWaypoint,
+        totalWaypoints = currentSectionLength
     })
 end
 
@@ -1915,7 +1920,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     beginDNFTimeout = false
                     timeoutStart = -1
                     position = -1
-                    numWaypointsPassed = 0
+                    waypointsHit = 0
                     currentLap = 1
                     numRacers = -1
                     results = {}
@@ -2590,8 +2595,8 @@ function HandleRaceType()
     end
 end
 
-function SendCheckpointTime(waypointsPassed)
-    TriggerServerEvent("races:sendCheckpointTime", waypointsPassed, raceIndex)
+function SendCheckpointTime(currentSection, currentWaypoint)
+    TriggerServerEvent("races:sendCheckpointTime", 0, raceIndex)
 end
 
 RegisterNetEvent("races:config")
@@ -2772,14 +2777,14 @@ function OnHitCheckpoint(player, waypointHit)
     resetupgrades(vehicle)
     ClearCurrentWaypoints()
 
-    numWaypointsPassed = numWaypointsPassed + 1
+    currentSection, currentWaypoint, currentSectionLength = currentTrack:CalculateProgress(waypointHit)
 
     if(Config.data.playerDisplay.raceDisplay.splitTimes) then
-        SendCheckpointTime(numWaypointsPassed)
+        SendCheckpointTime(currentSection, currentWaypoint)
     end
 
     --If the waypoint points to at least one other waypoint
-    if not currentTrack:AtEnd(waypointHit, numWaypointsPassed) then
+    if not currentTrack:AtEnd(waypointHit, waypointsHit) then
         PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
     else
         if (OnNewLap(player)) then
@@ -2787,7 +2792,9 @@ function OnHitCheckpoint(player, waypointHit)
         end
     end
 
-    UpdateCurrentCheckpoint()
+    waypointsHit = waypointsHit + 1
+
+    UpdateCurrentProgress()
 
     --TODO:Make sure next waypoints are retrieved not just one
     currentWaypoints = currentTrack:OnHitCheckpoint(waypointHit, previousWaypoint, currentLap, numLaps)
