@@ -14,6 +14,7 @@ local numVisible = maxNumVisible -- number of waypoints visible during a race - 
 Track = {
     waypoints = {}, -- waypoints[] = {coord = {x, y, z, r}, checkpoint, blip, sprite, color, number, name}
     startIsFinish = false,
+    sections = {},
     public = false,
     savedTrackName = nil,
     gridCheckpoint = nil,
@@ -50,6 +51,95 @@ function Track:Load(public, trackName, track)
     print("Loaded metadata")
 
     self:LoadWaypointBlips(track.waypoints)
+    self:IdentifySections();
+end
+
+-- Function to find the next waypoints in the track
+function Track:FindNextWaypoints(index, visited)
+    visited[index] = true
+    local waypoint = self.waypoints[index]
+    local next_indices = waypoint.next
+    local next_waypoints = {}
+    for _, next_index in ipairs(next_indices) do
+        if not visited[next_index] then
+            table.insert(next_waypoints, next_index)
+        end
+    end
+    return next_waypoints
+end
+
+-- Function to identify sections of the track
+function Track:IdentifySections()
+    self.sections = {}
+
+    local section = {}
+    local visited = {}
+    local reverse_links = {}
+    local stack = {1}
+
+    -- Build reverse links to detect convergence
+    for i, waypoint in ipairs(self.waypoints) do
+        for _, next_index in ipairs(waypoint.next) do
+            if not reverse_links[next_index] then
+                reverse_links[next_index] = {}
+            end
+            table.insert(reverse_links[next_index], i)
+        end
+    end
+
+    while #stack > 0 do
+        local current = table.remove(stack)
+        local is_convergence = reverse_links[current] and #reverse_links[current] > 1
+        local next_waypoints = self:FindNextWaypoints(current, visited)
+
+        -- If convergence, close current section and start new one with current waypoint
+        if is_convergence then
+            if #section > 0 then
+                table.insert(self.sections, section)
+            end
+            section = {current}
+        else
+            table.insert(section, current)
+        end
+
+        -- If split, close current section but do not start new section
+        if #next_waypoints > 1 then
+            if #section > 0 then
+                table.insert(self.sections, section)
+            end
+            section = {}
+        end
+
+        for _, next_index in ipairs(next_waypoints) do
+            table.insert(stack, next_index)
+        end
+
+        if #next_waypoints == 0 then
+            if #section > 0 then
+                table.insert(self.sections, section)
+            end
+            section = {}
+        end
+    end
+
+    -- Sort sections based on the minimum waypoint index in each section
+    table.sort(self.sections, function(a, b)
+        return a[1] < b[1]
+    end)
+
+end
+
+-- Function to calculate the race progress
+function Track:CalculateProgress(targetWaypoint)
+    for sectionIndex, section in ipairs(self.sections) do
+        for waypointIndex, waypoint in pairs(section) do
+            if (waypoint == targetWaypoint) then
+                return sectionIndex, waypointIndex, getTableSize(section)
+            end
+        end
+    end
+
+    return 0, 0, 0
 end
 
 function Track:AddNewWaypointAtIndex(coord, heading, index, linkWaypointInFront)
@@ -486,8 +576,6 @@ function Track:OnHitCheckpoint(waypointHit, previousWaypoint, currentLap, numLap
 
         local nextWaypoint = self.waypoints[nextWaypointIndex]
 
-        print(dump(nextWaypoint))
-        
         if(getTableSize(nextWaypoint.next) == 0 or (nextWaypointIndex == 1 and currentLap == numLaps)) then
             checkpointType = finishCheckpoint
         elseif(nextWaypointIndex == 1 and currentLap < numLaps) then
@@ -603,8 +691,8 @@ function Track:WaypointLoops(currentWaypoint)
     return self.waypoints[currentWaypoint]:Loops()
 end
 
-function Track:AtEnd(currentWaypoint, waypointsPassed)
-    return self.waypoints[currentWaypoint]:AtEnd() or (currentWaypoint == 1 and waypointsPassed > 1)
+function Track:AtEnd(currentWaypoint, waypointsHit)
+    return self.waypoints[currentWaypoint]:AtEnd() or (currentWaypoint == 1 and waypointsHit > 1)
 end
 
 function Track:Validate()
