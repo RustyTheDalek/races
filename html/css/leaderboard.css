@@ -138,12 +138,7 @@ ul#leaderboard li > span {
 }
 
 .lap_times > * {
-  font-size: 1rem;
-}
-
-.lap_times > .time-split {
-  align-self: center;
-  padding-top: 0.5rem;
+  font-size: 0.75rem;
 }
 
 .lap_times > .best::before {
