@@ -126,7 +126,7 @@ function SetSpawning(resourceRestarted)
 
     while(exports == nil) do
         print("Exports nil. waiting")
-        Citizen.wait(1)
+        Citizen.Wait(1)
     end
 
     print("Setting autospawn")
@@ -154,10 +154,28 @@ function SetSpawning(resourceRestarted)
             heading = spawnPosition.heading,
             skipFade = true
         })
+
+        local player = PlayerPedId()
+        local currentVehicle = GetVehiclePedIsIn(player, false)
+        local lastVehicle = GetVehiclePedIsIn(player, true)
+
+        local vehicleToUse = currentVehicle ~= 0 and currentVehicle or lastVehicle
+
+        if(vehicleToUse ~= 0) then
+
+            print(("Player had vehicle %i"):format(vehicleToUse))
+            local coords = GetOffsetFromEntityInWorldCoords(player, 0, 1.0, 0)
+            local coords = GetOffsetFromCoordAndHeadingInWorldCoords(spawnPosition.x, spawnPosition.y, spawnPosition.z, spawnPosition.heading, 3.0, 0.0, 0)
+            SetEntityCoords(vehicleToUse, coords.x, coords.y, coords.z, false, false, false, false)
+            SetEntityHeading(vehicleToUse, spawnPosition.heading)
+            SetVehicleOnGroundProperly(vehicleToUse)
+            SetPedIntoVehicle(player, vehicleToUse, -1)
+        end
+
     end)
 
     exports.spawnmanager:setAutoSpawn(true)
-        exports.spawnmanager:forceRespawn()
+    exports.spawnmanager:forceRespawn()
 end
 
 AddEventHandler('onClientGameTypeStart', SetSpawning)
