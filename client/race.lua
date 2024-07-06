@@ -2776,10 +2776,6 @@ function OnHitCheckpoint(player, waypointHit)
 
     currentSection, currentWaypoint, currentSectionLength = currentTrack:CalculateProgress(waypointHit)
 
-    if(Config.data.playerDisplay.raceDisplay.splitTimes) then
-        TriggerServerEvent("races:sendCheckpointTime", raceIndex, currentLap, currentSection, currentWaypoint)
-    end
-
     --If the waypoint points to at least one other waypoint
     if not currentTrack:AtEnd(waypointHit, waypointsHit) then
         PlaySoundFrontend(-1, "CHECKPOINT_NORMAL", "HUD_MINI_GAME_SOUNDSET", true)
@@ -2787,6 +2783,10 @@ function OnHitCheckpoint(player, waypointHit)
         if (OnNewLap(player)) then
             return
         end
+    end
+
+    if(Config.data.playerDisplay.raceDisplay.splitTimes) then
+        TriggerServerEvent("races:sendCheckpointTime", raceIndex, currentLap, currentSection, currentWaypoint)
     end
 
     waypointsHit = waypointsHit + 1
