@@ -592,12 +592,14 @@ function RaceEvent:SendCheckpointTime(source, lap, currentSection, currentWaypoi
     end
 
     for otherRacerSource, otherRacerTime in pairs(currentWaypointTimes) do
-        local currentRacerTimeSplit = otherRacerTime - self.raceTime
-        local otherRacerTimeSplit = self.raceTime - otherRacerTime
-
-        TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
-        TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, currentRacerTimeSplit)
+        if (otherRacerSource ~= source) then
+            self:CompareWaypointTimes(otherRacerSource, otherRacerTime, source)
+        end
     end
+
+    self:AddNewSourceTime(currentWaypointTimes, source)
+
+    print(("Adding Time for Source %i"):format(source))
 end
 
 function RaceEvent:AddNewLapTime(lapNumber, section, waypoint, source)
@@ -624,38 +626,15 @@ function RaceEvent:AddNewSourceTime(waypoint, source)
     print(dump(self.checkpointTimes))
 end
 
-function RaceEvent:CompareCheckpointTime(otherRacerSource, otherRacer, source, lap, currentSection, currentWaypoint)
-
-    local racerTimeSplit = -1
-    local otherRacerTimeSplit = -1
-
-    if (otherRacerSource == source) then
-        otherRacer.lap = lap
-        otherRacer.currentSection = currentSection
-        otherRacer.currentWaypoint = currentWaypoint
-        return
-    end
-
-    local otherRacerTime = self.checkpointTimes[otherRacer.lap][otherRacer.currentSection][otherRacer.currentWaypoint][otherRacerSource] 
-
+function RaceEvent:CompareWaypointTimes(otherRacerSource, otherRacerTime, source)
     print(("Comparing to Racer with source %i"):format(otherRacerSource))
-    if (otherRacer.currentSection >= currentSection and otherRacer.currentWaypoint >= 1) then
-        --Racer is ahead so get their time at this checkpoint
-        racerTimeSplit = otherRacerTime - self.raceTime
-        otherRacerTimeSplit = self.raceTime - otherRacerTime
-    elseif (otherRacerTime == nil) then
-        --Other Racer hasn't hit a checkpoint use race Start time
-        table.insert(self.checkpointTimes, {})
-        racerTimeSplit = self.raceTime - self.raceStart
-        otherRacerTimeSplit = self.raceStart - self.raceTime
-    else
-        --Racer is behind compare times at their waypoint
-        table.insert(self.checkpointTimes, {})
-        racerTimeSplit = self.raceTime - self.checkpointTimes[otherRacer.progress][otherRacerSource]
-        otherRacerTimeSplit = self.checkpointTimes[otherRacer.progress][otherRacerSource] - self.raceTime
-    end
-    TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
+    print(("And time %i"):format(otherRacerTime))
+
+    local currentRacerTimeSplit = otherRacerTime - self.raceTime
+    local otherRacerTimeSplit = self.raceTime - otherRacerTime
+
     TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
+    TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, currentRacerTimeSplit)
 end
 
 function RaceEvent:Report(source, currentSection, currentWaypoint, distance)
