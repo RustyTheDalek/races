@@ -1046,9 +1046,9 @@ AddEventHandler("races:finish", function(rIndex, finishData, altSource)
 end)
 
 RegisterNetEvent("races:report")
-AddEventHandler("races:report", function(rIndex, currentWaypoint, distanceToEnd, distance)
+AddEventHandler("races:report", function(rIndex, currentLap, currentWaypoint, distanceToEnd, distance)
     local source = source
-    if rIndex == nil or currentWaypoint == nil or distance == nil then
+    if rIndex == nil or currentLap == nil or currentWaypoint == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
         return
     end
@@ -1058,7 +1058,7 @@ AddEventHandler("races:report", function(rIndex, currentWaypoint, distanceToEnd,
         return
     end
 
-    races[rIndex]:Report(source, currentWaypoint, distanceToEnd, distance)
+    races[rIndex]:Report(source, currentLap, currentWaypoint, distanceToEnd, distance)
 end)
 
 RegisterNetEvent("races:trackNames")

@@ -637,12 +637,13 @@ function RaceEvent:CompareWaypointTimes(otherRacerSource, otherRacerTime, source
     TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, currentRacerTimeSplit)
 end
 
-function RaceEvent:Report(source, currentWaypoint, distanceToEnd, distance)
+function RaceEvent:Report(source, currentLap, currentWaypoint, distanceToEnd, distance)
     if self.players[source] == nil then
         notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
     end
 
-    self.players[source].currentWaypoint = currentWaypoint
+    self.players[source].lap = currentLap
+    self.players[source].waypoint = currentWaypoint
     self.players[source].distanceToEnd = distanceToEnd
     self.players[source].data = distance
 end
@@ -653,9 +654,8 @@ function RaceEvent:PollPositionsUpdate()
 
     -- race.players[source] = {source, playerName, section, waypoint, data, coord}
     for _, player in pairs(self.players) do
-        if player.currentWaypoint <= 0 then -- player client hasn't updated progress, data and coord
+        if player.waypoint <= 0 then -- player client hasn't updated progress, data and coord
             complete = false
-            print("player waypoint 0")
             break
         end
 
@@ -665,7 +665,8 @@ function RaceEvent:PollPositionsUpdate()
             sortedPlayers[#sortedPlayers + 1] = {
                 source = player.source,
                 distanceToEnd = player.distanceToEnd,
-                waypoint = player.currentWaypoint,
+                waypoint = player.waypoint,
+                lap = player.lap,
                 data = player.data,
                 playerName = GetPlayerName(player.source)
             }
@@ -674,8 +675,14 @@ function RaceEvent:PollPositionsUpdate()
 
     --TODO:Better way to determine progress with multiple sections
     if true == complete then -- all player clients have updated progress and data
-        table.sort(sortedPlayers, function(p0, p1)
-            return p0.distanceToEnd < p1.distanceToEnd or (p0.distanceToEnd == p1.distanceToEnd and p0.data < p1.data)
+        table.sort(sortedPlayers, function(racer1, racer2)
+            if racer1.lap ~= racer2.lap then
+                return racer1.lap > racer2.lap
+            elseif racer1.distanceToEnd ~= racer2.distanceToEnd then
+                return racer1.distanceToEnd < racer2.distanceToEnd
+            else
+                return racer1.data < racer2.data
+            end
         end)
 
         local racePositions = map(sortedPlayers,

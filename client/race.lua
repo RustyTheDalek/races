@@ -2419,9 +2419,9 @@ function RacesReport()
                 end
             end
 
-            local distanceToEnd = currentTrack:DistanceToEnd(currentWaypoint)
+            local distanceToEnd = currentTrack:DistanceToEnd(previousWaypoint)
 
-            TriggerServerEvent("races:report", raceIndex, currentWaypoint, distanceToEnd, closestWaypointDistance)
+            TriggerServerEvent("races:report", raceIndex, currentLap, currentWaypoint, distanceToEnd, closestWaypointDistance)
             TriggerServerEvent("races:updatefps", raceIndex, fpsMonitor.fps)
         end
 
