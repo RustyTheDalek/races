@@ -2077,6 +2077,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 end
                 randVehicles = {}
                 currentTrack:LoadWaypointBlips(waypoints)
+                currentTrack:IdentifySections();
                 playerDisplay:SetOwnRacerBlip()
 
                 currentRace.trackName = starts[rIndex].trackName
