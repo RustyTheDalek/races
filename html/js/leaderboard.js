@@ -318,6 +318,7 @@ function SetRaceData(current_lap, total_laps, total_checkpoints) {
 function ClearLeaderboard() {
   laps_visible = false;
   leaderboard_container.find('.leaderboard_chunk').removeClass('right-visible');
+  leaderboard_container.find('.progress_section').removeClass('right-visible');
   $('#current_laps').html(0);
   $('#total_laps').html(0);
   $('#current_section').html('');
