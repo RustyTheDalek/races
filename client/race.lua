@@ -2390,6 +2390,15 @@ AddEventHandler("races:teleportplayer", function(position, heading)
     TeleportPlayer({x = position.x, y = position.y, z = position.z}, heading)
 end)
 
+RegisterNetEvent("races:freezeplayer")
+AddEventHandler("races:freezeplayer", function()
+    print("freezing player")
+    if IsPedInAnyVehicle(PlayerPedId(), false) == 1 then
+        print('vehicle frozen')
+        FreezeEntityPosition(GetVehiclePedIsIn(PlayerPedId(), false), true)
+    end
+end)
+
 RegisterNetEvent("races:startPreRaceCountdown")
 AddEventHandler("races:startPreRaceCountdown", function(countdownTimer)
     SendNUIMessage({
@@ -2509,7 +2518,7 @@ function StartCountdownLights(countdown)
     })
 end
 
-function HandleJoinState()
+function HandleJoinState(player)
     --Down
     if IsControlJustReleased(0, 173) then
         ready = not ready
@@ -2998,7 +3007,7 @@ function MainUpdate()
         elseif racingStates.Racing == raceState then
             RaceUpdate(player, playerCoord, currentTime)
         elseif racingStates.Joining == raceState then
-            HandleJoinState()
+            HandleJoinState(player)
         elseif racingStates.Idle == raceState then
             IdleUpdate(player, playerCoord)
         end

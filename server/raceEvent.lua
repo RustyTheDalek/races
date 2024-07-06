@@ -153,6 +153,7 @@ function RaceEvent:PlaceRacersOnGrid(gridPositions)
         local gridPosition = gridPositions[index]
         print(dump(gridPosition))
         TriggerClientEvent("races:teleportplayer", player, gridPosition, heading)
+        TriggerClientEvent("races:freezeplayer", player)
         index = index + 1
     end
 end
