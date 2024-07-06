@@ -122,13 +122,54 @@ function Track:IdentifySections()
         end
     end
 
+    self:CalculateDistancesToEnd()
     -- Sort sections based on the minimum waypoint index in each section
     table.sort(self.sections, function(a, b)
         return a[1] < b[1]
     end)
-
 end
 
+function Track:CalculateDistancesToEnd()
+    local queue = {}
+
+    -- Initialize the distances for all waypoints to infinity
+    for index, waypoint in pairs(self.waypoints) do
+        waypoint.distanceToEnd = math.huge
+        if waypoint:AtEnd() or waypoint:Loops() then
+            print("Found finish waypoint")
+            table.insert(queue, {index, 0}) -- {waypoint index, distance}
+            waypoint.distanceToEnd = 0
+        else
+            print(dump(waypoint.next))
+        end
+    end
+
+    -- Perform BFS from the end waypoints to calculate distances
+    while #queue > 0 do
+        local current = table.remove(queue, 1)
+        local currentIndex = current[1]
+        local currentDistance = current[2]
+
+        for i, waypoint in ipairs(self.waypoints) do
+            for _, next_index in ipairs(waypoint.next) do
+                if next_index == currentIndex then
+                    if waypoint.distanceToEnd > currentDistance + 1 then
+                        waypoint.distanceToEnd = currentDistance + 1
+                        table.insert(queue, {i, currentDistance + 1})
+                    end
+                end
+            end
+        end
+    end
+end
+
+function Track:DistanceToEnd(waypointIndex)
+    if (self.waypoints[waypointIndex] == nil) then
+        return math.huge
+    end
+
+    return self.waypoints[waypointIndex].distanceToEnd
+end
 -- Function to calculate the race progress
 function Track:CalculateProgress(targetWaypoint)
     for sectionIndex, section in ipairs(self.sections) do

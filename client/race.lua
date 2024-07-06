@@ -2408,21 +2408,20 @@ function RacesReport()
         Citizen.Wait(500)
 
         local player = PlayerPedId()
-
         if racingStates.Racing == raceState then
             --TODO:Send current waypoint index as well as distance
-            local closestWaypoint = -1
             local closestWaypointDistance = 99999;
             for _, currentWaypoint in pairs(currentWaypoints) do
                 local distance = #(GetEntityCoords(player) - currentWaypoint.coord)
 
                 if(distance < closestWaypointDistance) then
                     closestWaypointDistance = distance
-                    closestWaypoint = currentWaypoint.index
                 end
             end
 
-            TriggerServerEvent("races:report", raceIndex, currentSection, currentWaypoint, closestWaypointDistance,closestWaypoint)
+            local distanceToEnd = currentTrack:DistanceToEnd(currentWaypoint)
+
+            TriggerServerEvent("races:report", raceIndex, currentWaypoint, distanceToEnd, closestWaypointDistance)
             TriggerServerEvent("races:updatefps", raceIndex, fpsMonitor.fps)
         end
 

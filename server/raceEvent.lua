@@ -637,12 +637,61 @@ function RaceEvent:CompareWaypointTimes(otherRacerSource, otherRacerTime, source
     TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, currentRacerTimeSplit)
 end
 
-function RaceEvent:Report(source, currentSection, currentWaypoint, distance)
+function RaceEvent:Report(source, currentWaypoint, distanceToEnd, distance)
     if self.players[source] == nil then
         notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
     end
 
-    self.players[source].section = currentSection
-    self.players[source].waypoint = currentWaypoint
+    self.players[source].currentWaypoint = currentWaypoint
+    self.players[source].distanceToEnd = distanceToEnd
     self.players[source].data = distance
+end
+
+function RaceEvent:PollPositionsUpdate()
+    local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
+    local complete = true
+
+    -- race.players[source] = {source, playerName, section, waypoint, data, coord}
+    for _, player in pairs(self.players) do
+        if player.currentWaypoint <= 0 then -- player client hasn't updated progress, data and coord
+            complete = false
+            print("player waypoint 0")
+            break
+        end
+
+    -- player.data will be travel distance to next waypoint or finish time; finish time will be -1 if player DNF
+    -- if player.data == -1 then player did not finish race - do not include in sortedPlayers
+        if player.data ~= -1 then
+            sortedPlayers[#sortedPlayers + 1] = {
+                source = player.source,
+                distanceToEnd = player.distanceToEnd,
+                waypoint = player.currentWaypoint,
+                data = player.data,
+                playerName = GetPlayerName(player.source)
+            }
+        end
+    end
+
+    --TODO:Better way to determine progress with multiple sections
+    if true == complete then -- all player clients have updated progress and data
+        table.sort(sortedPlayers, function(p0, p1)
+            return p0.distanceToEnd < p1.distanceToEnd or (p0.distanceToEnd == p1.distanceToEnd and p0.data < p1.data)
+        end)
+
+        local racePositions = map(sortedPlayers,
+            function(item)
+                return {
+                    source = item.source ,
+                    playerName = item.playerName
+                }
+        end)
+
+        -- players sorted into sortedPlayers table
+        for position, sortedPlayer in pairs(sortedPlayers) do
+            TriggerClientEvent("races:position", sortedPlayer.source, self.index, position, #sortedPlayers)
+        end
+
+        self:TriggerEventForRacers("races:racerPositions", racePositions)
+
+    end
 end

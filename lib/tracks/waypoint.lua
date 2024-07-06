@@ -33,7 +33,8 @@ Waypoint = {
     sprite = -1, 
     color = -1, 
     number = -1, 
-    name = ''
+    name = '',
+    distanceToEnd = -1,
 }
 
 function Waypoint:New(o)
