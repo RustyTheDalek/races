@@ -375,7 +375,7 @@ function RaceEvent:Finish(source, raceFinishData)
 end
 
 function RaceEvent:SaveResults()
-    -- races[playerID] = {state, waypoints[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  numWaypointsPassed, data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
+    -- races[playerID] = {state, waypoints[] = {x, y, z, r}, isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, numRacing, players[netID] = {source, playerName,  data, coord}, results[] = {source, playerName, finishTime, bestLapTime, vehicleName}}
     local msg = "Race using "
     if nil == self.trackName then
         msg = msg .. "unsaved track "
@@ -462,7 +462,8 @@ function RaceEvent:JoinRacer(source)
     self.players[source] = {
         source = source,
         playerName = playerName,
-        waypointsPassed = -1,
+        section = -1,
+        waypoint = -1,
         data = -1,
         ready = false,
         bestLapTime = -1,
@@ -570,48 +571,99 @@ function RaceEvent:OnLapCompleted(source, currentVehicleName)
     end
 end
 
-function RaceEvent:SendCheckpointTime(source, waypointsPassed)
+function RaceEvent:SendCheckpointTime(source, lap, currentSection, currentWaypoint)
+
+    local currentLapTimes = self.checkpointTimes[lap]
+    if (currentLapTimes == nil) then
+        self:AddNewLapTime(lap, currentSection, currentWaypoint, source)
+        return
+    end
+
+    local currentSectionTimes = currentLapTimes[currentSection]
+    if(currentSectionTimes == nil) then
+        self:AddNewSectionTime(currentLapTimes, currentSection, currentWaypoint, source)
+        return
+    end
+
+    local currentWaypointTimes = currentSectionTimes[currentWaypoint]
+    if(currentWaypointTimes == nil) then
+        self:AddNewWaypointTime(currentSectionTimes, currentWaypoint, source)
+        return
+    end
+
+    for otherRacerSource, otherRacerTime in pairs(currentWaypointTimes) do
+        local currentRacerTimeSplit = otherRacerTime - self.raceTime
+        local otherRacerTimeSplit = self.raceTime - otherRacerTime
+
+        TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
+        TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, currentRacerTimeSplit)
+    end
+end
+
+function RaceEvent:AddNewLapTime(lapNumber, section, waypoint, source)
+    print(("Adding Lap %i"):format(lapNumber))
+    self.checkpointTimes[lapNumber] = {}
+    self:AddNewSectionTime(self.checkpointTimes[lapNumber], section, waypoint, source)
+end
+
+function RaceEvent:AddNewSectionTime(lapTimes, sectionNumber, waypoint, source)
+    print(("Adding Section %i"):format(sectionNumber))
+    lapTimes[sectionNumber] = {}
+    self:AddNewWaypointTime(lapTimes[sectionNumber], waypoint, source)
+end
+
+function RaceEvent:AddNewWaypointTime(section, waypoint, source)
+    print(("Adding Waypoint %i"):format(waypoint))
+    section[waypoint] = {}
+    self:AddNewSourceTime(section[waypoint], source)
+end
+
+function RaceEvent:AddNewSourceTime(waypoint, source)
+    print(("Adding Source %i"):format(source))
+    waypoint[source] = self.raceTime
+    print(dump(self.checkpointTimes))
+end
+
+function RaceEvent:CompareCheckpointTime(otherRacerSource, otherRacer, source, lap, currentSection, currentWaypoint)
 
     local racerTimeSplit = -1
     local otherRacerTimeSplit = -1
 
-    for otherRacerSource, otherRacer in pairs(self.players) do
-        if (otherRacerSource ~= source) then
-            print(("Comparing to Racer with source %i"):format(otherRacerSource))
-            if (otherRacer.waypointsPassed >= waypointsPassed and otherRacer.waypointsPassed > 0) then
-                --Racer is ahead so get their time at this checkpoint
-                racerTimeSplit = self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - self.raceTime
-                otherRacerTimeSplit = self.raceTime - self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
-            elseif (otherRacer.waypointsPassed < 1) then
-                --Other Racer hasn't hit a checkpoint use race Start time
-                table.insert(self.checkpointTimes, {})
-                racerTimeSplit = self.raceTime - self.raceStart
-                otherRacerTimeSplit = self.raceStart - self.raceTime
-            else
-                --Racer is behind compare times at their waypoint
-                table.insert(self.checkpointTimes, {})
-                racerTimeSplit = self.raceTime - self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource]
-                otherRacerTimeSplit = self.checkpointTimes[otherRacer.waypointsPassed][otherRacerSource] - self.raceTime
-            end
-            TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
-            TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
-        else
-            otherRacer.waypointsPassed = waypointsPassed
-        end
+    if (otherRacerSource == source) then
+        otherRacer.lap = lap
+        otherRacer.currentSection = currentSection
+        otherRacer.currentWaypoint = currentWaypoint
+        return
     end
 
-    if (getTableSize(self.players) == 1) then
+    local otherRacerTime = self.checkpointTimes[otherRacer.lap][otherRacer.currentSection][otherRacer.currentWaypoint][otherRacerSource] 
+
+    print(("Comparing to Racer with source %i"):format(otherRacerSource))
+    if (otherRacer.currentSection >= currentSection and otherRacer.currentWaypoint >= 1) then
+        --Racer is ahead so get their time at this checkpoint
+        racerTimeSplit = otherRacerTime - self.raceTime
+        otherRacerTimeSplit = self.raceTime - otherRacerTime
+    elseif (otherRacerTime == nil) then
+        --Other Racer hasn't hit a checkpoint use race Start time
         table.insert(self.checkpointTimes, {})
+        racerTimeSplit = self.raceTime - self.raceStart
+        otherRacerTimeSplit = self.raceStart - self.raceTime
+    else
+        --Racer is behind compare times at their waypoint
+        table.insert(self.checkpointTimes, {})
+        racerTimeSplit = self.raceTime - self.checkpointTimes[otherRacer.progress][otherRacerSource]
+        otherRacerTimeSplit = self.checkpointTimes[otherRacer.progress][otherRacerSource] - self.raceTime
     end
-    
-    self.checkpointTimes[waypointsPassed][source] = self.raceTime
+    TriggerClientEvent("races:updateTimeSplit", source, otherRacerSource, racerTimeSplit)
+    TriggerClientEvent("races:updateTimeSplit", otherRacerSource, source, otherRacerTimeSplit)
 end
 
-function RaceEvent:Report(source, numWaypointsPassed, distance)
+function RaceEvent:Report(source, currentSection, currentWaypoint, distance)
     if self.players[source] == nil then
         notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
     end
 
-    self.players[source].numWaypointsPassed = numWaypointsPassed
+    self.players[source].section = currentSection
+    self.players[source].waypoint = currentWaypoint
     self.players[source].data = distance
 end

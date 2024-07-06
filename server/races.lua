@@ -1046,9 +1046,9 @@ AddEventHandler("races:finish", function(rIndex, finishData, altSource)
 end)
 
 RegisterNetEvent("races:report")
-AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance, closestWaypointIndex)
+AddEventHandler("races:report", function(rIndex, currentSection, currentWaypoint, distance, closestWaypointIndex)
     local source = source
-    if rIndex == nil or numWaypointsPassed == nil or distance == nil then
+    if rIndex == nil or currentSection == nil or currentWaypoint == nil or distance == nil then
         notifyPlayer(source, "Ignoring report event.  Invalid parameters.\n")
         return
     end
@@ -1058,7 +1058,7 @@ AddEventHandler("races:report", function(rIndex, numWaypointsPassed, distance, c
         return
     end
 
-    races[rIndex]:Report(source, numWaypointsPassed, distance)
+    races[rIndex]:Report(source, currentSection, currentWaypoint, distance)
 end)
 
 RegisterNetEvent("races:trackNames")
@@ -1149,7 +1149,7 @@ AddEventHandler("races:sendvehiclename", function(raceIndex, currentVehicleName)
 end)
 
 RegisterNetEvent("races:sendCheckpointTime")
-AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
+AddEventHandler("races:sendCheckpointTime", function(raceIndex, lap, section, waypoint)
     local source = source
 
     if (races[raceIndex] == nil) then
@@ -1157,7 +1157,7 @@ AddEventHandler("races:sendCheckpointTime", function(waypointsPassed, raceIndex)
         return
     end
 
-    races[raceIndex]:SendCheckpointTime(source, waypointsPassed)
+    races[raceIndex]:SendCheckpointTime(source, lap, section, waypoint)
 end)
 
 RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
@@ -1178,9 +1178,9 @@ function RaceServerUpdate()
             local sortedPlayers = {} -- will contain players still racing and players that finished without DNF
             local complete = true
 
-            -- race.players[source] = {source, playerName, numWaypointsPassed, data, coord}
+            -- race.players[source] = {source, playerName, section, waypoint, data, coord}
             for _, player in pairs(race.players) do
-                if -1 == player.numWaypointsPassed then -- player client hasn't updated numWaypointsPassed, data and coord
+                if player.waypoint <= 0 then -- player client hasn't updated progress, data and coord
                     complete = false
                     break
                 end
@@ -1190,17 +1190,19 @@ function RaceServerUpdate()
                 if player.data ~= -1 then
                     sortedPlayers[#sortedPlayers + 1] = {
                         source = player.source,
-                        numWaypointsPassed = player.numWaypointsPassed,
+                        section = player.section,
+                        waypoint = player.waypoint,
                         data = player.data,
                         playerName = GetPlayerName(player.source)
                     }
                 end
             end
 
-            if true == complete then -- all player clients have updated numWaypointsPassed and data
+            if true == complete then -- all player clients have updated progress and data
                 table.sort(sortedPlayers, function(p0, p1)
-                    return (p0.numWaypointsPassed > p1.numWaypointsPassed) or
-                        (p0.numWaypointsPassed == p1.numWaypointsPassed and p0.data < p1.data)
+                    return (p0.section > p1.section) or
+                        (p0.section == p1.section and p0.waypoint > p1.waypoint) or
+                        (p0.waypoint == p1.waypoint and p0.data < p1.data)
                 end)
 
                 local racePositions = map(sortedPlayers,

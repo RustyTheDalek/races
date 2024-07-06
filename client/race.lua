@@ -2421,7 +2421,7 @@ function RacesReport()
                 end
             end
 
-            TriggerServerEvent("races:report", raceIndex, numWaypointsPassed, closestWaypointDistance,closestWaypoint)
+            TriggerServerEvent("races:report", raceIndex, currentSection, currentWaypoint, closestWaypointDistance,closestWaypoint)
             TriggerServerEvent("races:updatefps", raceIndex, fpsMonitor.fps)
         end
 
@@ -2593,10 +2593,6 @@ function HandleRaceType()
     elseif currentRace.raceType == 'ghost' then
         --
     end
-end
-
-function SendCheckpointTime(currentSection, currentWaypoint)
-    TriggerServerEvent("races:sendCheckpointTime", 0, raceIndex)
 end
 
 RegisterNetEvent("races:config")
@@ -2780,7 +2776,7 @@ function OnHitCheckpoint(player, waypointHit)
     currentSection, currentWaypoint, currentSectionLength = currentTrack:CalculateProgress(waypointHit)
 
     if(Config.data.playerDisplay.raceDisplay.splitTimes) then
-        SendCheckpointTime(currentSection, currentWaypoint)
+        TriggerServerEvent("races:sendCheckpointTime", raceIndex, currentLap, currentSection, currentWaypoint)
     end
 
     --If the waypoint points to at least one other waypoint
