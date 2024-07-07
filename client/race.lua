@@ -135,10 +135,11 @@ function SetSpawning(resourceRestarted)
         print("Overriding auto spawn")
 
         local spawnPosition = lobbySpawn
+        local heading = 0
 
         if racingStates.Racing == raceState then
             spawnPosition = startCoord
-            spawnPosition = currentTrack:GetTrackRespawnPosition(previousWaypoint)
+            spawnPosition, heading = currentTrack:GetTrackRespawnPosition(previousWaypoint)
         elseif racingStates.Registering == raceState then
             spawnPosition = startCoord
         elseif racingStates.Joining == raceState then
@@ -146,12 +147,11 @@ function SetSpawning(resourceRestarted)
         elseif racingStates.Idle == raceState then
             spawnPosition = getOffsetSpawn(lobbySpawn)
         end
-        
         exports.spawnmanager:spawnPlayer({
             x = spawnPosition.x,
             y = spawnPosition.y,
             z = spawnPosition.z,
-            heading = spawnPosition.heading,
+            heading = heading,
             skipFade = true
         })
 
@@ -935,7 +935,8 @@ local function respawn()
         local vehicle = GetVehiclePedIsIn(player, true)
         local currentVehicleHash = GetEntityModel(vehicle)
         local coord = startCoord
-        coord = currentTrack:GetTrackRespawnPosition(previousWaypoint)
+        local heading = GetEntityHeading(player)
+        coord, heading = currentTrack:GetTrackRespawnPosition(previousWaypoint)
 
         print(vehicle)
         print(currentVehicleHash)
@@ -947,7 +948,7 @@ local function respawn()
                 vehicle = exports.CarTierUI:RequestVehicle(raceVehicleName)
                 raceVehicleHash = GetEntityModel(vehicle)
                 SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
-                SetEntityHeading(vehicle, coord.heading)
+                SetEntityHeading(vehicle, heading)
                 SetVehicleEngineOn(vehicle, true, true, false)
                 SetVehRadioStation(vehicle, "OFF")
                 SetPedIntoVehicle(player, vehicle, -1)
@@ -959,7 +960,7 @@ local function respawn()
                 end
                 vehicle = putPedInVehicle(player, raceVehicleName, coord)
                 SetEntityAsNoLongerNeeded(vehicle)
-                SetEntityHeading(vehicle, coord.heading)
+                SetEntityHeading(vehicle, heading)
                 repairVehicle(vehicle)
                 for _, passenger in pairs(passengers) do
                     SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
@@ -968,12 +969,12 @@ local function respawn()
         elseif raceVehicleHash == nil then
             print("Respawning on foot")
             SetEntityCoords(player, coord.x, coord.y, coord.z, false, false, false, true)
-            SetEntityHeading(player, coord.heading)
+            SetEntityHeading(player, heading)
         else
             print("Using previous vehicle found")
             repairVehicle(vehicle)
             SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
-            SetEntityHeading(vehicle, coord.heading)
+            SetEntityHeading(vehicle, heading)
             SetVehicleEngineOn(vehicle, true, true, false)
             SetVehRadioStation(vehicle, "OFF")
             SetPedIntoVehicle(player, vehicle, -1)

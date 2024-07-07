@@ -375,7 +375,7 @@ function Track:LoadWaypointBlips(waypoints)
 
     for index, waypoint in ipairs(waypoints) do
 
-        if (index == #waypoints and 
+        if (index == #waypoints and
             waypoint.coord.x == self.waypoints[1].coord.x and
             waypoint.coord.y == self.waypoints[1].coord.y and 
             waypoint.coord.z == self.waypoints[1].coord.z) then
@@ -720,7 +720,7 @@ function Track:GetTrackRespawnPosition(index)
 
     index = Clamp(index, 1, #self.waypoints)
 
-    return self:GetWaypoint(index).coord
+    return self:GetWaypoint(index).coord, self:GetWaypoint(index).heading
 end
 
 function Track:WaypointLoops(currentWaypoint)
