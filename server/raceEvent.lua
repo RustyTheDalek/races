@@ -163,7 +163,7 @@ function RaceEvent:SetNextGridLineup(race)
     for k in next, self.gridLineup do rawset(self.gridLineup, k, nil) end
     for i = 1, #self.results do
         local racer = self.results[#self.results + 1 - i]
-        table.insert(self.gridLineup, self.source)
+        table.insert(self.gridLineup, racer.source)
     end
 end
 
