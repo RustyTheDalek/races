@@ -717,15 +717,10 @@ function Track:OnStartRace()
 end
 
 function Track:GetTrackRespawnPosition(index)
-    if self.startIsFinish == true then
-        if index > 0 then
-            return self:GetWaypoint(index).coord
-        end
-    else
-        if index > 1 then
-            return self:GetWaypoint(index - 1).coord
-        end
-    end
+
+    index = Clamp(index, 1, #self.waypoints)
+
+    return self:GetWaypoint(index).coord
 end
 
 function Track:WaypointLoops(currentWaypoint)
