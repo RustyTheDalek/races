@@ -55,7 +55,11 @@
     </div>
     <p id="ready-message" class="ui-message center-view">Press Down Arrow or D-PAD Down to toggle ready</p>
     <p id="join-message" class="ui-message center-view"></p>
-    <div style="display:none;" id="mainPanel">
+
+    <div id="grid-lineup" class="panel">
+    </div>
+
+    <div id="mainPanel" class="center panel" style="display:none;" >
         <div class="row">
             <button id="main_clear">Clear Waypoints</button>
         </div>
@@ -138,7 +142,7 @@
         </div>
     </div>
 
-    <div id="editPanel">
+    <div id="editPanel" class="center panel">
         <div class="row">
             <button id="edit">Toggle Edit Waypoints</button>
             <button id="edit_clear">Clear Waypoints</button>
@@ -186,7 +190,7 @@
         </div>
     </div>
 
-    <div id="registerPanel">
+    <div id="registerPanel" class="center panel">
         <div class="row">
             <select id="register_track_access">
                 <option value="pvt">Private</option>
@@ -292,7 +296,7 @@
         </div>
     </div>
 
-    <div style="display:none;" id="listPanel">
+    <div id="listPanel" class="center panel" style="display:none;">
         <div class="row">
             <button id="add_veh">Add Vehicle</button>
             <select id="list_vehicle">
@@ -378,7 +382,7 @@
         </div>
     </div>
 
-    <div style="display:none;" id="replyPanel">
+    <div id="replyPanel" class="center panel" style="display:none;">
         <div id="scroll" class="scrollable">
             <p id="message"></p>
         </div>

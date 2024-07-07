@@ -52,18 +52,21 @@ body {
     padding: 5px 0px;
 }
 
-#mainPanel {
+.panel {
     text-align: center;
     font-size: 25px;
     padding: 25px;
     color: rgb(191, 191, 191);
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.5);
     border: 2px solid rgb(255, 255, 255);
     border-radius: 7px;
+}
+
+.center {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 #main_clear {
@@ -144,20 +147,6 @@ body {
     width: 25%;
 }
 
-#editPanel {
-    text-align: center;
-    font-size: 25px;
-    padding: 25px;
-    color: rgb(191, 191, 191);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgb(255, 255, 255);
-    border-radius: 7px;
-}
-
 #edit {
     width: 25%;
 }
@@ -221,20 +210,6 @@ body {
 
 #edit_vlist {
     width: 25%;
-}
-
-#registerPanel {
-    text-align: center;
-    font-size: 25px;
-    padding: 25px;
-    color: rgb(191, 191, 191);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgb(255, 255, 255);
-    border-radius: 7px;
 }
 
 #register_track_access {
@@ -358,20 +333,6 @@ select {
     width: 20%;
 }
 
-#listPanel {
-    text-align: center;
-    font-size: 25px;
-    padding: 25px;
-    color: rgb(191, 191, 191);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgb(255, 255, 255);
-    border-radius: 7px;
-}
-
 #add_veh {
     width: 15%;
 }
@@ -461,18 +422,6 @@ select {
 
 #vlist_register {
     width: 25%;
-}
-
-#replyPanel {
-    text-align: center;
-    padding: 25px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    border: 2px solid rgb(255, 255, 255);
-    border-radius: 7px;
 }
 
 #scroll {
