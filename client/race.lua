@@ -114,15 +114,10 @@ local function getOffsetSpawn(startingSpawn)
 
     offsetSpawn = offsetSpawn + (offsetVector * (GetPlayerServerId(PlayerId()) - 1))
 
-    return {
-        x = offsetSpawn.x,
-        y = offsetSpawn.y,
-        z = offsetSpawn.z,
-        heading = startingSpawn.heading
-    }
+    return offsetSpawn, startingSpawn.heading
 end
 
-function SetSpawning(resourceRestarted)
+function SetSpawning()
 
     while(exports == nil) do
         print("Exports nil. waiting")
@@ -145,7 +140,7 @@ function SetSpawning(resourceRestarted)
         elseif racingStates.Joining == raceState then
             spawnPosition = starts[raceIndex].registerPosition
         elseif racingStates.Idle == raceState then
-            spawnPosition = getOffsetSpawn(lobbySpawn)
+            spawnPosition, heading = getOffsetSpawn(lobbySpawn)
         end
         exports.spawnmanager:spawnPlayer({
             x = spawnPosition.x,
@@ -164,7 +159,6 @@ function SetSpawning(resourceRestarted)
         if(vehicleToUse ~= 0) then
 
             print(("Player had vehicle %i"):format(vehicleToUse))
-            local coords = GetOffsetFromEntityInWorldCoords(player, 0, 1.0, 0)
             local coords = GetOffsetFromCoordAndHeadingInWorldCoords(spawnPosition.x, spawnPosition.y, spawnPosition.z, spawnPosition.heading, 3.0, 0.0, 0)
             SetEntityCoords(vehicleToUse, coords.x, coords.y, coords.z, false, false, false, false)
             SetEntityHeading(vehicleToUse, spawnPosition.heading)
