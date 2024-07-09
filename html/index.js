@@ -639,6 +639,7 @@ $(function () {
 
   $("#register_close").click(function () {
     $("#registerPanel").hide();
+    $("#grid-lineup").hide();
     $.post("https://races/close");
   });
 
@@ -879,8 +880,9 @@ $(function () {
     }
   };
 
-  $.post("https://races/uiReady");
-
+  if(window.jQuery) {
+    $.post("https://races/uiReady");
+  }
 });
 
 function DisplayRandomOptions(html) {
@@ -904,5 +906,9 @@ function OpenRegisterPanel(data, openPanel) {
     '<option value = ""></option>' + data.allVehicles;
   $("#registerPanel").show();
   openPanel = "register";
+
+  if($('#grid-lineup .container').find().length > 0) {
+    $('#grid-lineup').show();
+  }
   return openPanel;
 }

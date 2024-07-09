@@ -1,4 +1,3 @@
-
 /* Ready count */
 
 #leaderboard .not-ready {
@@ -14,20 +13,20 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    
+
     text-align: center;
     font-size: 2rem;
     font-weight: bold;
     font-family: Arial, Helvetica, sans-serif;
 
-    padding:1rem 2rem;
+    padding: 1rem 2rem;
     background-color: black;
     clip-path: polygon(0 0, 100% 0%, 95% 100%, 5% 100%);
     transition: top 0.5s ease-in-out;
 }
 
 .top-visible {
-    top:0rem;
+    top: 0rem;
 }
 
 .top-hidden {
@@ -61,6 +60,16 @@ body {
     background-color: rgba(0, 0, 0, 0.5);
     border: 2px solid rgb(255, 255, 255);
     border-radius: 7px;
+}
+
+.v-center {
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.h-center {
+    left: 50%;
+    transform: translate(-50%, 0);
 }
 
 .center {
@@ -438,7 +447,7 @@ select {
 
 button {
     background-color: rgb(127, 127, 127);
-    padding: 10px;
+    padding: 0.7rem;
     margin: 5px;
     min-width: max-content;
 }
@@ -448,3 +457,42 @@ input {
     font-size: 15px;
     padding: 12px;
 }
+
+/* #region Grid Line-up*/
+
+#shuffle {
+    background-color: black;
+    color: white;
+    border: solid 0.1rem white;
+    border-radius: .25rem;
+}
+
+#grid-lineup {
+    left: 10%;
+    padding: 0.5rem;
+    font-size: 1rem;
+    color: white;
+    user-select: none; 
+}
+
+#grid-lineup #shuffle {
+    padding: 0;
+}
+
+.box {
+    border: 0.15rem solid #ffffff;
+    border-radius: .5em;
+    padding: 0.25rem;
+    cursor: move;
+    background-color: black;
+}
+
+.box p {
+    font-size: 0.75rem;
+}
+
+.box.over {
+    border: 0.15rem dotted #ffffff;
+}
+
+/* #endregion Grid Line-up*/
