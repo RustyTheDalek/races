@@ -116,7 +116,7 @@ function RaceEvent:GenerateStartingGrid(startWaypoint, numRacers)
         0.0
     )
 
-    local gridPositions = {}
+    self.gridPositions = {}
 
     for i = 1, numRacers do
         local gridPosition = startPoint - forwardVector * (i + 1) * gridSeparation
@@ -129,32 +129,52 @@ function RaceEvent:GenerateStartingGrid(startWaypoint, numRacers)
             gridPosition = gridPosition + leftVector * 3
         end
 
-        table.insert(gridPositions, gridPosition)
+        table.insert(self.gridPositions, gridPosition)
     end
-
-    return gridPositions
 end
 
 function RaceEvent:SetupGrid()
-    local gridPositions = self:GenerateStartingGrid(self.waypoints[1], self.numRacing)
+    self:GenerateStartingGrid(self.waypoints[1], self.numRacing)
 
-    if (gridPositions ~= nil) then
-        self:TriggerEventForRacers("races:spawncheckpoints", gridPositions)
-        self:PlaceRacersOnGrid(gridPositions)
+    if (self.gridPositions ~= nil) then
+        self:TriggerEventForRacers("races:spawncheckpoints", self.gridPositions)
+        self:PlaceRacersOnGrid()
     end
 end
 
-function RaceEvent:PlaceRacersOnGrid(gridPositions)
+function RaceEvent:PlaceRacersOnGrid()
 
     local heading = self.waypoints[1].heading
-    
-    local index = 1
-    for _, player in pairs(self.gridLineup) do
-        local gridPosition = gridPositions[index]
+
+    for index, player in pairs(self.gridLineup) do
+        local gridPosition = self.gridPositions[index]
         print(dump(gridPosition))
-        TriggerClientEvent("races:teleportplayer", player, gridPosition, heading)
+        TriggerClientEvent("races:moveToGrid", player, index, gridPosition, heading)
         TriggerClientEvent("races:freezeplayer", player)
-        index = index + 1
+    end
+end
+
+function RaceEvent:UpdateGridPositions(gridPositions)
+    print(dump(gridPositions))
+    
+    if(self.gridPositions == nil or #self.gridPositions < self.numRacing) then
+        self:GenerateStartingGrid(self.waypoints[1], self.numRacing)
+
+        if (self.gridPositions ~= nil) then
+            self:TriggerEventForRacers("races:refreshcheckpoints", self.gridPositions)
+        end
+    end 
+
+    self.gridLineup = gridPositions
+
+    local gridHeading = self.waypoints[1].heading
+
+    for gridIndex, gridPosition in ipairs(self.gridLineup) do
+        if(self.players[gridPosition.source] == nil) then
+            print(("%i is not in this race"):format(gridPosition.source))
+        else
+            TriggerClientEvent("races:moveToGrid", gridPosition.source, gridIndex, self.gridPositions[gridIndex], gridHeading)
+        end
     end
 end
 
@@ -163,8 +183,14 @@ function RaceEvent:SetNextGridLineup(race)
     for k in next, self.gridLineup do rawset(self.gridLineup, k, nil) end
     for i = 1, #self.results do
         local racer = self.results[#self.results + 1 - i]
-        table.insert(self.gridLineup, racer.source)
+        table.insert(self.gridLineup, {
+            source = racer.source,
+            name = racer.playerName,
+            position = #self.results + 1 - i
+        })
     end
+
+    TriggerClientEvent("races:addgridlineup", self.index, self.gridLineup)
 end
 
 function RaceEvent:ReadyStateChange(source, ready)
@@ -500,6 +526,8 @@ function RaceEvent:JoinRacer(source)
     TriggerClientEvent("races:join", source, self.index, self.tier, self.specialClass,
     self.waypoints, racerDictionary)
 
+    TriggerClientEvent("races:addracertogridlineup", self.index, source, playerName)
+
 end
 
 function RaceEvent:OnPlayerLeave(source)
@@ -516,6 +544,8 @@ function RaceEvent:OnPlayerLeave(source)
         self.numRacing, self.waypoints[1])
 
     TriggerClientEvent("races:onleave", source)
+
+    TriggerClientEvent("races:removeracerfromgridlineup", self.index, source)
 
     self.players[source] = nil
 

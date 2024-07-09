@@ -108,6 +108,9 @@ local boost_active = false
 local lobbySpawn = { x = -1413, y = -3007, z = 13.95}
 local spawnOffsetVector = { x = 1, y = 0, z = 0}
 
+local currentGridIndex = -1
+local currentGridPosition
+
 local function getOffsetSpawn(startingSpawn)
     local offsetSpawn = vector3(startingSpawn.x, startingSpawn.y, startingSpawn.z)
     local offsetVector = vector3(spawnOffsetVector.x, spawnOffsetVector.y, spawnOffsetVector.z)
@@ -414,6 +417,8 @@ local function finishRace(dnf)
     currentRace.raceType = ""
     currentTrack:RestoreBlips()
     currentTrack:RouteToTrack()
+    currentGridIndex = -1
+    currentGridPosition = nil
     if originalVehicleHash ~= nil then
         local vehicle = switchVehicle(PlayerPedId(), originalVehicleHash)
         if vehicle ~= nil then
@@ -1459,6 +1464,10 @@ RegisterNUICallback("setnewmap", function(data)
     end
 end)
 
+RegisterNUICallback("updateGridPositions", function(data)
+    TriggerServerEvent("races:updateGridPositions", data.gridPositions)
+end)
+
 --#endregion
 
 local function resetupgrades(vehicle)
@@ -2380,6 +2389,12 @@ AddEventHandler("races:spawncheckpoints", function(gridPositions)
     currentTrack:SpawnCheckpoints(gridPositions)
 end)
 
+RegisterNetEvent("races:refreshcheckpoints")
+AddEventHandler("races:refreshcheckpoints", function(gridPositions)
+    currentTrack:DeleteGridCheckPoints()
+    currentTrack:SpawnCheckpoints(gridPositions)
+end)
+
 RegisterNetEvent("races:teleportplayer")
 AddEventHandler("races:teleportplayer", function(position, heading)
     TeleportPlayer({x = position.x, y = position.y, z = position.z}, heading)
@@ -2411,6 +2426,46 @@ AddEventHandler("races:stopPreRaceCountdown", function()
     })
 end)
 
+RegisterNetEvent("races:addgridlineup")
+AddEventHandler("races:addgridlineup", function(gridLineup)
+    SendNUIMessage({
+        type = "grid",
+        action = "add_to_grid",
+        gridLineup = gridLineup,
+    })
+end)
+
+RegisterNetEvent("races:addracertogridlineup")
+AddEventHandler("races:addracertogridlineup", function(source, name)
+    SendNUIMessage({
+        type = "grid",
+        action = "add_racer_to_grid",
+        racer = { source = source, name = name},
+    })
+end)
+
+RegisterNetEvent("races:removeracerfromgridlineup")
+AddEventHandler("races:removeracerfromgridlineup", function(source)
+    SendNUIMessage({
+        type = "grid",
+        action = "add_racer_to_grid",
+        source = source
+    })
+end)
+
+RegisterNetEvent("races:moveToGrid")
+AddEventHandler("races:moveToGrid", function(gridIndex, gridPosition, gridHeading)
+    if (currentGridIndex == gridIndex) then
+        print("Alread on that grid position, ignoring")
+        return
+    end
+
+    currentGridIndex = gridIndex
+    currentGridPosition = gridPosition
+
+    TeleportPlayer(gridPosition, gridHeading)
+
+end)
 
 --#endregion
 

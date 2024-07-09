@@ -1172,6 +1172,18 @@ RegisterNetEvent("races:lapcompleted", function(raceIndex, currentVehicleName)
 
 end)
 
+RegisterNetEvent("races:updateGridPositions", function(gridPositions)
+    local source = source
+
+    if (races[source] == nil) then
+        print("No Race update grid positions")
+        return
+    end
+
+    races[source]:UpdateGridPositions(gridPositions)
+
+end)
+
 function RaceServerUpdate()
     for rIndex, race in pairs(races) do
         if racingStates.Racing == race.state then
