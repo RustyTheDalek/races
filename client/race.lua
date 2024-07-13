@@ -1478,7 +1478,8 @@ RegisterNUICallback("setnewmap", function(data)
 end)
 
 RegisterNUICallback("updateGridPositions", function(data)
-    TriggerServerEvent("races:updateGridPositions", data.gridPositions)
+    currentGridLineup = data.gridLineup
+    TriggerServerEvent("races:updateGridPositions", data.gridLineup)
 end)
 
 --#endregion
