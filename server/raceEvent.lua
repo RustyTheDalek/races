@@ -68,6 +68,7 @@ end
 
 function RaceEvent:Unregister()
     for k in next, self.gridLineup do rawset(self.gridLineup, k, nil) end
+    TriggerClientEvent("races:cleargridpositions", self.index)
     TriggerClientEvent("races:unregister", -1, self.index)
     notifyPlayer(self.index, "Race unregistered.\n")
 end
