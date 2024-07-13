@@ -7,7 +7,6 @@ $(function () {
     window.addEventListener("message", readGridEvents);
 
     gridTable.sortable({
-        revert: true,
         update: updateGridPositions
     });
 
