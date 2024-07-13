@@ -151,7 +151,7 @@ function RaceEvent:PlaceRacersOnGrid()
     for index, player in pairs(self.gridLineup) do
         local gridPosition = self.gridPositions[index]
         print(dump(gridPosition))
-        TriggerClientEvent("races:moveToGrid", player, index, gridPosition, heading)
+        TriggerClientEvent("races:moveToGrid", player.source, index, gridPosition, heading)
         TriggerClientEvent("races:freezeplayer", player)
     end
 end
