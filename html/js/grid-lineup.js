@@ -38,6 +38,9 @@ function readGridEvents(event) {
         case "remove_racer_from_grid":
             removeRacerFromGrid(data.source);
             break;
+        case "clear_grid":
+            gridTable.empty();
+            break;
     }
 }
 
