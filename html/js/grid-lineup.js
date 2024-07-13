@@ -77,6 +77,11 @@ function addRacerToGrid(racer, moveRacerToGrid = false) {
 
     gridTable.append(gridElement);
     gridTable.sortable("refresh");
+
+    if ($('#registerPanel').is(":visible")) {
+        gridContainer.show();
+    }
+
     if (moveRacerToGrid) {
         updateGridPositions();
     }
@@ -84,6 +89,8 @@ function addRacerToGrid(racer, moveRacerToGrid = false) {
 
 function removeRacerFromGrid(source) {
     gridTable.find(`[value="${source}"]`).remove();
+
+    if (gridTable.children().length == 0) gridContainer.hide();
     updateGridPositions();
 }
 
