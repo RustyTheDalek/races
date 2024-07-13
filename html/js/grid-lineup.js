@@ -10,15 +10,10 @@ $(function () {
         update: updateGridPositions
     });
 
-    // addRacerToGrid({ source: 1, name: "Rusty", position: 1 });
-    // addRacerToGrid({ source: 2, name: "Oli", position: 2 });
-    // addRacerToGrid({ source: 3, name: "JCMonster", position: 3 });
-    // addRacerToGrid({ source: 4, name: "Payne" });
-
     gridShuffle.click(function () {
         let gridPlayers = gridTable.children();
         gridTable.append(gridPlayers.get().reverse());
-        updateGridPositions(gridTable);
+        updateGridPositions();
     });
 });
 
@@ -50,6 +45,8 @@ function addRacersToGrid(gridLineup) {
     gridLineup.forEach((racer) => {
         addRacerToGrid(racer)
     });
+
+    updateGridPositions();
 }
 
 function addRacerToGrid(racer, moveRacerToGrid = false) {
@@ -75,7 +72,10 @@ function addRacerToGrid(racer, moveRacerToGrid = false) {
     }
 
     gridTable.append(gridElement);
-    gridTable.sortable("refresh");
+
+    gridTable.sortable({
+        update: updateGridPositions
+    })
 
     if ($('#registerPanel').is(":visible")) {
         gridContainer.show();
