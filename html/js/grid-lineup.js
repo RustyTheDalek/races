@@ -66,7 +66,8 @@ function addRacerToGrid(racer, moveRacerToGrid = false) {
         text: racer.name
     });
 
-    if (racer.position) {
+    if (racer.position !== undefined) {
+        console.log("Adding racer with position");
         let previousResult = $("<p/>", {
             text: `#${racer.position} last race`
         });
