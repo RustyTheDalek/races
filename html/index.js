@@ -907,7 +907,7 @@ function OpenRegisterPanel(data, openPanel) {
   $("#registerPanel").show();
   openPanel = "register";
 
-  if($('#grid-lineup .container').find().length > 0) {
+  if($('#grid-lineup-table').children().length > 0) {
     $('#grid-lineup').show();
   }
   return openPanel;
