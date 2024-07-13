@@ -1,4 +1,4 @@
-let gridContainer = $('#grid-lineup #sortable');
+let gridContainer = $('#grid-lineup');
 let gridTable = $('#grid-lineup-table');
 let gridShuffle = $("#grid-lineup #shuffle");
 
@@ -46,7 +46,7 @@ function readGridEvents(event) {
 
 function addRacersToGrid(gridLineup) {
 
-    gridContainer.empty();
+    gridTable.empty();
 
     gridLineup.forEach((racer) => {
         addRacerToGrid(racer)
