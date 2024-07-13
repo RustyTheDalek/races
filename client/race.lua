@@ -111,7 +111,8 @@ local spawnOffsetVector = { x = 1, y = 0, z = 0}
 local currentGridLineup = {}
 local previousRaceResults = {}
 local currentGridIndex = -1
-local currentGridPosition
+local currentGridPosition = nil
+local currentGridHeading = nil
 
 local function ClearGrid()
     currentGridLineup = { }
@@ -245,6 +246,10 @@ local function TeleportPlayer(position, heading)
 
     SetEntityCoords(entityToMove, position.x, position.y, position.z, false, false, false, true)
     SetEntityHeading(entityToMove, heading)
+
+    if(vehicle) then
+        SetVehicleOnGroundProperly(vehicle)
+    end
 
 end
 
@@ -430,6 +435,7 @@ local function finishRace(dnf)
     currentTrack:RouteToTrack()
     currentGridIndex = -1
     currentGridPosition = nil
+    currentGridHeading = nil
     if originalVehicleHash ~= nil then
         local vehicle = switchVehicle(PlayerPedId(), originalVehicleHash)
         if vehicle ~= nil then
@@ -898,7 +904,9 @@ local function leave()
     currentVehicleName = nil
     raceVehicleHash = nil
     raceVehicleName = nil
-
+    currentGridIndex = -1
+    currentGridPosition = nil
+    currentGridHeading = nil
     fpsMonitor:StopTracking()
 
     if racingStates.Joining == raceState then
@@ -960,6 +968,7 @@ local function respawn()
                 vehicle = exports.CarTierUI:RequestVehicle(raceVehicleName)
                 raceVehicleHash = GetEntityModel(vehicle)
                 SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
+                SetVehicleOnGroundProperly(vehicle)
                 SetEntityHeading(vehicle, heading)
                 SetVehicleEngineOn(vehicle, true, true, false)
                 SetVehRadioStation(vehicle, "OFF")
@@ -986,6 +995,7 @@ local function respawn()
             print("Using previous vehicle found")
             repairVehicle(vehicle)
             SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
+            SetVehicleOnGroundProperly(vehicle)
             SetEntityHeading(vehicle, heading)
             SetVehicleEngineOn(vehicle, true, true, false)
             SetVehRadioStation(vehicle, "OFF")
@@ -1978,6 +1988,8 @@ AddEventHandler("races:start", function(rIndex, delay)
                     raceVehicleHash = GetEntityModel(vehicle)
                     raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
 
+                    TeleportPlayer(currentGridPosition, currentGridHeading)
+
                     StartRaceEffects()
 
                     repairVehicle(vehicle)
@@ -2493,6 +2505,7 @@ AddEventHandler("races:moveToGrid", function(gridIndex, gridPosition, gridHeadin
 
     currentGridIndex = gridIndex
     currentGridPosition = gridPosition
+    currentGridHeading = gridHeading
 
     TeleportPlayer(gridPosition, gridHeading)
 
@@ -2600,6 +2613,25 @@ function StartCountdownLights(countdown)
 end
 
 function HandleJoinState(player)
+
+    if(currentGridPosition ~= nil) then
+        local vehicle = GetVehiclePedIsIn(player, false)
+        local entityToFreeze = vehicle ~= 0 and vehicle or player
+        FreezeEntityPosition(entityToFreeze, true)
+        SetEntityHeading(entityToFreeze, currentGridHeading)
+        local playerCoord = GetEntityCoords(player)
+        local distanceFromGridPosition = #(playerCoord - currentGridPosition)
+        
+        if(distanceFromGridPosition > 3.0) then 
+            if(GetPlayerName(PlayerId()) == "Payne") then
+                sendMessage("Come on Payne, try and be a bit more patient please...") 
+            else
+                sendMessage("You moved too far from your grid position, resettting")
+            end
+            TeleportPlayer(currentGridPosition, currentGridHeading)
+        end
+    end
+
     --Down
     if IsControlJustReleased(0, 173) then
         ready = not ready
