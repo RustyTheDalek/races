@@ -26,6 +26,7 @@ RaceEvent = {
     countdownTimeStart = 0,
     players = {},
     results = {},
+    previousRaceResults = {},
     gridLineup = {},
     gridPositions = {},
     useRaceResults = false,

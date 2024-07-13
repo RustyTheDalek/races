@@ -275,6 +275,7 @@ local function AddNewRace(waypoints, isPublic, trackName, owner, tier, timeout, 
         gridPositions = {},
         useRaceResults = false,
         map = rdata.map,
+        previousRaceResults = rdata.previousRaceResults,
         checkpointTimes = {}
     })
 

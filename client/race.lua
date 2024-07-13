@@ -108,6 +108,8 @@ local boost_active = false
 local lobbySpawn = { x = -1413, y = -3007, z = 13.95}
 local spawnOffsetVector = { x = 1, y = 0, z = 0}
 
+local currentGridLineup = {}
+local previousRaceResults = {}
 local currentGridIndex = -1
 local currentGridPosition
 
@@ -671,7 +673,9 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
         randomVehicleListName = randomVehicleListName,
         randomVehicleListAccess = randomVehicleListPublic,
         specialClass = specialClass,
-        map = currentTrack.map
+        map = currentTrack.map,
+        previousRaceResults = previousRaceResults,
+        gridLineup = currentGridLineup
     }
 
     currentTrack:Register(rdata)
@@ -2434,6 +2438,11 @@ AddEventHandler("races:stopPreRaceCountdown", function()
         type = "ready",
         action = "stopPreRaceCountdown"
     })
+end)
+
+RegisterNetEvent("races:sendraceresults")
+AddEventHandler("races:sendraceresults", function(raceResults)
+    previousRaceResults = raceResults table.sort(raceResults, function(a, b) return a.position > b.position end )
 end)
 
 RegisterNetEvent("races:addgridlineup")
