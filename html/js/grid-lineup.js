@@ -106,7 +106,7 @@ function updateGridPositions(event, ui) {
 
     $.post("https://races/updateGridPositions",
         JSON.stringify({
-            gridPositions: updatedGridPositions
+            gridLineup: updatedGridPositions
         })
     );
 }
