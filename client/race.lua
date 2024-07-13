@@ -111,6 +111,15 @@ local spawnOffsetVector = { x = 1, y = 0, z = 0}
 local currentGridIndex = -1
 local currentGridPosition
 
+local function ClearGrid()
+    currentGridLineup = { }
+    SendNUIMessage({
+        type = "grid",
+        action = "clear_grid"
+    })
+end
+
+
 local function getOffsetSpawn(startingSpawn)
     local offsetSpawn = vector3(startingSpawn.x, startingSpawn.y, startingSpawn.z)
     local offsetVector = vector3(spawnOffsetVector.x, spawnOffsetVector.y, spawnOffsetVector.z)
@@ -2239,6 +2248,7 @@ RegisterNetEvent("races:onendrace")
 AddEventHandler("races:onendrace", function(rIndex, raceResults)
 
     ClearLeaderboard()
+    ClearGrid()
 
     if rIndex ~= nil and raceResults ~= nil then
         if rIndex == raceIndex then
@@ -2451,6 +2461,11 @@ AddEventHandler("races:removeracerfromgridlineup", function(source)
         action = "add_racer_to_grid",
         source = source
     })
+end)
+
+RegisterNetEvent("races:cleargridpositions")
+AddEventHandler("races:cleargridpositions", function(source)
+    ClearGrid()
 end)
 
 RegisterNetEvent("races:moveToGrid")
