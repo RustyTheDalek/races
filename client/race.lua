@@ -2447,6 +2447,7 @@ end)
 
 RegisterNetEvent("races:addgridlineup")
 AddEventHandler("races:addgridlineup", function(gridLineup)
+    currentGridLineup = gridLineup
     SendNUIMessage({
         type = "grid",
         action = "add_to_grid",
@@ -2455,11 +2456,16 @@ AddEventHandler("races:addgridlineup", function(gridLineup)
 end)
 
 RegisterNetEvent("races:addracertogridlineup")
-AddEventHandler("races:addracertogridlineup", function(source, name)
+AddEventHandler("races:addracertogridlineup", function(gridRacer)
+
     SendNUIMessage({
         type = "grid",
         action = "add_racer_to_grid",
-        racer = { source = source, name = name},
+        racer = {
+            source = gridRacer.source,
+            name = gridRacer.name,
+            position = gridRacer.position
+        },
     })
 end)
 
@@ -2467,7 +2473,7 @@ RegisterNetEvent("races:removeracerfromgridlineup")
 AddEventHandler("races:removeracerfromgridlineup", function(source)
     SendNUIMessage({
         type = "grid",
-        action = "add_racer_to_grid",
+        action = "remove_racer_from_grid",
         source = source
     })
 end)
