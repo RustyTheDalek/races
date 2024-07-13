@@ -180,19 +180,20 @@ function RaceEvent:UpdateGridPositions(gridPositions)
     end
 end
 
-function RaceEvent:SetNextGridLineup(race)
+function RaceEvent:SendRaceResults()
     self.useRaceResults = true
     for k in next, self.gridLineup do rawset(self.gridLineup, k, nil) end
-    for i = 1, #self.results do
-        local racer = self.results[#self.results + 1 - i]
-        table.insert(self.gridLineup, {
-            source = racer.source,
-            name = racer.playerName,
-            position = #self.results + 1 - i
+
+    local raceResults = {}
+    for index, racerResult in ipairs(self.results) do
+        table.insert(raceResults, {
+            source = racerResult.source,
+            name = racerResult.playerName,
+            position = index
         })
     end
 
-    TriggerClientEvent("races:addgridlineup", self.index, self.gridLineup)
+    TriggerClientEvent("races:sendraceresults", self.index, raceResults)
 end
 
 function RaceEvent:ReadyStateChange(source, ready)
@@ -396,7 +397,7 @@ function RaceEvent:Finish(source, raceFinishData)
 
         self:SaveResults()
 
-        self:SetNextGridLineup()
+        self:SendRaceResults()
         return true
     end
 
@@ -509,10 +510,7 @@ function RaceEvent:JoinRacer(source)
             }
         end)
 
-    if self.useRaceResults == false then
-        print("No race results, adding racer")
-        table.insert(self.gridLineup, source)
-    end
+    local gridRacer = self:AddRacerToGrid(source, playerName)
 
     local joinNotificationData = {
         playerName = playerName,
@@ -528,7 +526,34 @@ function RaceEvent:JoinRacer(source)
     TriggerClientEvent("races:join", source, self.index, self.tier, self.specialClass,
     self.waypoints, racerDictionary)
 
-    TriggerClientEvent("races:addracertogridlineup", self.index, source, playerName)
+    print(("Sending event to owner with source %i"):format(self.index))
+    if(self.useRaceResults) then
+        for _, gridPosition in pairs(self.gridPositions) do
+            if(gridPosition.source == source) then
+                print("Skipping Racer they're already in grid position")
+                return
+            end
+        end
+    end
+    TriggerClientEvent("races:addracertogridlineup", self.index, gridRacer)
+end
+
+function RaceEvent:AddRacerToGrid(source, playerName)
+
+    for i, racer in pairs(self.previousRaceResults) do
+        if(source == racer.source) then
+            table.insert(self.gridLineup, racer)
+            return racer
+        end
+    end
+
+    local newRacer = {
+        source = source,
+        name = playerName
+    }
+
+    table.insert(self.gridLineup, newRacer)
+    return newRacer
 
 end
 
