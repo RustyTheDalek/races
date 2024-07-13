@@ -33,7 +33,7 @@ function readGridEvents(event) {
             addRacersToGrid(data.gridLineup);
             break;
         case "add_racer_to_grid":
-            addRacerToGrid(data.racer);
+            addRacerToGrid(data.racer, true);
             break;
         case "remove_racer_from_grid":
             removeRacerFromGrid(data.source);
@@ -53,7 +53,7 @@ function addRacersToGrid(gridLineup) {
     });
 }
 
-function addRacerToGrid(racer) {
+function addRacerToGrid(racer, moveRacerToGrid = false) {
 
     let lineUpExists = gridTable.find(`[value="${racer.source}"]`).length > 0;
 
@@ -76,6 +76,9 @@ function addRacerToGrid(racer) {
 
     gridTable.append(gridElement);
     gridTable.sortable("refresh");
+    if (moveRacerToGrid) {
+        updateGridPositions();
+    }
 }
 
 function removeRacerFromGrid(source) {
