@@ -303,8 +303,26 @@
         </div>
     </div>
 
-    <div id="listPanel" class="center panel" style="display:none;">
-        <div class="row">
+    <div id="listPanel" class="center panel">
+
+        <div class="multi-select-transfer">
+            <ul id="all-vehicles" class="multi-select-list window">
+                <li value ="1">Item 1</li>
+                <li value ="2">Item 2</li>
+                <li value ="3">Item 3</li>
+                <li value ="4">Item 4</li>
+                <li value ="5">Item 5</li>
+            </ul>
+            <div class="transfer-options">
+                <button id="add-all">Add all</button>
+                <button id="add-selected">Add selected</button>
+                <button id="remove-all">Remove All</button>
+                <button id="remove-selected">Remove Selected</button>
+            </div>
+            <ul id="current-list" class="multi-select-list window">
+            </ul>
+        </div>
+        <!-- <div class="row">
             <button id="add_veh">Add Vehicle</button>
             <select id="list_vehicle">
             </select>
@@ -399,6 +417,7 @@
     </div>
     <script src="js/leaderboard.js" type="text/javascript"></script>
     <script src="js/grid-lineup.js" type="text/javascript"></script>
+    <script src="js/vehicle-list.js" type="text/javascript"></script>
     <script src="js/editor.js" type="text/javascript"></script>
     <script src="index.js" type="text/javascript"></script>
 </body>

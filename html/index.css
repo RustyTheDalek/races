@@ -62,6 +62,12 @@ body {
     border-radius: 7px;
 }
 
+.window {
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgb(255, 255, 255);
+    border-radius: 7px;
+}
+
 .v-center {
     top: 50%;
     transform: translate(0, -50%);
@@ -342,6 +348,34 @@ select {
     width: 20%;
 }
 
+/* #region Vehicle List */
+.multi-select-transfer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-around;
+}
+
+.multi-select-transfer > .multi-select-list{
+    flex-basis: 40%;
+}
+
+.multi-select-transfer > .transfer-options {
+    flex-basis: 10%;
+}
+
+.transfer-options > button {
+    width: -webkit-fill-available;
+}
+
+.multi-select-list .ui-selecting {
+    background: #ccc;
+}
+
+.multi-select-list .ui-selected {
+    background: #999;
+}
+
 #add_veh {
     width: 15%;
 }
@@ -432,6 +466,8 @@ select {
 #vlist_register {
     width: 25%;
 }
+
+/* #endregion */
 
 #scroll {
     max-height: 500px;
