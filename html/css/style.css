@@ -8,8 +8,4 @@
     border: 2px solid white;
     border-radius: 10px;
     background-color: black;
-    max-height: 50vh;
-    width: 10vw;
-    min-width: 125px;
-    overflow: hidden;
 }

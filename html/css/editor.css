@@ -1,6 +1,10 @@
 #editor-info {
     display: none;
     padding: 1rem;
+    max-height: 50vh;
+    width: 10vw;
+    min-width: 125px;
+    overflow: hidden;
 }
 
 #editor-info h4 {
