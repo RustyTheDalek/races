@@ -829,18 +829,19 @@ end)
 RegisterNetEvent("races:loadLst")
 AddEventHandler("races:loadLst", function(isPublic, name)
     local source = source
-    if isPublic ~= nil and name ~= nil then
-        local list = loadVehicleList(isPublic, source, name)
-        if list ~= nil then
-            TriggerClientEvent("races:loadLst", source, isPublic, name, list)
-        else
-            notifyPlayer(source,
-                "Cannot load.   " ..
-                (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
-        end
-    else
+    if isPublic == nil and name == nil then
         notifyPlayer(source, "Ignoring load vehicle list event.  Invalid parameters.\n")
+        return
     end
+
+    local list = loadVehicleList(isPublic, source, name)
+
+    if list == nil then
+        notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
+    end
+
+    TriggerClientEvent("races:loadLst", source, isPublic, name, list)
+
 end)
 
 RegisterNetEvent("races:saveLst")
@@ -849,7 +850,6 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
     if isPublic ~= nil and name ~= nil and vehicleList ~= nil then
         if loadVehicleList(isPublic, source, name) == nil then
             if true == saveVehicleList(isPublic, source, name, vehicleList) then
-                TriggerEvent("races:listNames", isPublic, source)
                 notifyPlayer(source,
                     "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
 
@@ -909,7 +909,6 @@ AddEventHandler("races:deleteLst", function(isPublic, name)
         local list = loadVehicleList(isPublic, source, name)
         if list ~= nil then
             if true == saveVehicleList(isPublic, source, name, nil) then
-                TriggerEvent("races:listNames", isPublic, source)
                 notifyPlayer(source,
                     "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
             else
@@ -924,49 +923,6 @@ AddEventHandler("races:deleteLst", function(isPublic, name)
         end
     else
         notifyPlayer(source, "Ignoring delete vehicle list event.  Invalid parameters.\n")
-    end
-end)
-
-RegisterNetEvent("races:listLsts")
-AddEventHandler("races:listLsts", function(isPublic)
-    local source = source
-    if isPublic ~= nil then
-        local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
-        if license ~= nil then
-            local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
-            if vehicleListData ~= nil then
-                if license ~= "PUBLIC" then
-                    license = string.sub(license, 9)
-                end
-                local lists = vehicleListData[license]
-                if lists ~= nil then
-                    local names = {}
-                    for name in pairs(lists) do
-                        names[#names + 1] = name
-                    end
-                    if #names > 0 then
-                        table.sort(names)
-                        local msg = "Saved " .. (true == isPublic and "public" or "private") .. " vehicle lists:\n"
-                        for _, name in ipairs(names) do
-                            msg = msg .. name .. "\n"
-                        end
-                        notifyPlayer(source, msg)
-                    else
-                        notifyPlayer(source,
-                            "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
-                    end
-                else
-                    notifyPlayer(source,
-                        "No saved " .. (true == isPublic and "public" or "private") .. " vehicle lists.\n")
-                end
-            else
-                notifyPlayer(source, "Could not load vehicle list data.\n")
-            end
-        else
-            notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
-        end
-    else
-        notifyPlayer(source, "Ignoring list vehicle lists event.  Invalid parameters.\n")
     end
 end)
 
@@ -1093,13 +1049,6 @@ AddEventHandler("races:trackNames", function(isPublic, altSource)
     else
         notifyPlayer(source, "Ignoring list event.  Invalid parameters.\n")
     end
-end)
-
-RegisterNetEvent("races:listNames")
-AddEventHandler("races:listNames", function(isPublic, altSource)
-    local source = altSource or source
-
-    TriggerClientEvent("races:listNames", source, isPublic, GetVehicleListNames(isPublic, source))
 end)
 
 function GetVehicleListNames(isPublic, source)

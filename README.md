@@ -37,7 +37,6 @@ For the following **`/races register`** commands, (tier) defaults to none, (spec
 **`/races vl list`** - list all vehicles in vehicle list
 
 For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\
-**`/races vl loadLst [access] [name]`** - load private or public vehicle list saved as [name]\
 **`/races vl saveLst [access] [name]`** - save new private or public vehicle list as [name]\
 **`/races vl overwriteLst [access] [name]`** - overwrite existing private or public vehicle list saved as [name]\
 **`/races vl deleteLst [access] [name]`** - delete private or public vehicle list saved as [name]\
@@ -116,7 +115,6 @@ Type **`/races`** to see the list of available **`/races`** commands.  If you ca
 **`/races vl addAll`**\
 **`/races vl deleteAll`**\
 **`/races vl list`**\
-**`/races vl loadLst [access] [name]`**\
 **`/races vl saveLst [access] [name]`**\
 **`/races vl overwriteLst [access] [name]`**\
 **`/races vl deleteLst [access] [name]`**\
@@ -194,15 +192,13 @@ If you want to delete all vehicles from your vehicle list, type **`/races vl del
 
 To list all the vehicles in your vehicle list, type **`/races vl list`**.
 
-The commands **`/races vl saveLst`**, **`/races vl overwriteLst`**, **`/races vl listLsts`**, **`/races vl deleteLst`** and **`/races vl loadLst`** operate on your private list of vehicle lists if you specify **`pvt`** after the command or on the public list of vehicle lists if you specify **`pub`** after the command.  Only you have access to your private list of vehicle lists and can view and modify them.  All players have access to the public list of vehicle lists and can view and modify them.
+The commands **`/races vl saveLst`**, **`/races vl overwriteLst`**, **`/races vl listLsts`**, **`/races vl deleteLst`** operate on your private list of vehicle lists if you specify **`pvt`** after the command or on the public list of vehicle lists if you specify **`pub`** after the command.  Only you have access to your private list of vehicle lists and can view and modify them.  All players have access to the public list of vehicle lists and can view and modify them.
 
 Type **`/races vl saveLst pvt mylist`** to save your vehicle list as **`mylist`**.  **`mylist`** must not exist.  If you want to overwrite an existing vehicle list named **`mylist`**, type **`/races vl overwriteLst pvt mylist`**.
 
 To list the vehicle lists you have saved, type **`/races vl listLsts pvt`**.  If you cannot see all the vehicle lists, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
 
 If you want to delete a vehicle list named **`mylist`**, type **`/races vl deleteLst pvt mylist`**.
-
-To load the vehicle list named **`mylist`**, type **`/races vl loadLst pvt mylist`**.  This will clear your current vehicle list and load the vehicles from the saved list.
 
 Vehicle list data is saved in the file **`resources/races/vehicleListData.json`**.
 

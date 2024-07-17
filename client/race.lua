@@ -78,8 +78,6 @@ local starts = {}                         -- starts[playerID] = {isPublic, track
 
 local panelShown = false                  -- flag indicating if main, edit, register, or list panel is shown
 local allVehiclesList = {}                -- list of all vehicles from vehicles.txt
-local allVehiclesHTML = ""                -- html option list of all vehicles
-
 local enteringVehicle = false             -- flag indicating if player is entering a vehicle
 
 local localPlayerPed = GetPlayerPed(-1)
@@ -448,13 +446,10 @@ end
 
 local function updateList()
     table.sort(vehicleList)
-    local html = ""
-    for _, vehicle in ipairs(vehicleList) do
-        html = html .. "<option value = \"" .. vehicle .. "\">" .. vehicle .. "</option>"
-    end
     SendNUIMessage({
-        update = "vehicleList",
-        vehicleList = html
+        type = 'vehicle-list',
+        action = "display_saved_list",
+        vehicleList = vehicleList
     })
 end
 
@@ -827,15 +822,16 @@ local function listVeh()
 end
 
 local function loadLst(access, name)
-    if "pvt" == access or "pub" == access then
-        if name ~= nil then
-            TriggerServerEvent("races:loadLst", "pub" == access, name)
-        else
-            sendMessage("Cannot load vehicle list.  Name required.\n")
-        end
-    else
+    if access ~= "Private" and access ~= "Public" then
         sendMessage("Cannot load vehicle list.  Invalid access type.\n")
+        return
     end
+
+    if name == nil then
+        sendMessage("Cannot load vehicle list.  Name required.\n")
+    end
+    
+    TriggerServerEvent("races:loadLst", access == "Public", name)
 end
 
 local function saveLst(access, name)
@@ -879,14 +875,6 @@ local function deleteLst(access, name)
         end
     else
         sendMessage("Cannot delete vehicle list.  Invalid access type.\n")
-    end
-end
-
-local function listLsts(access)
-    if "pvt" == access or "pub" == access then
-        TriggerServerEvent("races:listLsts", "pub" == access)
-    else
-        sendMessage("Cannot list vehicle lists.  Invalid access type.\n")
     end
 end
 
@@ -1099,8 +1087,7 @@ local function showPanel(panel)
         TriggerServerEvent("races:trackNames", true, nil)
         SendNUIMessage({
             panel = "main",
-            defaultVehicle = defaultVehicle,
-            allVehicles = allVehiclesHTML
+            defaultVehicle = defaultVehicle
         })
     elseif "edit" == panel then
         SetNuiFocus(true, true)
@@ -1117,17 +1104,15 @@ local function showPanel(panel)
             panel = "register",
             defaultLaps = defaultLaps,
             defaultTimeout = defaultTimeout,
-            defaultDelay = defaultDelay,
-            allVehicles = allVehiclesHTML
+            defaultDelay = defaultDelay
         })
     elseif "list" == panel then
         SetNuiFocus(true, true)
         updateList()
-        TriggerServerEvent("races:listNames", false, nil)
-        TriggerServerEvent("races:listNames", true, nil)
         SendNUIMessage({
-            panel = "list",
-            allVehicles = allVehiclesHTML
+            type = "vehicle-list",
+            action = "display_list",
+            allVehicles = allVehiclesList
         })
     else
         notifyPlayer("Invalid panel.\n")
@@ -1375,32 +1360,12 @@ RegisterNUICallback("start", function(data)
     startRace(delay, true)
 end)
 
-RegisterNUICallback("add_veh", function(data)
-    addVeh(data.vehicle)
-end)
-
-RegisterNUICallback("delete_veh", function(data)
-    delVeh(data.vehicle)
-end)
-
 RegisterNUICallback("add_class", function(data)
     addClass(data.class)
 end)
 
 RegisterNUICallback("delete_class", function(data)
     deleteClass(data.class)
-end)
-
-RegisterNUICallback("add_all_veh", function()
-    addAllVeh()
-end)
-
-RegisterNUICallback("delete_all_veh", function()
-    delAllVeh()
-end)
-
-RegisterNUICallback("list_veh", function()
-    listVeh()
 end)
 
 RegisterNUICallback("load_list", function(data)
@@ -1415,16 +1380,8 @@ RegisterNUICallback("save_list", function(data)
     saveLst(data.access, name)
 end)
 
-RegisterNUICallback("overwrite_list", function(data)
-    overwriteLst(data.access, data.name)
-end)
-
 RegisterNUICallback("delete_list", function(data)
     deleteLst(data.access, data.name)
-end)
-
-RegisterNUICallback("list_lists", function(data)
-    listLsts(data.access)
 end)
 
 RegisterNUICallback("leave", function()
@@ -1590,7 +1547,6 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "\n"
         msg = msg ..
         "For the following '/races vl' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\n"
-        msg = msg .. "/races vl loadLst [access] [name] - load private or public vehicle list saved as [name]\n"
         msg = msg .. "/races vl saveLst [access] [name] - save new private or public vehicle list as [name]\n"
         msg = msg ..
         "/races vl overwriteLst [access] [name] - overwrite existing private or public vehicle list saved as [name]\n"
@@ -1668,8 +1624,6 @@ RegisterCommand("races", function(_, args)
             delAllVeh()
         elseif "list" == args[2] then
             listVeh()
-        elseif "loadLst" == args[2] then
-            loadLst(args[3], args[4])
         elseif "saveLst" == args[2] then
             saveLst(args[3], args[4])
         elseif "overwriteLst" == args[2] then
@@ -1827,14 +1781,17 @@ end)
 
 RegisterNetEvent("races:loadLst")
 AddEventHandler("races:loadLst", function(isPublic, name, list)
-    if isPublic ~= nil and name ~= nil and list ~= nil then
-        vehicleList = list
-        if true == panelShown then
-            updateList()
-        end
-        sendMessage((true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' loaded.\n")
-    else
+    if isPublic == nil and name == nil and list == nil then
         notifyPlayer("Ignoring load vehicle list event.  Invalid parameters.\n")
+        return
+    end
+
+    vehicleList = list
+
+    print(dump(vehicleList))
+
+    if true == panelShown then
+        updateList()
     end
 end)
 
@@ -2343,18 +2300,19 @@ end)
 
 RegisterNetEvent("races:allVehicles")
 AddEventHandler("races:allVehicles", function(allVehicles)
-    if allVehicles ~= nil then
-        allVehiclesList = {}
-        allVehiclesHTML = ""
-        for _, vehicle in ipairs(allVehicles) do
-            if IsModelInCdimage(vehicle) == 1 and IsModelAVehicle(vehicle) == 1 then
-                allVehiclesList[#allVehiclesList + 1] = vehicle
-                allVehiclesHTML = allVehiclesHTML .. "<option value = \"" .. vehicle .. "\">" .. vehicle .. "</option>"
-            end
-        end
-    else
+    if allVehicles == nil then
         notifyPlayer("Ignoring allVehicles event.  Invalid parameters.\n")
+        return
     end
+
+    for index, vehicle in ipairs(allVehicles) do
+        if IsModelInCdimage(vehicle) ~= 1 and IsModelAVehicle(vehicle) ~= 1 then
+            table.remove(allVehicles, index);
+        end
+    end
+    
+    allVehiclesList = allVehicles
+
 end)
 
 RegisterNetEvent("races:trackNames")
@@ -2376,29 +2334,17 @@ AddEventHandler("races:trackNames", function(isPublic, trackNames)
     end
 end)
 
-RegisterNetEvent("races:listNames")
-AddEventHandler("races:listNames", function(isPublic, listNames)
-    if isPublic ~= nil and listNames ~= nil then
-        if true == panelShown then
-            local html = ""
-            for _, listName in ipairs(listNames) do
-                html = html .. "<option value = \"" .. listName .. "\">" .. listName .. "</option>"
-            end
-            SendNUIMessage({
-                update = "listNames",
-                access = false == isPublic and "pvt" or "pub",
-                listNames = html
-            })
-        end
-    else
-        notifyPlayer("Ignoring listNames event.  Invalid parameters.\n")
-    end
-end)
-
 RegisterNetEvent("races:vehicleLists")
 AddEventHandler("races:vehicleLists", function(publicVehicleListNames, privateVehicleListNames)
     SendNUIMessage({
         update = "vehicleListNames",
+        public = publicVehicleListNames,
+        private = privateVehicleListNames
+    })
+
+    SendNUIMessage({
+        type = "vehicle-list",
+        action = "recieve_lists",
         public = publicVehicleListNames,
         private = privateVehicleListNames
     })
