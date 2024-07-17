@@ -2,7 +2,13 @@ let listPanel = $("#listPanel");
 let allVehicles = $("#all-vehicles");
 let currentVehicleList = $("#current-list");
 let savedVehicleLists = $('#list_name');
+let publicSwitch = listPanel.find('input[name="public"');
+let listDelete = listPanel.find('#delete_list');
+
 let listModal = $('#listModal');
+let modalInput = listModal.find(`[name=modal-input]`);
+let modalConfirm = listModal.find('button[value="confirm"]');
+let modalCancel = listModal.find('button[value="cancel"]');
 
 $(function () {
     allVehicles.selectable();
@@ -15,8 +21,12 @@ $(function () {
     $('#remove-selected').on("click", removeSelectedVehicles);
 
     savedVehicleLists.on('change', onSavedVehicleListsChange);
+    listDelete.on('click', setupModalForDeletelist);
 
-    listModal.find(`[name=modal-input]`).on('input', validateModalInput);
+    publicSwitch.on('change', onPublicChange);
+    modalInput.on('input', validateModalInput);
+    modalConfirm.on('click', onModalConfirm);
+    modalCancel.on('click', onModalCancel);
 
     window.addEventListener("message", readVehicleListEvents);
 
@@ -46,16 +56,14 @@ function updateVehicleLists(publicList, privateList) {
     pvtListNames = privateList;
     pubListNames = publicList;
 
-    let privateListOptionGroup = $("<optgroup/>", { label: "Private" });
+    let privateListOptionGroup = savedVehicleLists.find('[label="Private"]');
 
     if (privateList !== undefined)
         privateListOptionGroup.append(MakeOptions(privateList));
 
-    let publicListOptionGroup = $("<optgroup/>", { label: "Public" });
+    let publicListOptionGroup = savedVehicleLists.find('[label="Public"]');
     if (publicList !== undefined)
         publicListOptionGroup.append(MakeOptions(publicList));
-
-    savedVehicleLists.append([privateListOptionGroup, publicListOptionGroup]);
 }
 
 function MakeOptions(list) {
@@ -77,9 +85,9 @@ function populateSavedList(vehicleList) {
 
     currentVehicleList.empty();
 
-    vehicleList.forEach(vehicle => {
+    vehicleList.forEach(listName => {
         let vehicleElement = $("<li/>", {
-            text: vehicle
+            text: name
         });
         currentVehicleList.append(vehicleElement)
     });
@@ -114,17 +122,101 @@ function addVehicles(vehiclesToAdd) {
     }).appendTo(currentVehicleList);
 }
 
-function createNewVehicleList() {
+function setupModalForDeletelist() {
+
+    let currentList = savedVehicleLists.find(":selected")
+    
+    if (currentList.text() == 'None' || currentList.text() == 'New') return;
+
+    modalInput.hide();
+    listModal.find('h1').text('Are you sure you want to delete this list?');
+    modalConfirm.data('action', 'delete-list');
     listModal.show();
-    listModal.find('h1').text('New List Name');
-    listModal.find('confirm').data('action', 'new-list');
 }
 
+function setupModalForNewVehicleList() {
+    listModal.show();
+    listModal.find('h1').text('New List Name');
+    modalInput.val('').show();
+    modalConfirm.data('action', 'new-list');
+}
 
 // #region Input events
 
-function validateModalInput(){
-    console.log($(this).val());
+function deleteList() {
+
+    let currentList = savedVehicleLists.find(":selected")
+    
+    if (currentList.text() == 'None' || currentList.text() == 'New') return;
+
+    listModal.hide();
+
+    currentList.remove();
+    
+    if(currentVehicleList.children().length == 0) return;
+
+    console.log("list has vehicles");
+}
+
+function onPublicChange() {
+
+    let currentList = savedVehicleLists.find(":selected")
+
+    if (currentList.text() == 'None' || currentList.text() == 'New') return;
+
+    if(publicSwitch.is(':checked')) {
+        currentList.detach().appendTo(savedVehicleLists.find('[label="Public"]'));
+    } else {
+        currentList.detach().appendTo(savedVehicleLists.find('[label="Private"]'));
+    }
+
+    if(currentVehicleList.children().length == 0) return;
+
+    console.log("list has vehicles");
+}
+
+function onModalConfirm() {
+
+    let action = modalConfirm.data('action');
+
+    console.log(action);
+
+    switch (action) {
+        case 'new-list':
+            createNewVehicleList();
+            break;
+        case 'delete-list':
+            deleteList();
+        default:
+            console.warn("No action set");
+            break;
+    }
+}
+
+function createNewVehicleList() {
+    let name = modalInput.val();
+    let public = publicSwitch.is(":checked");
+
+    let option = $("<option/>", {
+        selected: "selected",
+        value: name,
+        text: name,
+    })
+
+    let groupToAppend = public ? savedVehicleLists.find('[label="Public"]') : savedVehicleLists.find('[label="Private"]');
+
+    groupToAppend.append(option);
+    listModal.hide();
+}
+
+function onModalCancel() {
+    listModal.hide();
+    listModal.find('h1').text('');
+    modalInput.val('');
+    modalConfirm.data('action', null);
+}
+
+function validateModalInput() {
     $(this).next().prop('disabled', !$(this).val());
 }
 
@@ -148,10 +240,9 @@ function removeSelectedVehicles() {
 }
 
 function onSavedVehicleListsChange() {
-    console.log(this.value);
     switch (this.value) {
         case "New":
-            createNewVehicleList();
+            setupModalForNewVehicleList();
             break;
         default:
             let selectedListAccess = $(this).find(":selected").parent().attr('label');

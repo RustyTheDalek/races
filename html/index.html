@@ -309,12 +309,16 @@
             <select id="list_name">
                 <option selected>None</option>
                 <option>New</option>
+                <optgroup label="Private">
+                </optgroup>
+                <optgroup label="Public">
+                </optgroup>
             </select>
             <button id="delete_list">Delete</button>
             <div>
                 <p class="small mb-1">Public</p>
                 <label class="switch">
-                    <input class="public-access" type="checkbox">
+                    <input name="public" class="public-access" type="checkbox">
                     <span class="slider round"></span>
                 </label>
             </div>
@@ -371,11 +375,11 @@
             <button id="list_close">Close</button>
         </div>
 
-        <div id="listModal" class="modal center panel">
+        <div id="listModal" class="modal center panel" style="display:none;"> 
             <h1>Modal Title</h1>
             <input name="modal-input" type="text" />
             <button disabled class="confirm" value="confirm">Confirm</button>
-            <button onclick="$(this).closest('.modal').hide()" class="cancel" value="cancel">Cancel</button>
+            <button class="cancel" value="cancel">Cancel</button>
         </div>
     </div>
 
