@@ -37,7 +37,7 @@ For the following **`/races register`** commands, (tier) defaults to none, (spec
 **`/races vl list`** - list all vehicles in vehicle list
 
 For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\
-**`/races vl saveLst [access] [name]`** - save new private or public vehicle list as [name]\
+**`/races vl saveList [access] [name]`** - save new private or public vehicle list as [name]\
 **`/races vl overwriteLst [access] [name]`** - overwrite existing private or public vehicle list saved as [name]\
 **`/races vl deleteLst [access] [name]`** - delete private or public vehicle list saved as [name]\
 **`/races vl listLsts [access]`** - list saved private or public vehicle lists
@@ -108,17 +108,6 @@ Type **`/races`** to see the list of available **`/races`** commands.  If you ca
 **`/races register (tier) (specialClass) (laps) (DNF timeout) rand (class) (vehicle)`**\
 **`/races unregister`**\
 **`/races start (delay)`**\
-**`/races vl add [vehicle]`**\
-**`/races vl delete [vehicle]`**\
-**`/races vl addClass [class]`**\
-**`/races vl deleteClass [class]`**\
-**`/races vl addAll`**\
-**`/races vl deleteAll`**\
-**`/races vl list`**\
-**`/races vl saveLst [access] [name]`**\
-**`/races vl overwriteLst [access] [name]`**\
-**`/races vl deleteLst [access] [name]`**\
-**`/races vl listLsts [access]`**
 
 **`/races spawn (vehicle)`**
 
@@ -187,20 +176,6 @@ If you want to add an entire class of vehicles to your vehicle list, type **`/ra
 If you want to delete an entire class of vehicles from your vehicle list, type **`/races vl deleteClass 9`** to delete all class Off-road (9) vehicles from your list.
 
 If you want to add all vehicles to your vehicle list, type **`/races vl addAll`**.
-
-If you want to delete all vehicles from your vehicle list, type **`/races vl deleteAll`**.
-
-To list all the vehicles in your vehicle list, type **`/races vl list`**.
-
-The commands **`/races vl saveLst`**, **`/races vl overwriteLst`**, **`/races vl listLsts`**, **`/races vl deleteLst`** operate on your private list of vehicle lists if you specify **`pvt`** after the command or on the public list of vehicle lists if you specify **`pub`** after the command.  Only you have access to your private list of vehicle lists and can view and modify them.  All players have access to the public list of vehicle lists and can view and modify them.
-
-Type **`/races vl saveLst pvt mylist`** to save your vehicle list as **`mylist`**.  **`mylist`** must not exist.  If you want to overwrite an existing vehicle list named **`mylist`**, type **`/races vl overwriteLst pvt mylist`**.
-
-To list the vehicle lists you have saved, type **`/races vl listLsts pvt`**.  If you cannot see all the vehicle lists, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
-
-If you want to delete a vehicle list named **`mylist`**, type **`/races vl deleteLst pvt mylist`**.
-
-Vehicle list data is saved in the file **`resources/races/vehicleListData.json`**.
 
 If you want to create a race where only a custom list of vehicles are allowed, type **`/races register 100 2 180 no class -1`**.  The allowed vehicles will come from a vehicle list that you created or loaded.
 

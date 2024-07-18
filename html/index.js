@@ -725,16 +725,6 @@ $(function () {
     );
   });
 
-  $("#save_list").click(function () {
-    $.post(
-      "https://races/save_list",
-      JSON.stringify({
-        access: $('#listPanel .public-access').prop('checked') ? 'pub' : 'pvt',
-        name: $("#list_unsaved").val(),
-      })
-    );
-  });
-
   $("#vlist_main").click(function () {
     $("#listPanel").hide();
     $.post(

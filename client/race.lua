@@ -834,20 +834,23 @@ local function loadLst(access, name)
     TriggerServerEvent("races:loadLst", access == "Public", name)
 end
 
-local function saveLst(access, name)
-    if "pvt" == access or "pub" == access then
-        if name ~= nil then
-            if #vehicleList > 0 then
-                TriggerServerEvent("races:saveLst", "pub" == access, name, vehicleList)
-            else
-                sendMessage("Cannot save vehicle list.  List is empty.\n")
-            end
-        else
-            sendMessage("Cannot save vehicle list.  Name required.\n")
-        end
-    else
+local function saveList(access, name, vehicles)
+
+    if (access ~= "pvt" and access ~= pub) then
         sendMessage("Cannot save vehicle list.  Invalid access type.\n")
+        return
     end
+
+    if name == nil then
+        sendMessage("Cannot save vehicle list.  Name required.\n")
+        return
+    end
+
+    if #vehicles == 0 then
+        sendMessage("Cannot save vehicle list.  List is empty.\n")
+    end
+
+    TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
 end
 
 local function overwriteLst(access, name)
@@ -1373,11 +1376,16 @@ RegisterNUICallback("load_list", function(data)
 end)
 
 RegisterNUICallback("save_list", function(data)
-    local name = data.name
-    if "" == name then
-        name = nil
+
+    print("Save list event")
+
+    print(dump(data.access))
+
+    if data.name == nil or data.access == nil or data.vehicles == nil then
+        return 
     end
-    saveLst(data.access, name)
+
+    saveList(data.access, data.name, data.vehicles)
 end)
 
 RegisterNUICallback("delete_list", function(data)
@@ -1545,14 +1553,6 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races vl deleteAll - delete all vehicles from vehicle list\n"
         msg = msg .. "/races vl list - list all vehicles in vehicle list\n"
         msg = msg .. "\n"
-        msg = msg ..
-        "For the following '/races vl' commands, [access] = {'pvt', 'pub'} where 'pvt' operates on a private vehicle list and 'pub' operates on a public vehicle list\n"
-        msg = msg .. "/races vl saveLst [access] [name] - save new private or public vehicle list as [name]\n"
-        msg = msg ..
-        "/races vl overwriteLst [access] [name] - overwrite existing private or public vehicle list saved as [name]\n"
-        msg = msg .. "/races vl deleteLst [access] [name] - delete private or public vehicle list saved as [name]\n"
-        msg = msg .. "/races vl listLsts [access] - list saved private or public vehicle lists\n"
-        msg = msg .. "\n"
         msg = msg .. "/races leave - leave a race that you joined\n"
         msg = msg .. "/races respawn - respawn at last waypoint\n"
         msg = msg .. "/races results - view latest race results\n"
@@ -1609,32 +1609,6 @@ RegisterCommand("races", function(_, args)
         autojoin()
     elseif "start" == args[1] then
         startRace(args[2], args[3])
-    elseif "vl" == args[1] then
-        if "add" == args[2] then
-            addVeh(args[3])
-        elseif "delete" == args[2] then
-            delVeh(args[3])
-        elseif "addClass" == args[2] then
-            addClass(args[3])
-        elseif "deleteClass" == args[2] then
-            deleteClass(args[3])
-        elseif "addAll" == args[2] then
-            addAllVeh()
-        elseif "deleteAll" == args[2] then
-            delAllVeh()
-        elseif "list" == args[2] then
-            listVeh()
-        elseif "saveLst" == args[2] then
-            saveLst(args[3], args[4])
-        elseif "overwriteLst" == args[2] then
-            overwriteLst(args[3], args[4])
-        elseif "deleteLst" == args[2] then
-            deleteLst(args[3], args[4])
-        elseif "listLsts" == args[2] then
-            listLsts(args[3])
-        else
-            notifyPlayer("Unknown vehicle list command.\n")
-        end
     elseif "leave" == args[1] then
         leave()
     elseif "end" == args[1] then

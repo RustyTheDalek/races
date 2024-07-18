@@ -163,6 +163,45 @@ local function saveTrack(isPublic, source, trackName, track)
     return false
 end
 
+local function getAccessIndex(isPublic, source)
+    local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
+
+    --Check Public then private
+    if ~isPublic then
+        if(GetPlayerIdentifier(source, 0) == nil) then
+            notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
+            return nil
+        end
+
+        license = string.sub(license, 9)
+    end
+
+    return license
+end
+
+local function deleteVehicleList(isPublic, source, name)
+    
+    local license = getAccessIndex(isPublic, source)
+
+    local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
+    if vehicleListData == nil then
+        notifyPlayer(source, "Could not load vehicle list data.\n")
+        return
+    end
+
+    if vehicleListData[license] == nil or vehicleListData[license][name] == nil then
+        return
+    end
+
+    vehicleListData[license][name] = nil
+
+    if ~FileManager.SaveCurrentResourceFileJson('vehicleListData', vehicleListData) then
+        notifyPlayer(source, "Could not write vehicle list data.\n")
+    end
+
+    return
+end
+
 local function loadVehicleList(isPublic, source, name)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
 
@@ -847,33 +886,28 @@ end)
 RegisterNetEvent("races:saveLst")
 AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
     local source = source
-    if isPublic ~= nil and name ~= nil and vehicleList ~= nil then
-        if loadVehicleList(isPublic, source, name) == nil then
-            if true == saveVehicleList(isPublic, source, name, vehicleList) then
-                notifyPlayer(source,
-                    "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
 
-                local publicVehicleListNames = GetVehicleListNames(true, source)
-                local privateVehicleListNames = GetVehicleListNames(false, source)
-
-                if(isPublic) then
-                    TriggerClientEvent("races:vehicleLists", -1, publicVehicleListNames, privateVehicleListNames)
-                else
-                    TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
-                end
-
-            else
-                notifyPlayer(source,
-                    "Error saving " ..
-                    (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-            end
-        else
-            notifyPlayer(source,
-                (true == isPublic and "Public" or "Private") ..
-                " vehicle list '" .. name .. "' exists.  Use 'overwrite' command instead.\n")
-        end
-    else
+    if isPublic == nil or name == nil or vehicleList == nil then
         notifyPlayer(source, "Ignoring save vehicle list event.  Invalid parameters.\n")
+        return
+    end
+
+    deleteVehicleList(~isPublic, source, name)
+
+    if(~saveVehicleList(isPublic, source, name, vehicleList)) then
+        notifyPlayer(source, "Error saving " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+    end
+    
+    notifyPlayer(source, "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+
+    local publicVehicleListNames = GetVehicleListNames(true, source)
+    local privateVehicleListNames = GetVehicleListNames(false, source)
+
+    --TODO send this to vehicleLists js
+    if(isPublic) then
+        TriggerClientEvent("races:vehicleLists", -1, publicVehicleListNames, privateVehicleListNames)
+    else
+        TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
     end
 end)
 
