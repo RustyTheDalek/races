@@ -848,6 +848,7 @@ local function saveList(access, name, vehicles)
 
     if #vehicles == 0 then
         sendMessage("Cannot save vehicle list.  List is empty.\n")
+        return
     end
 
     TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
