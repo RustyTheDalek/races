@@ -187,28 +187,8 @@ $(function () {
       } else if ("pub" == data.access) {
         pubListNames = data.listNames;
       }
-    } else if (data.update == "vehicleListNames") {
-      UpdateVehicleLists(data.public, data.private);
     }
   });
-
-  function UpdateVehicleLists(publicList, privateList) {
-    pvtListNames = privateList;
-    pubListNames = publicList;
-
-    let privateListOptionGroup = $("<optgroup/>", { label: "Private" });
-
-    if (privateList !== undefined)
-      privateListOptionGroup.append(MakeOptions(privateList));
-
-    let publicListOptionGroup = $("<optgroup/>", { label: "Public" });
-    if (publicList !== undefined)
-      publicListOptionGroup.append(MakeOptions(publicList));
-
-    registerPanel
-      .find("[name=vehicle-list]")
-      .append([ privateListOptionGroup, publicListOptionGroup ] );
-  }
 
   function MakeOptions(list) {
     let options = [];

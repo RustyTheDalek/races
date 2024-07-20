@@ -56,12 +56,25 @@ function updateVehicleLists(publicList, privateList) {
 
 	let privateListOptionGroup = savedVehicleLists.find('[label="Private"]');
 
-	if (privateList !== undefined)
+	let selectedList = savedVehicleLists.find(":selected");
+	let selectedListName = selectedList.text();
+
+	let selectedAccess = selectedList.closest('optgroup');
+
+	if (privateList !== undefined) {
+		privateListOptionGroup.empty();
 		privateListOptionGroup.append(MakeOptions(privateList));
+	}
 
 	let publicListOptionGroup = savedVehicleLists.find('[label="Public"]');
-	if (publicList !== undefined)
+	if (publicList !== undefined) {
+		publicListOptionGroup.empty();
 		publicListOptionGroup.append(MakeOptions(publicList));
+	}
+
+	if(selectedListName !== '') {
+		selectedAccess.find(`option[value='${selectedListName}']`).prop('selected', 'selected');
+	}
 }
 
 function MakeOptions(list) {
@@ -127,7 +140,7 @@ function addVehicles(vehiclesToAdd) {
 }
 
 function saveCurrentList() {
-	if (currentVehicleList.children() == 0) return;
+	// if (currentVehicleList.children() == 0) return;
 
 	$.post(
 		"https://races/save_list",
@@ -261,10 +274,14 @@ function addSelectedVehiclesToCurrentList() {
 
 function removeAll() {
 	currentVehicleList.children().detach();
+
+	saveCurrentList();
 }
 
 function removeSelectedVehicles() {
 	currentVehicleList.find(".ui-selected").detach();
+
+	saveCurrentList();
 }
 
 function onSavedVehicleListsChange() {

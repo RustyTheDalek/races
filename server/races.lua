@@ -167,7 +167,7 @@ local function getAccessIndex(isPublic, source)
     local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
 
     --Check Public then private
-    if ~isPublic then
+    if not isPublic then
         if(GetPlayerIdentifier(source, 0) == nil) then
             notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
             return nil
@@ -179,27 +179,34 @@ local function getAccessIndex(isPublic, source)
     return license
 end
 
-local function deleteVehicleList(isPublic, source, name)
+local function deleteVehicleList(isPublic, source, name, vehicleLists)
     
     local license = getAccessIndex(isPublic, source)
 
-    local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
-    if vehicleListData == nil then
-        notifyPlayer(source, "Could not load vehicle list data.\n")
+    if vehicleLists[license] == nil or vehicleLists[license][name] == nil then
+        print(("Not deleting %s doesn't exist at that access"):format(name))
         return
     end
 
-    if vehicleListData[license] == nil or vehicleListData[license][name] == nil then
-        return
-    end
+    vehicleLists[license][name] = nil
 
-    vehicleListData[license][name] = nil
-
-    if ~FileManager.SaveCurrentResourceFileJson('vehicleListData', vehicleListData) then
+    if not FileManager.SaveCurrentResourceFileJson('vehicleListData', vehicleLists) then
         notifyPlayer(source, "Could not write vehicle list data.\n")
     end
 
     return
+end
+
+local function loadFullVehicleList()
+    local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
+
+    if vehicleListData == nil then
+        notifyPlayer(source, "loadVehicleList: Could not load vehicle list data.\n")
+        return
+    end
+
+    return vehicleListData
+
 end
 
 local function loadVehicleList(isPublic, source, name)
@@ -235,29 +242,14 @@ local function loadVehicleList(isPublic, source, name)
 
 end
 
-local function saveVehicleList(isPublic, source, name, vehicleList)
-    local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
-    if license ~= nil then
-        local vehicleListData = FileManager.LoadCurrentResourceFileJson('vehicleListData')
-        if vehicleListData ~= nil then
-            if license ~= "PUBLIC" then
-                license = string.sub(license, 9)
-            end
-            local lists = vehicleListData[license] ~= nil and vehicleListData[license] or {}
-            lists[name] = vehicleList
-            vehicleListData[license] = lists
-            if true == FileManager.SaveCurrentResourceFileJson('vehicleListData', vehicleListData) then
-                return true
-            else
-                notifyPlayer(source, "saveVehicleList: Could not write vehicle list data.\n")
-            end
-        else
-            notifyPlayer(source, "saveVehicleList: Could not load vehicle list data.\n")
-        end
-    else
-        notifyPlayer(source, "saveVehicleList: Could not get license for player source ID: " .. source .. "\n")
-    end
-    return false
+local function saveVehicleList(accessIndex, name, allVehicleLists, saveVehicleList)
+
+    local lists = allVehicleLists[accessIndex] ~= nil and allVehicleLists[accessIndex] or {}
+
+    lists[name] = saveVehicleList
+    allVehicleLists[accessIndex] = lists
+
+    return FileManager.SaveCurrentResourceFileJson('vehicleListData', allVehicleLists) 
 end
 
 local function updateBestLapTimes(rIndex)
@@ -892,10 +884,13 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
         return
     end
 
-    deleteVehicleList(~isPublic, source, name)
+    local vehicleLists = loadFullVehicleList()
 
-    if(~saveVehicleList(isPublic, source, name, vehicleList)) then
+    local accessIndex = getAccessIndex(isPublic, source)
+
+    if(not saveVehicleList(accessIndex, name, vehicleLists, vehicleList)) then
         notifyPlayer(source, "Error saving " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+        return
     end
     
     notifyPlayer(source, "Saved " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")

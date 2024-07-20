@@ -846,10 +846,10 @@ local function saveList(access, name, vehicles)
         return
     end
 
-    if #vehicles == 0 then
-        sendMessage("Cannot save vehicle list.  List is empty.\n")
-        return
-    end
+    -- if #vehicles == 0 then
+    --     sendMessage("Cannot save vehicle list.  List is empty.\n")
+    --     return
+    -- end
 
     TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
 end
@@ -1377,10 +1377,6 @@ RegisterNUICallback("load_list", function(data)
 end)
 
 RegisterNUICallback("save_list", function(data)
-
-    print("Save list event")
-
-    print(dump(data.access))
 
     if data.name == nil or data.access == nil or data.vehicles == nil then
         return 
@@ -2311,12 +2307,6 @@ end)
 
 RegisterNetEvent("races:vehicleLists")
 AddEventHandler("races:vehicleLists", function(publicVehicleListNames, privateVehicleListNames)
-    SendNUIMessage({
-        update = "vehicleListNames",
-        public = publicVehicleListNames,
-        private = privateVehicleListNames
-    })
-
     SendNUIMessage({
         type = "vehicle-list",
         action = "recieve_lists",
