@@ -444,11 +444,12 @@ local function finishRace(dnf)
     raceState = racingStates.Idle
 end
 
-local function updateList()
+local function updateList(isPublic)
     table.sort(vehicleList)
     SendNUIMessage({
         type = 'vehicle-list',
         action = "display_saved_list",
+        isPublic = isPublic,
         vehicleList = vehicleList
     })
 end
@@ -709,44 +710,6 @@ local function startRace(delay, override)
     end
 end
 
-local function addVeh(vehicle)
-    if vehicle ~= nil then
-        if IsModelInCdimage(vehicle) == 1 and IsModelAVehicle(vehicle) == 1 then
-            vehicleList[#vehicleList + 1] = vehicle
-            if true == panelShown then
-                updateList()
-            end
-            sendMessage("'" .. vehicle .. "' added to vehicle list.\n")
-        else
-            sendMessage("Cannot add vehicle.  Invalid vehicle.\n")
-        end
-    else
-        sendMessage("Cannot add vehicle.  Vehicle name required.\n")
-    end
-end
-
-local function delVeh(vehicle)
-    if vehicle ~= nil then
-        if IsModelInCdimage(vehicle) == 1 and IsModelAVehicle(vehicle) == 1 then
-            for i = 1, #vehicleList do
-                if vehicleList[i] == vehicle then
-                    table.remove(vehicleList, i)
-                    if true == panelShown then
-                        updateList()
-                    end
-                    sendMessage("'" .. vehicle .. "' deleted from vehicle list.\n")
-                    return
-                end
-            end
-            sendMessage("Cannot delete vehicle.  '" .. vehicle .. "' not found.\n")
-        else
-            sendMessage("Cannot delete vehicle.  Invalid vehicle.\n")
-        end
-    else
-        sendMessage("Cannot delete vehicle.  Vehicle name required.\n")
-    end
-end
-
 local function addClass(class)
     class = math.tointeger(tonumber(class))
     if class ~= nil and class >= 0 and class <= 21 then
@@ -789,38 +752,6 @@ local function deleteClass(class)
     end
 end
 
-local function addAllVeh()
-    for _, vehicle in pairs(allVehiclesList) do
-        vehicleList[#vehicleList + 1] = vehicle
-    end
-    if true == panelShown then
-        updateList()
-    end
-    sendMessage("Added all vehicles to vehicle list.\n")
-end
-
-local function delAllVeh()
-    vehicleList = {}
-    if true == panelShown then
-        updateList()
-    end
-    sendMessage("All vehicles deleted from vehicle list.\n")
-end
-
-local function listVeh()
-    if #vehicleList > 0 then
-        table.sort(vehicleList)
-        local msg = "Vehicle list: "
-        for i = 1, #vehicleList do
-            msg = msg .. vehicleList[i] .. ", "
-        end
-        msg = string.sub(msg, 1, -3)
-        sendMessage(msg)
-    else
-        sendMessage("No vehicles in vehicle list.\n")
-    end
-end
-
 local function loadLst(access, name)
     if access ~= "Private" and access ~= "Public" then
         sendMessage("Cannot load vehicle list.  Invalid access type.\n")
@@ -836,7 +767,7 @@ end
 
 local function saveList(access, name, vehicles)
 
-    if (access ~= "pvt" and access ~= pub) then
+    if (access ~= "pvt" and access ~= "pub") then
         sendMessage("Cannot save vehicle list.  Invalid access type.\n")
         return
     end
@@ -852,22 +783,6 @@ local function saveList(access, name, vehicles)
     -- end
 
     TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
-end
-
-local function overwriteLst(access, name)
-    if "pvt" == access or "pub" == access then
-        if name ~= nil then
-            if #vehicleList > 0 then
-                TriggerServerEvent("races:overwriteLst", "pub" == access, name, vehicleList)
-            else
-                sendMessage("Cannot overwrite vehicle list.  List is empty.\n")
-            end
-        else
-            sendMessage("Cannot overwrite vehicle list.  Name required.\n")
-        end
-    else
-        sendMessage("Cannot overwrite vehicle list.  Invalid access type.\n")
-    end
 end
 
 local function deleteLst(access, name)
@@ -1767,7 +1682,7 @@ AddEventHandler("races:loadLst", function(isPublic, name, list)
     vehicleList = list
 
     if true == panelShown then
-        updateList()
+        updateList(isPublic)
     end
 end)
 

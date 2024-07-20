@@ -42,7 +42,7 @@ function readVehicleListEvents(event) {
 			listPanel.show();
 			break;
 		case "display_saved_list":
-			populateSavedList(data.vehicleList);
+			populateSavedList(data.vehicleList, data.isPublic);
 			break;
 		case "recieve_lists":
 			updateVehicleLists(data.public, data.private);
@@ -92,8 +92,10 @@ function MakeOptions(list) {
 	return options;
 }
 
-function populateSavedList(vehicleList) {
+function populateSavedList(vehicleList, isPublic) {
 	currentVehicleList.empty();
+
+	publicSwitch.prop('checked', isPublic);
 
 	vehicleList.forEach((vehicle) => {
 		let vehicleElement = $("<li/>", {
@@ -145,7 +147,7 @@ function saveCurrentList() {
 	$.post(
 		"https://races/save_list",
 		JSON.stringify({
-			access: $("#listPanel .public-access").prop("checked") ? "pub" : "pvt",
+			access: publicSwitch.prop("checked") ? "pub" : "pvt",
 			name: savedVehicleLists.find(":selected").text(),
 			vehicles: currentVehicleList.children().map(function() {
 				return $(this).text()
@@ -213,6 +215,8 @@ function onPublicChange() {
 	if (currentVehicleList.children().length == 0) return;
 
 	console.log("list has vehicles");
+
+	saveCurrentList();
 }
 
 function onModalConfirm() {
