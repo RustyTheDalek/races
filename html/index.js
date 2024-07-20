@@ -677,24 +677,6 @@ $(function () {
 
   /* vehicle list panel */
 
-  $("#add_class").click(function () {
-    $.post(
-      "https://races/add_class",
-      JSON.stringify({
-        class: $("#list_vclass").val(),
-      })
-    );
-  });
-
-  $("#delete_class").click(function () {
-    $.post(
-      "https://races/delete_class",
-      JSON.stringify({
-        class: $("#list_vclass").val(),
-      })
-    );
-  });
-
   $("#vlist_main").click(function () {
     $("#listPanel").hide();
     $.post(

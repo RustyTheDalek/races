@@ -710,48 +710,6 @@ local function startRace(delay, override)
     end
 end
 
-local function addClass(class)
-    class = math.tointeger(tonumber(class))
-    if class ~= nil and class >= 0 and class <= 21 then
-        for _, vehicle in pairs(allVehiclesList) do
-            if GetVehicleClassFromName(vehicle) == class then
-                vehicleList[#vehicleList + 1] = vehicle
-            end
-        end
-        if true == panelShown then
-            updateList()
-        end
-        sendMessage("Vehicles of class " .. getClassName(class) .. " added to vehicle list.\n")
-    else
-        sendMessage("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
-    end
-end
-
-local function deleteClass(class)
-    class = math.tointeger(tonumber(class))
-    if class ~= nil and class >= 0 and class <= 21 then
-        for i = 1, #vehicleList do
-            while true do
-                if vehicleList[i] ~= nil then
-                    if GetVehicleClassFromName(vehicleList[i]) == class then
-                        table.remove(vehicleList, i)
-                    else
-                        break
-                    end
-                else
-                    break
-                end
-            end
-        end
-        if true == panelShown then
-            updateList()
-        end
-        sendMessage("Vehicles of class " .. getClassName(class) .. " deleted from vehicle list.\n")
-    else
-        sendMessage("Cannot delete vehicles from vehicle list.  Invalid vehicle class.\n")
-    end
-end
-
 local function loadLst(access, name)
     if access ~= "Private" and access ~= "Public" then
         sendMessage("Cannot load vehicle list.  Invalid access type.\n")
@@ -782,6 +740,7 @@ local function saveList(access, name, vehicles)
     --     return
     -- end
 
+    vehicleList = vehicles
     TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
 end
 
@@ -797,6 +756,60 @@ local function deleteLst(access, name)
     end
     
     TriggerServerEvent("races:deleteLst", "pub" == access, name)
+end
+
+local function addClass(data)
+    local class = math.tointeger(tonumber(data.class))
+
+    if class == nil or class < 0 or class > 21 then
+        sendMessage("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
+        return
+    end
+
+    for _, vehicle in pairs(allVehiclesList) do
+        if GetVehicleClassFromName(vehicle) == class then
+            vehicleList[#vehicleList + 1] = vehicle
+        end
+    end
+
+    vehicleList = removeDuplicates(vehicleList)
+
+    saveList(data.access, data.name, vehicleList)
+
+    if true == panelShown then
+        updateList()
+    end
+    
+end
+
+local function deleteClass(data)
+    local class = math.tointeger(tonumber(data.class))
+
+    if class == nil or class < 0 or class > 21 then
+        sendMessage("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
+        return
+    end
+    
+    for i = 1, #vehicleList do
+        while true do
+            if vehicleList[i] ~= nil then
+                if GetVehicleClassFromName(vehicleList[i]) == class then
+                    table.remove(vehicleList, i)
+                else
+                    break
+                end
+            else
+                break
+            end
+        end
+    end
+
+    saveList(data.access, data.name, vehicleList)
+
+    if true == panelShown then
+        updateList()
+    end
+
 end
 
 local function ClearCurrentWaypoints()
@@ -1029,7 +1042,7 @@ local function showPanel(panel)
         })
     elseif "list" == panel then
         SetNuiFocus(true, true)
-        updateList()
+        -- updateList()
         SendNUIMessage({
             type = "vehicle-list",
             action = "display_list",
@@ -1282,11 +1295,11 @@ RegisterNUICallback("start", function(data)
 end)
 
 RegisterNUICallback("add_class", function(data)
-    addClass(data.class)
+    addClass(data)
 end)
 
 RegisterNUICallback("delete_class", function(data)
-    deleteClass(data.class)
+    deleteClass(data)
 end)
 
 RegisterNUICallback("load_list", function(data)
