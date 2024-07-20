@@ -161,6 +161,7 @@ function setupModalForDeletelist() {
 
 	modalInput.hide();
 	listModal.find("h1").text("Are you sure you want to delete this list?");
+	modalConfirm.prop("disabled", false);
 	modalConfirm.data("action", "delete-list");
 	listModal.show();
 }
@@ -168,8 +169,8 @@ function setupModalForDeletelist() {
 function setupModalForNewVehicleList() {
 	listModal.show();
 	listModal.find("h1").text("New List Name");
+	modalConfirm.prop("disabled", "true");
 	modalInput.val("").show();
-	modalConfirm.data("action", "new-list");
 }
 
 // #region Input events
@@ -186,6 +187,16 @@ function deleteList() {
 	if (currentVehicleList.children().length == 0) return;
 
 	console.log("list has vehicles");
+
+	$("#delete_list").click(function () {
+		$.post(
+			"https://races/delete_list",
+			JSON.stringify({
+				access: $("#listPanel .public-access").prop("checked") ? "pub" : "pvt",
+				name: savedVehicleLists.find(":selected").text(),
+			})
+		);
+	});
 }
 
 function onPublicChange() {

@@ -695,16 +695,6 @@ $(function () {
     );
   });
 
-  $("#delete_list").click(function () {
-    $.post(
-      "https://races/delete_list",
-      JSON.stringify({
-        access: $('#listPanel .public-access').prop('checked') ? 'pub' : 'pvt',
-        name: $("#list_name").val(),
-      })
-    );
-  });
-
   $("#vlist_main").click(function () {
     $("#listPanel").hide();
     $.post(

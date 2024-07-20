@@ -934,24 +934,30 @@ end)
 RegisterNetEvent("races:deleteLst")
 AddEventHandler("races:deleteLst", function(isPublic, name)
     local source = source
-    if isPublic ~= nil and name ~= nil then
-        local list = loadVehicleList(isPublic, source, name)
-        if list ~= nil then
-            if true == saveVehicleList(isPublic, source, name, nil) then
-                notifyPlayer(source,
-                    "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-            else
-                notifyPlayer(source,
-                    "Error deleting " ..
-                    (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
-            end
-        else
-            notifyPlayer(source,
-                "Cannot delete.  " ..
-                (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
-        end
-    else
+    if isPublic == nil or name ~= nil then
         notifyPlayer(source, "Ignoring delete vehicle list event.  Invalid parameters.\n")
+        return
+    end
+
+    local vehicleLists = loadFullVehicleList()
+
+    local accessIndex = getAccessIndex(isPublic, source)
+
+    if(not saveVehicleList(accessIndex, name, vehicleLists, nil)) then
+        notifyPlayer(source, "Cannot delete.  " .. (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
+        return
+    end
+
+    notifyPlayer(source, "Deleted " .. (true == isPublic and "public" or "private") .. " vehicle list '" .. name .. "'.\n")
+
+    local publicVehicleListNames = GetVehicleListNames(true, source)
+    local privateVehicleListNames = GetVehicleListNames(false, source)
+
+    --TODO send this to vehicleLists js
+    if(isPublic) then
+        TriggerClientEvent("races:vehicleLists", -1, publicVehicleListNames, privateVehicleListNames)
+    else
+        TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
     end
 end)
 

@@ -871,15 +871,17 @@ local function overwriteLst(access, name)
 end
 
 local function deleteLst(access, name)
-    if "pvt" == access or "pub" == access then
-        if name ~= nil then
-            TriggerServerEvent("races:deleteLst", "pub" == access, name)
-        else
-            sendMessage("Cannot delete vehicle list.  Name required.\n")
-        end
-    else
+    if access ~= "pvt" and access == "pub" then
         sendMessage("Cannot delete vehicle list.  Invalid access type.\n")
+        return
     end
+
+    if name == nil then
+        sendMessage("Cannot delete vehicle list.  Name required.\n")
+        return
+    end
+    
+    TriggerServerEvent("races:deleteLst", "pub" == access, name)
 end
 
 local function ClearCurrentWaypoints()
@@ -1386,6 +1388,11 @@ RegisterNUICallback("save_list", function(data)
 end)
 
 RegisterNUICallback("delete_list", function(data)
+
+    if (data.name == nil or data.access == nil) then
+        return
+    end
+
     deleteLst(data.access, data.name)
 end)
 
@@ -1758,8 +1765,6 @@ AddEventHandler("races:loadLst", function(isPublic, name, list)
     end
 
     vehicleList = list
-
-    print(dump(vehicleList))
 
     if true == panelShown then
         updateList()
