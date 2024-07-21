@@ -168,15 +168,6 @@ body {
     width: 25%;
 }
 
-#main_track_access {
-    height: 44px;
-}
-
-#main_name {
-    width: 500px;
-    height: 44px;
-}
-
 #main_load {
     width: 25%
 }
@@ -250,10 +241,6 @@ body {
     width: 25%;
 }
 
-#edit_track_access0 {
-    height: 44px;
-}
-
 #edit_name {
     width: 500px;
     height: 44px;
@@ -301,10 +288,6 @@ body {
 
 #edit_vlist {
     width: 25%;
-}
-
-#register_track_access {
-    height: 44px;
 }
 
 #register_name {

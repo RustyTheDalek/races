@@ -1057,34 +1057,41 @@ end)
 RegisterNetEvent("races:trackNames")
 AddEventHandler("races:trackNames", function(isPublic, altSource)
     local source = altSource or source
-    if isPublic ~= nil then
-        local trackNames = {}
 
-        local license = true == isPublic and "PUBLIC" or GetPlayerIdentifier(source, 0)
-        if license ~= nil then
-            local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
-            if raceData ~= nil then
-                if license ~= "PUBLIC" then
-                    license = string.sub(license, 9)
-                end
-                local tracks = raceData[license]
-                if tracks ~= nil then
-                    for trackName in pairs(tracks) do
-                        trackNames[#trackNames + 1] = trackName
-                    end
-                    table.sort(trackNames)
-                end
-            else
-                notifyPlayer(source, "Could not load race data.\n")
-            end
-        else
-            notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
-        end
-
-        TriggerClientEvent("races:trackNames", source, isPublic, trackNames)
-    else
+    print("Getting track names")
+    
+    if isPublic == nil then
         notifyPlayer(source, "Ignoring list event.  Invalid parameters.\n")
+        return
     end
+
+    local license = getAccessIndex(isPublic, source)
+
+    if license == nil then
+        notifyPlayer(source, "Could not get license for player source ID: " .. source .. "\n")
+        return
+    end
+
+    local raceData = FileManager.LoadCurrentResourceFileJson('raceData')
+
+    if raceData == nil then
+        notifyPlayer(source, "Could not load race data.\n")
+        return
+    end
+
+    local trackNames = {}
+    local tracks = raceData[license]
+    if tracks ~= nil then
+        for trackName in pairs(tracks) do
+            trackNames[#trackNames + 1] = trackName
+        end
+        table.sort(trackNames)
+    end
+    
+    print(dump(trackNames))
+
+    TriggerClientEvent("races:trackNames", source, isPublic, trackNames)
+
 end)
 
 function GetVehicleListNames(isPublic, source)

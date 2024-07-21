@@ -1021,23 +1021,23 @@ local function showPanel(panel)
     panelShown = true
     if nil == panel then
         SetNuiFocus(true, true)
-        TriggerServerEvent("races:trackNames", false, nil)
-        TriggerServerEvent("races:trackNames", true, nil)
+        TriggerServerEvent("races:trackNames", false)
+        TriggerServerEvent("races:trackNames", true)
         SendNUIMessage({
             panel = "main",
             defaultVehicle = defaultVehicle
         })
     elseif "edit" == panel then
         SetNuiFocus(true, true)
-        TriggerServerEvent("races:trackNames", false, nil)
-        TriggerServerEvent("races:trackNames", true, nil)
+        TriggerServerEvent("races:trackNames", false)
+        TriggerServerEvent("races:trackNames", true)
         SendNUIMessage({
             panel = "edit"
         })
     elseif "register" == panel then
         SetNuiFocus(true, true)
-        TriggerServerEvent("races:trackNames", false, nil)
-        TriggerServerEvent("races:trackNames", true, nil)
+        TriggerServerEvent("races:trackNames", false)
+        TriggerServerEvent("races:trackNames", true)
         SendNUIMessage({
             panel = "register",
             defaultLaps = defaultLaps,
@@ -2210,20 +2210,19 @@ end)
 
 RegisterNetEvent("races:trackNames")
 AddEventHandler("races:trackNames", function(isPublic, trackNames)
-    if isPublic ~= nil and trackNames ~= nil then
-        if true == panelShown then
-            local html = ""
-            for _, trackName in ipairs(trackNames) do
-                html = html .. "<option value = \"" .. trackName .. "\">" .. trackName .. "</option>"
-            end
-            SendNUIMessage({
-                update = "trackNames",
-                access = false == isPublic and "pvt" or "pub",
-                trackNames = html
-            })
-        end
-    else
+    if isPublic == nil or trackNames == nil then
         notifyPlayer("Ignoring trackNames event.  Invalid parameters.\n")
+        return
+    end
+
+    print("Sending track names")
+
+    if true == panelShown then
+        SendNUIMessage({
+            update = "trackNames",
+            access = false == isPublic and "pvt" or "pub",
+            trackNames = trackNames
+        })
     end
 end)
 

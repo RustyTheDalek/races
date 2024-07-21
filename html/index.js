@@ -133,6 +133,33 @@ $(function () {
     }
   }
 
+  function populateOptgroup(data, optgroup) {
+
+    if(!Array.isArray(data)) {
+      console.warn("data isn't an array");
+      return;
+    }
+
+    data.forEach((item) => {
+      optgroup.append(
+        $("<option/>", {
+          value: item,
+          text: item,
+        })
+      );
+    });
+  }
+
+  function populateTrackNames(selectToPopulate) {
+
+    console.log(selectToPopulate);
+    let privateListGroup = selectToPopulate.find(`optgroup[label='Private']`);
+    let publicListGroup = selectToPopulate.find(`optgroup[label='Public']`);
+
+    populateOptgroup(pvtTrackNames, privateListGroup);
+    populateOptgroup(pubTrackNames, publicListGroup);
+  }
+
   window.addEventListener("message", function (event) {
     let data = event.data;
     if (data.type === "ready") {
@@ -166,9 +193,10 @@ $(function () {
       } else if ("pub" == data.access) {
         pubTrackNames = data.trackNames;
       }
-      $("#main_track_access").change();
-      $("#edit_track_access0").change();
-      $("#register_track_access").change();
+
+      populateTrackNames($("#main_name"));
+      populateTrackNames($("#edit_name"));
+      populateTrackNames($("#register_name"));
     }
   });
 
@@ -178,19 +206,11 @@ $(function () {
     $.post("https://races/clear");
   });
 
-  $("#main_track_access").change(function () {
-    if ("pvt" == $("#main_track_access").val()) {
-      document.getElementById("main_name").innerHTML = pvtTrackNames;
-    } else {
-      document.getElementById("main_name").innerHTML = pubTrackNames;
-    }
-  });
-
   $("#main_load").click(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access: $("#main_track_access").val(),
+        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#main_name").val(),
       })
     );
@@ -200,7 +220,7 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $("#main_track_access").val(),
+        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#main_name").val(),
       })
     );
@@ -210,7 +230,7 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $("#main_track_access").val(),
+        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
       })
     );
   });
@@ -304,14 +324,6 @@ $(function () {
     $.post("https://races/reverse");
   });
 
-  $("#edit_track_access0").change(function () {
-    if ("pvt" == $("#edit_track_access0").val()) {
-      document.getElementById("edit_name").innerHTML = pvtTrackNames;
-    } else {
-      document.getElementById("edit_name").innerHTML = pubTrackNames;
-    }
-  });
-
   $("#map").change(function () {
     $.post(
       "https://races/setnewmap",
@@ -325,7 +337,7 @@ $(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access: $("#edit_track_access0").val(),
+        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#edit_name").val(),
       })
     );
@@ -335,7 +347,7 @@ $(function () {
     $.post(
       "https://races/overwrite",
       JSON.stringify({
-        access: $("#edit_track_access0").val(),
+        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#edit_name").val(),
         map: $("#map").val(),
       })
@@ -346,7 +358,7 @@ $(function () {
     $.post(
       "https://races/delete",
       JSON.stringify({
-        access: $("#edit_track_access0").val(),
+        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#edit_name").val(),
       })
     );
@@ -356,7 +368,7 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $("#edit_track_access0").val(),
+        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#edit_name").val(),
       })
     );
@@ -366,7 +378,7 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $("#edit_track_access0").val(),
+        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
       })
     );
   });
@@ -419,19 +431,12 @@ $(function () {
   /* #endregion */
 
   /* #region register panel */
-  $("#register_track_access").change(function () {
-    if ("pvt" == $("#register_track_access").val()) {
-      document.getElementById("register_name").innerHTML = pvtTrackNames;
-    } else {
-      document.getElementById("register_name").innerHTML = pubTrackNames;
-    }
-  });
 
   $("#register_load").click(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access: $("#register_track_access").val(),
+        access:  $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#register_name").val(),
       })
     );
@@ -441,7 +446,7 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $("#register_track_access").val(),
+        access: $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
         trackName: $("#register_name").val(),
       })
     );
@@ -451,7 +456,7 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $("#register_track_access").val(),
+        access: $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
       })
     );
   });
@@ -482,20 +487,20 @@ $(function () {
       "<option value = 21>21:Trains</option>";
     if ($("#rtype").val() == "norm") {
       $("#rest").hide();
-			$("#vehicle-list-options").hide();
+      $("#vehicle-list-options").hide();
       $("#vclass").hide();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "rest") {
       $("#rest").show();
-			registerPanel.find("#vehicle-list-options").show();
+      registerPanel.find("#vehicle-list-options").show();
       $("#vclass").hide();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "class") {
       $("#rest").hide();
       document.getElementById("register_vclass").innerHTML =
         "<option value = -1>-1:Custom</option>" + html;
-			registerPanel.find("#vehicle-list-options").show();
-			$("#vclass").show();
+      registerPanel.find("#vehicle-list-options").show();
+      $("#vclass").show();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "rand") {
       DisplayRandomOptions(html);
@@ -503,8 +508,9 @@ $(function () {
   });
 
   $("#register").click(function () {
-
-    let selectedVehicleList = registerPanel.find("[name=vehicle-list]").find(":selected");
+    let selectedVehicleList = registerPanel
+      .find("[name=vehicle-list]")
+      .find(":selected");
 
     $.post(
       "https://races/register",
@@ -518,7 +524,8 @@ $(function () {
         vclass: $("#register_vclass").val(),
         svehicle: $("#register_start_vehicle").val(),
         randomVehicleList: selectedVehicleList.val(),
-        randomVehicleListPublic : selectedVehicleList.parent().attr('label') == "Public" ? true : false
+        randomVehicleListPublic:
+          selectedVehicleList.parent().attr("label") == "Public" ? true : false,
       })
     );
   });
@@ -660,18 +667,18 @@ $(function () {
     }
   };
 
-  if(window.jQuery) {
+  if (window.jQuery) {
     $.post("https://races/uiReady");
   }
 });
 
 function DisplayRandomOptions(html) {
-    $("#rest").hide();
-    document.getElementById("register_vclass").innerHTML =
-        "<option value = -2>Any</option>" + html;
-    $("#vehicle-list-options").show();
-    $("#vclass").show();
-    $("#sveh").show();
+  $("#rest").hide();
+  document.getElementById("register_vclass").innerHTML =
+    "<option value = -2>Any</option>" + html;
+  $("#vehicle-list-options").show();
+  $("#vclass").show();
+  $("#sveh").show();
 }
 
 function OpenRegisterPanel(data, openPanel) {
@@ -683,14 +690,17 @@ function OpenRegisterPanel(data, openPanel) {
   $("#rtype").change();
 
   let vehicleOptions = MakeVehicleListOptions(data.allVehicles);
-  
+
   $("#register_rest_vehicle").empty().append(vehicleOptions);
-  $("#register_start_vehicle").empty().append('<option selected value=""></option>').append(vehicleOptions.map(option => option.clone()));
+  $("#register_start_vehicle")
+    .empty()
+    .append('<option selected value=""></option>')
+    .append(vehicleOptions.map((option) => option.clone()));
   $("#registerPanel").show();
   openPanel = "register";
 
-  if($('#grid-lineup-table').children().length > 0) {
-    $('#grid-lineup').show();
+  if ($("#grid-lineup-table").children().length > 0) {
+    $("#grid-lineup").show();
   }
   return openPanel;
 }
