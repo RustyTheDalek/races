@@ -296,6 +296,7 @@ function createNewVehicleList() {
 	listModal.hide();
 	currentVehicleList.empty();
 	publicSwitch.prop('checked', public);
+	setVehicleListControls(true);
 }
 
 function onModalCancel() {
