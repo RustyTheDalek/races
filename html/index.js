@@ -235,16 +235,7 @@ $(function () {
       })
     );
   });
-
-  $("#lvehicles").click(function () {
-    $.post(
-      "https://races/lvehicles",
-      JSON.stringify({
-        vclass: $("#main_vclass").val(),
-      })
-    );
-  });
-
+  
   $("#speedo").click(function () {
     $.post(
       "https://races/speedo",

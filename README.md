@@ -46,7 +46,6 @@ For the following **`/races vl`** commands, [access] = {'pvt', 'pub'} where 'pvt
 **`/races respawn`** - respawn at last waypoint\
 **`/races results`** - view latest race results\
 **`/races spawn (vehicle)`** - spawn a vehicle; (vehicle) defaults to 'adder'\
-**`/races lvehicles (class)`** - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\
 **`/races speedo (unit)`** - change unit of speed measurement to (unit) = {imperial, metric}; otherwise toggle display of speedometer if (unit) is not specified\
 **`/races panel (panel)`** - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified
 
@@ -84,7 +83,7 @@ Look for purple circled star blips on the waypoint map.  There will be correspon
 
 If the race is restricted to a specific vehicle, the label will include **'using [vehicle]'** where [vehicle] is the name of the restricted vehicle.  You must be in that vehicle when prompted to join the race.  If permission to spawn vehicles is given or not required, you can spawn the restricted vehicle by typing **`/races spawn [vehicle]`** where [vehicle] is the restricted vehicle.  For example, if the label shows **using 'adder'**, you can spawn the vehicle by typing **`/races spawn adder`**.
 
-If the race is restricted to a specific vehicle class, the label will include **'using [class] vehicle class'** where [class] is the vehicle class.  The class number will be in parentheses.  You must be in a vehicle of that class when prompted to join the race.  If the class is Custom (-1), you can view which vehicles are allowed in the race by getting out of any vehicle you are in, walking into the registration waypoint on foot and trying to join the race.  The chat window will list which vehicles you can use in the class Custom (-1) race.  If the class is not Custom (-1), you can list vehicles in the class by typing **`/races lvehicles [class]`** where [class] is the vehicle class number.
+If the race is restricted to a specific vehicle class, the label will include **'using [class] vehicle class'** where [class] is the vehicle class.  The class number will be in parentheses.  You must be in a vehicle of that class when prompted to join the race.  If the class is Custom (-1), you can view which vehicles are allowed in the race by getting out of any vehicle you are in, walking into the registration waypoint on foot and trying to join the race.  The chat window will list which vehicles you can use in the class Custom (-1) race.  If the class is not Custom (-1).
 
 If the race changes vehicles randomly every lap, the label will include **'using random vehicles'**.  If a vehicle is specified after the **'using random vehicles'** message, racers will be placed in the specified vehicle when the race starts.
 
@@ -225,7 +224,7 @@ There are seven possible types of race you can join:  1. Any vehicle can be used
 
 If the race is restricted to specific vehicle, its name is shown at the registration waypoint.  Players will need to be in the restricted vehicle at the registration waypoint in order to join the race.  Players can spawn the restricted vehicle by typing **`/races spawn [vehicle]`** where [vehicle] is the restricted vehicle name.
 
-If the race is restricted to a specific vehicle class, the class name and number is shown at the registration waypoint.  You must be in a vehicle of the restricted class to join the race.  If the class is Custom (-1), you can view which vehicles are allowed in the race by getting out of any vehicle you are in, walking into the registration waypoint on foot and trying to join the race.  The chat window will list which vehicles you can use in the class Custom (-1) race.  If the class is not Custom (-1), you can list vehicles of the class by typing **`/races lvehicles [class]`** where [class] is the vehicle class number.
+If the race is restricted to a specific vehicle class, the class name and number is shown at the registration waypoint.  You must be in a vehicle of the restricted class to join the race.  If the class is Custom (-1), you can view which vehicles are allowed in the race by getting out of any vehicle you are in, walking into the registration waypoint on foot and trying to join the race.  The chat window will list which vehicles you can use in the class Custom (-1) race.  If the class is not Custom (-1).
 
 To join the race, type 'E' or press right DPAD.  Joining the race will clear any waypoints you previously set and load the track waypoints.  **NOTE THAT YOU CANNOT JOIN A RACE IF YOU ARE EDITING WAYPOINTS.  STOP EDITING FIRST.**  You can only join one race at a time.  If you want to join another race, leave your current one first.  **IF YOU DO NOT JOIN THE RACE YOU REGISTERED, YOU WILL NOT SEE THE RESULTS OF THE RACE.**
 
@@ -248,8 +247,6 @@ After all racers finish or DNF, the race results will be broadcast to players wh
 If you want to look at the race results again, type **`/races results`**.  If you cannot see all the results, type 'T' for chat and use the 'Page Up' and 'Page Down' keys to scroll.  Type 'Esc' when done.
 
 To spawn a vehicle, type **`/races spawn elegy2`** to spawn an **`elegy2`** vehicle.  If you do not indicate a vehicle name, the default is **`adder`**.  A list of vehicles you can spawn are listed in **`vehicles.txt`**.  This list has not been verified to work for all vehicles listed and there may be some missing.
-
-To list vehicles that can be used for any race, type **`/races lvehicles`**.  To list vehicles of a specific class, type **`/races lvehicles 0`** to list class Compacts (0) vehicles.  The vehicles displayed come from the **`vehicles.txt`** file which should contain every vehicle.
 
 To toggle the display of the speedometer at any time, type **`/races speedo`**.  The speedometer automatically displays when you are in a race and disappears when you finish or leave the race.  The default unit of measurement is imperial.  If you wish to change the unit of measurement type **`/races speedo (unit)`** where (unit) is either **`imperial`** for imperial or **`metric`** for metric.
 

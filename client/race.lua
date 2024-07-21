@@ -986,33 +986,6 @@ local function spawn(vehicleHash)
     end
 end
 
-local function lvehicles(vclass)
-    vclass = math.tointeger(tonumber(vclass))
-    if nil == vclass or (vclass >= 0 and vclass <= 21) then
-        local msg = "Available vehicles"
-        if nil == vclass then
-            msg = msg .. ": "
-        else
-            msg = msg .. " of class " .. getClassName(vclass) .. ": "
-        end
-        local vehicleFound = false
-        for _, vehicle in ipairs(allVehiclesList) do
-            if nil == vclass or GetVehicleClassFromName(vehicle) == vclass then
-                msg = msg .. vehicle .. ", "
-                vehicleFound = true
-            end
-        end
-        if false == vehicleFound then
-            msg = "No vehicles in list."
-        else
-            msg = string.sub(msg, 1, -3)
-        end
-        sendMessage(msg)
-    else
-        sendMessage("Cannot list vehicles.  Invalid vehicle class.\n")
-    end
-end
-
 local function showPanel(panel)
     panelShown = true
     if nil == panel then
@@ -1345,14 +1318,6 @@ RegisterNUICallback("spawn", function(data)
     spawn(vehicle)
 end)
 
-RegisterNUICallback("lvehicles", function(data)
-    local vclass = data.vclass
-    if "-1" == vclass then
-        vclass = nil
-    end
-    lvehicles(vclass)
-end)
-
 RegisterNUICallback("speedo", function(data)
     local unit = data.unit
     if "" == unit then
@@ -1491,8 +1456,6 @@ RegisterCommand("races", function(_, args)
         msg = msg .. "/races results - view latest race results\n"
         msg = msg .. "/races spawn (vehicle) - spawn a vehicle; (vehicle) defaults to 'adder'\n"
         msg = msg ..
-        "/races lvehicles (class) - list available vehicles of type (class); otherwise list all available vehicles if (class) is not specified\n"
-        msg = msg ..
         "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
         msg = msg ..
         "/races panel (panel) - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified\n"
@@ -1552,8 +1515,6 @@ RegisterCommand("races", function(_, args)
         viewResults(true)
     elseif "spawn" == args[1] then
         spawn(args[2])
-    elseif "lvehicles" == args[1] then
-        lvehicles(args[2])
     elseif "speedo" == args[1] then
         setSpeedo(args[2])
     elseif "panel" == args[1] then
