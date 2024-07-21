@@ -2,6 +2,7 @@ let listPanel = $("#listPanel");
 let allVehicles = $("#all-vehicles");
 let currentVehicleList = $("#current-list");
 let savedVehicleLists = $("#list_name");
+let registerVehicleLists = $('#vehicle-list-options');
 let publicSwitch = listPanel.find('input[name="public"]');
 let newList = listPanel.find("#new_list");
 let listDelete = listPanel.find("#delete_list");
@@ -74,12 +75,18 @@ function updateVehicleLists(publicList, privateList) {
 	if (privateList !== undefined) {
 		privateListOptionGroup.empty();
 		privateListOptionGroup.append(MakeOptions(privateList));
+
+		registerVehicleLists.find('[label="Private"]').empty().append(MakeOptions(privateList));
+		
 	}
 
 	let publicListOptionGroup = savedVehicleLists.find('[label="Public"]');
 	if (publicList !== undefined) {
 		publicListOptionGroup.empty();
 		publicListOptionGroup.append(MakeOptions(publicList));
+
+		registerVehicleLists.find('[label="Public"]').empty().append(MakeOptions(publicList));
+
 	}
 
 	if (selectedListName !== '') {
