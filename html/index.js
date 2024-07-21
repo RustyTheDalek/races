@@ -37,10 +37,6 @@ $(function () {
   let openPanel = "";
   let pvtTrackNames = "";
   let pubTrackNames = "";
-  let pvtGrpNames = "";
-  let pubGrpNames = "";
-  let pvtListNames = "";
-  let pubListNames = "";
 
   let registerPanel = $("#registerPanel").show();
 
@@ -173,39 +169,10 @@ $(function () {
       $("#main_track_access").change();
       $("#edit_track_access0").change();
       $("#register_track_access").change();
-    } else if ("grpNames" == data.update) {
-      if ("pvt" == data.access) {
-        pvtGrpNames = data.grpNames;
-      } else if ("pub" == data.access) {
-        pubGrpNames = data.grpNames;
-      }
-      $("#grp_access0").change();
-    } else if ("listNames" == data.update) {
-      console.log("Updating vehicle list");
-      if ("pvt" == data.access) {
-        pvtListNames = data.listNames;
-      } else if ("pub" == data.access) {
-        pubListNames = data.listNames;
-      }
     }
   });
 
-  function MakeOptions(list) {
-    let options = [];
-
-    list.forEach((name) => {
-      options.push(
-        $("<option/>", {
-          value: name,
-          text: name,
-        })
-      );
-    });
-
-    return options;
-  }
-
-  /* main panel */
+  /* #region main panel */
 
   $("#main_clear").click(function () {
     $.post("https://races/clear");
@@ -331,7 +298,9 @@ $(function () {
     $.post("https://races/close");
   });
 
-  /* edit panel */
+  /* #endregion */
+
+  /* #region edit panel */
   $("#edit").click(function () {
     $.post("https://races/edit");
   });
@@ -456,7 +425,9 @@ $(function () {
     $.post("https://races/close");
   });
 
-  /* register panel */
+  /* #endregion */
+
+  /* #region register panel */
   $("#register_track_access").change(function () {
     if ("pvt" == $("#register_track_access").val()) {
       document.getElementById("register_name").innerHTML = pvtTrackNames;
@@ -618,64 +589,9 @@ $(function () {
     $.post("https://races/close");
   });
 
-  $("#grp_access0").change(function () {
-    if ("pvt" == $("#grp_access0").val()) {
-      document.getElementById("grp_name").innerHTML = pvtGrpNames;
-    } else {
-      document.getElementById("grp_name").innerHTML = pubGrpNames;
-    }
-  });
+  /* #endregion */
 
-  $("#load_grp").click(function () {
-    $.post(
-      "https://races/load_grp",
-      JSON.stringify({
-        access: $("#grp_access0").val(),
-        name: $("#grp_name").val(),
-      })
-    );
-  });
-
-  $("#overwrite_grp").click(function () {
-    $.post(
-      "https://races/overwrite_grp",
-      JSON.stringify({
-        access: $("#grp_access0").val(),
-        name: $("#grp_name").val(),
-      })
-    );
-  });
-
-  $("#delete_grp").click(function () {
-    $.post(
-      "https://races/delete_grp",
-      JSON.stringify({
-        access: $("#grp_access0").val(),
-        name: $("#grp_name").val(),
-      })
-    );
-  });
-
-  $("#list_grps").click(function () {
-    $.post(
-      "https://races/list_grps",
-      JSON.stringify({
-        access: $("#grp_access0").val(),
-      })
-    );
-  });
-
-  $("#save_grp").click(function () {
-    $.post(
-      "https://races/save_grp",
-      JSON.stringify({
-        access: $("#grp_access1").val(),
-        name: $("#grp_unsaved").val(),
-      })
-    );
-  });
-
-  /* vehicle list panel */
+  /* ]region vehicle list panel */
 
   $("#vlist_main").click(function () {
     $("#listPanel").hide();
@@ -711,6 +627,8 @@ $(function () {
     $("#listPanel").hide();
     $.post("https://races/close");
   });
+
+  /* #endregion */
 
   /* reply panel */
   $("#reply_close").click(function () {

@@ -452,6 +452,8 @@ end)
 
 RegisterNetEvent("races:recieveUIData")
 AddEventHandler("races:recieveUIData", function()
+    local source = source 
+    
     local publicVehicleListNames = GetVehicleListNames(true, source)
     local privateVehicleListNames = GetVehicleListNames(false, source)
 

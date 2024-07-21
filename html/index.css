@@ -386,43 +386,6 @@ select {
     width: 25%;
 }
 
-#grp_access0 {
-    height: 44px;
-}
-
-#grp_name {
-    width: 500px;
-    height: 44px;
-}
-
-#load_grp {
-    width: 20%;
-}
-
-#overwrite_grp {
-    width: 20%;
-}
-
-#delete_grp {
-    width: 20%;
-}
-
-#list_grps {
-    width: 20%;
-}
-
-#grp_access1 {
-    height: 44px;
-}
-
-#grp_unsaved {
-    width: 500px;
-}
-
-#save_grp {
-    width: 20%;
-}
-
 /* #region Vehicle List */
 
 #listPanel {
