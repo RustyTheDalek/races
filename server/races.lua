@@ -439,7 +439,6 @@ AddEventHandler("races:init", function()
     end
 
     table.sort(allVehicles)
-    allVehicles = removeDuplicates(allVehicles)
 
     TriggerClientEvent("races:allVehicles", source, allVehicles)
 

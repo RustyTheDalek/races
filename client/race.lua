@@ -48,6 +48,7 @@ local beginDNFTimeout = false             -- flag indicating if DNF timeout shou
 local timeoutStart = -1                   -- start time of DNF timeout
 
 local vehicleList = {}                    -- vehicle list used for custom class races and random races
+local formattedList = {}
 local restrictedHash = nil                -- vehicle hash of race with restricted vehicle
 local restrictedClass = nil               -- restricted vehicle class
 
@@ -380,6 +381,32 @@ local function getClassName(vclass)
     end
 end
 
+local function getDisplayNamesFromVehicleList(vehicleList)
+
+    local vehicleListInfo = {}
+
+    for index, vehicle in ipairs(vehicleList) do
+        if IsModelInCdimage(vehicle) and IsModelAVehicle(vehicle) then
+            --Fallback to spawncode 
+            local name
+            if (GetLabelText(vehicle) ~= 'NULL') then
+                name = GetLabelText(vehicle)
+            elseif (GetLabelText(GetDisplayNameFromVehicleModel(vehicle))) then
+                name = GetLabelText(GetDisplayNameFromVehicleModel(vehicle))
+            else
+                name = vehicle
+            end
+
+            table.insert(vehicleListInfo, {
+                spawnCode = vehicle,
+                name = name
+            })
+        end
+    end
+
+    return vehicleListInfo;
+end
+
 local function vehicleInList(vehicle, list)
     for _, vehName in pairs(list) do
         if GetEntityModel(vehicle) == GetHashKey(vehName) then
@@ -450,7 +477,7 @@ local function updateList(isPublic)
         type = 'vehicle-list',
         action = "display_saved_list",
         isPublic = isPublic,
-        vehicleList = vehicleList
+        vehicleList = formattedList
     })
 end
 
@@ -767,12 +794,14 @@ local function addClass(data)
     end
 
     for _, vehicle in pairs(allVehiclesList) do
-        if GetVehicleClassFromName(vehicle) == class then
-            vehicleList[#vehicleList + 1] = vehicle
+        if GetVehicleClassFromName(vehicle.spawnCode) == class then
+            vehicleList[#vehicleList + 1] = vehicle.spawnCode
         end
     end
 
     vehicleList = removeDuplicates(vehicleList)
+
+    formattedList = getDisplayNamesFromVehicleList(vehicleList)
 
     saveList(data.access, data.name, vehicleList)
 
@@ -803,6 +832,8 @@ local function deleteClass(data)
             end
         end
     end
+
+    formattedList = getDisplayNamesFromVehicleList(vehicleList)
 
     saveList(data.access, data.name, vehicleList)
 
@@ -1017,6 +1048,7 @@ local function showPanel(panel)
     elseif "list" == panel then
         SetNuiFocus(true, true)
         -- updateList()
+        print(dump(allVehiclesList))
         SendNUIMessage({
             type = "vehicle-list",
             action = "display_list",
@@ -1655,6 +1687,8 @@ AddEventHandler("races:loadLst", function(isPublic, name, list)
     end
 
     vehicleList = list
+    
+    formattedList = getDisplayNamesFromVehicleList(list)
 
     if true == panelShown then
         updateList(isPublic)
@@ -2171,14 +2205,7 @@ AddEventHandler("races:allVehicles", function(allVehicles)
         return
     end
 
-    for index, vehicle in ipairs(allVehicles) do
-        if IsModelInCdimage(vehicle) ~= 1 and IsModelAVehicle(vehicle) ~= 1 then
-            table.remove(allVehicles, index);
-        end
-    end
-    
-    allVehiclesList = allVehicles
-
+    allVehiclesList = getDisplayNamesFromVehicleList(allVehicles)
 end)
 
 RegisterNetEvent("races:trackNames")

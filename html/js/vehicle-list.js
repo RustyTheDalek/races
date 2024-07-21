@@ -94,27 +94,42 @@ function updateVehicleLists(publicList, privateList) {
 	}
 }
 
+function populateList(vehicleList) {
+	
+	let elements = [];
+	
+	vehicleList.forEach((vehicle) => {
+		let vehicleElement = $("<li/>", {
+			"data-value" : vehicle.spawnCode, 
+			text: vehicle.name,
+		});
+
+		let vehicleSpawnCode = $("<p/>", {
+			class : "sub-text",
+			text: vehicle.spawnCode
+		});
+
+		vehicleElement.append(vehicleSpawnCode);
+
+		elements.push(vehicleElement);
+	});
+
+	return elements;
+}
+
 function populateSavedList(vehicleList, isPublic) {
+
+	setVehicleListControls(true);
+
 	currentVehicleList.empty();
 
 	publicSwitch.prop('checked', isPublic);
 
-	vehicleList.forEach((vehicle) => {
-		let vehicleElement = $("<li/>", {
-			text: vehicle,
-		});
-		currentVehicleList.append(vehicleElement);
-	});
+	currentVehicleList.append(populateList(vehicleList));
 }
 
 function populateAllVehicles(vehicleList) {
-	vehicleList.forEach((vehicle) => {
-		let vehicleElement = $("<li/>", {
-			text: vehicle,
-		});
-
-		allVehicles.append(vehicleElement);
-	});
+	allVehicles.append(populateList(vehicleList));
 }
 
 function addVehicles(vehiclesToAdd) {
@@ -328,9 +343,17 @@ function removeSelectedVehicles() {
 	saveCurrentList();
 }
 
+function setVehicleListControls(active) {
+	$("#add-all").prop("disabled", !active);
+	$("#add-selected").prop("disabled", !active);
+	$("#remove-all").prop("disabled", !active);
+	$("#remove-selected").prop("disabled", !active);
+}
+
 function onSavedVehicleListsChange() {
 	switch (this.value) {
 		case "None":
+			setVehicleListControls(false);
 			break;
 		default:
 			let selectedListAccess = $(this).find(":selected").parent().attr("label");

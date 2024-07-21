@@ -12,3 +12,17 @@ function MakeOptions(list) {
 
 	return options;
 }
+
+function MakeVehicleListOptions(list) {
+	let options = [];
+
+	list.forEach((vehicle) => {
+		let option = $("<option/>", {
+			value : vehicle.spawnCode,
+			text: `${vehicle.name}: ${vehicle.spawnCode}`,
+		});
+		options.push(option);
+	});
+
+	return options;
+}

@@ -235,7 +235,7 @@ $(function () {
       })
     );
   });
-  
+
   $("#speedo").click(function () {
     $.post(
       "https://races/speedo",
@@ -682,9 +682,7 @@ function OpenRegisterPanel(data, openPanel) {
   $("#delay").val(data.defaultDelay);
   $("#rtype").change();
 
-  let vehicleOptions = MakeOptions(data.allVehicles);
-
-  console.log($("#register_rest_vehicle"));
+  let vehicleOptions = MakeVehicleListOptions(data.allVehicles);
   
   $("#register_rest_vehicle").empty().append(vehicleOptions);
   $("#register_start_vehicle").empty().append('<option selected value=""></option>').append(vehicleOptions.map(option => option.clone()));

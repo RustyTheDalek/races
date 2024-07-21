@@ -159,6 +159,11 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.sub-text {
+    font-size: x-small;
+    color: grey;
+}
+
 #main_clear {
     width: 25%;
 }
