@@ -450,6 +450,7 @@ select {
 
 .multi-select-transfer>.transfer-options {
     flex-basis: 10%;
+    align-self: center;
 }
 
 .transfer-options>button {

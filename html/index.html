@@ -313,8 +313,6 @@
                 <optgroup label="Public">
                 </optgroup>
             </select>
-            <button id="new_list">New</button>
-            <button id="delete_list">Delete</button>
             <div>
                 <p class="small mb-1">Public</p>
                 <label class="switch">
@@ -327,6 +325,8 @@
             <ul id="all-vehicles" class="multi-select-list window">
             </ul>
             <div class="transfer-options">
+                <button id="new_list">New</button>
+                <button id="delete_list">Delete</button>
                 <button id="add-all">Add all</button>
                 <button id="add-selected">Add selected</button>
                 <button id="remove-all">Remove All</button>
@@ -377,7 +377,14 @@
 
         <div id="listModal" class="modal center panel" style="display:none;"> 
             <h1>Modal Title</h1>
-            <input name="modal-input" type="text" />
+            <div class="input-options">
+                <input name="text" type="text" />
+                <p class="small mb-1">Public</p>
+                <label class="switch">
+                    <input name="public" class="public-access" type="checkbox">
+                    <span class="slider round"></span>
+                </label>
+            </div>
             <button disabled class="confirm" value="confirm">Confirm</button>
             <button class="cancel" value="cancel">Cancel</button>
         </div>

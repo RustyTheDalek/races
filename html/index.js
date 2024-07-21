@@ -47,8 +47,8 @@ $(function () {
   $("#mainPanel").hide();
   $("#editPanel").hide();
   $("#registerPanel").hide();
-  // $("#listPanel").hide();
-  // $("#replyPanel").hide();
+  $("#listPanel").hide();
+  $("#replyPanel").hide();
 
   function UpdateRacer(racer) {
     let racer_chunk = $(`#leaderboard_container`).find(`#${racer.source}`);

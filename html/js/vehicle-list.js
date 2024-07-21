@@ -7,7 +7,9 @@ let newList = listPanel.find("#new_list");
 let listDelete = listPanel.find("#delete_list");
 
 let listModal = $("#listModal");
-let modalInput = listModal.find(`[name=modal-input]`);
+let modalInputs = listModal.find(`.input-options`);
+let modalTextInput = listModal.find(`[name='text']`);
+let modalSwitch = listModal.find(`[name='public']`);
 let modalConfirm = listModal.find('button[value="confirm"]');
 let modalCancel = listModal.find('button[value="cancel"]');
 
@@ -32,7 +34,7 @@ $(function () {
 	listDelete.on("click", setupModalForDeletelist);
 
 	publicSwitch.on("change", onPublicChange);
-	modalInput.on("input", validateModalInput);
+	modalTextInput.on("input", validateModalInput);
 	modalConfirm.on("click", onModalConfirm);
 	modalCancel.on("click", onModalCancel);
 
@@ -169,7 +171,7 @@ function setupModalForDeletelist() {
 
 	if (currentList.text() == "None") return;
 
-	modalInput.hide();
+	modalInputs.hide();
 	listModal.find("h1").text("Are you sure you want to delete this list?");
 	modalConfirm.prop("disabled", false);
 	modalConfirm.data("action", "delete-list");
@@ -181,7 +183,9 @@ function setupModalForNewVehicleList() {
 	listModal.find("h1").text("New List Name");
 	modalConfirm.data("action", "new-list");
 	modalConfirm.prop("disabled", "true");
-	modalInput.val("").show();
+	modalSwitch.prop('checked', false).show();
+	modalTextInput.val("").show();
+	modalInputs.show();
 }
 
 // #region Input events
@@ -268,8 +272,8 @@ function onModalConfirm() {
 }
 
 function createNewVehicleList() {
-	let name = modalInput.val();
-	let public = publicSwitch.is(":checked");
+	let name = modalTextInput.val();
+	let public = modalSwitch.is(":checked");
 
 	let option = $("<option/>", {
 		selected: "selected",
@@ -283,17 +287,19 @@ function createNewVehicleList() {
 
 	groupToAppend.append(option);
 	listModal.hide();
+	currentVehicleList.empty();
+	publicSwitch.prop('checked', public);
 }
 
 function onModalCancel() {
 	listModal.hide();
 	listModal.find("h1").text("");
-	modalInput.val("");
+	modalTextInput.val("");
 	modalConfirm.data("action", null);
 }
 
 function validateModalInput() {
-	$(this).next().prop("disabled", !$(this).val());
+	modalConfirm.prop("disabled", !$(this).val());
 }
 
 function addAllToCurrentList() {
