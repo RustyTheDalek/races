@@ -241,11 +241,6 @@ body {
     width: 25%;
 }
 
-#edit_name {
-    width: 500px;
-    height: 44px;
-}
-
 #edit_load {
     width: 15%;
 }
@@ -288,11 +283,6 @@ body {
 
 #edit_vlist {
     width: 25%;
-}
-
-#register_name {
-    width: 500px;
-    height: 44px;
 }
 
 #register_load {
