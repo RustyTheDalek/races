@@ -690,9 +690,13 @@ function OpenRegisterPanel(data, openPanel) {
   $("#timeout").val(data.defaultTimeout);
   $("#delay").val(data.defaultDelay);
   $("#rtype").change();
-  document.getElementById("register_rest_vehicle").innerHTML = data.allVehicles;
-  document.getElementById("register_start_vehicle").innerHTML =
-    '<option value = ""></option>' + data.allVehicles;
+
+  let vehicleOptions = MakeOptions(data.allVehicles);
+
+  console.log($("#register_rest_vehicle"));
+  
+  $("#register_rest_vehicle").empty().append(vehicleOptions);
+  $("#register_start_vehicle").empty().append('<option selected value=""></option>').append(vehicleOptions.map(option => option.clone()));
   $("#registerPanel").show();
   openPanel = "register";
 

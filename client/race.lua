@@ -1038,7 +1038,8 @@ local function showPanel(panel)
             panel = "register",
             defaultLaps = defaultLaps,
             defaultTimeout = defaultTimeout,
-            defaultDelay = defaultDelay
+            defaultDelay = defaultDelay,
+            allVehicles = allVehiclesList
         })
     elseif "list" == panel then
         SetNuiFocus(true, true)
