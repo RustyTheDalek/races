@@ -348,6 +348,8 @@ function setVehicleListControls(active) {
 	$("#add-selected").prop("disabled", !active);
 	$("#remove-all").prop("disabled", !active);
 	$("#remove-selected").prop("disabled", !active);
+	$("#add_class").prop("disabled", !active);
+	$("#delete_class").prop("disabled", !active);
 }
 
 function onSavedVehicleListsChange() {
