@@ -41,7 +41,6 @@ $(function () {
 	newList.on("click", setupModalForNewVehicleList);
 	listDelete.on("click", setupModalForDeletelist);
 
-	publicSwitch.on("change", onPublicChange);
 	modalTextInput.on("input", validateModalInput);
 	modalConfirm.on("click", onModalConfirm);
 	modalCancel.on("click", closeModal);
@@ -101,7 +100,7 @@ function updateVehicleLists(publicList, privateList) {
 		privateListOptionGroup.append(MakeOptions(privateList));
 
 		registerVehicleLists.find('[label="Private"]').empty().append(MakeOptions(privateList));
-		
+
 	}
 
 	let publicListOptionGroup = savedVehicleLists.find('[label="Public"]');
@@ -119,12 +118,12 @@ function updateVehicleLists(publicList, privateList) {
 }
 
 function populateList(vehicleList) {
-	
+
 	let elements = [];
-	
+
 	vehicleList.forEach((vehicle) => {
 		let vehicleElement = $("<li/>", {
-			"data-value" : vehicle.spawnCode, 
+			"data-value" : vehicle.spawnCode,
 			text: vehicle.name,
 		});
 
@@ -251,40 +250,20 @@ function deleteList() {
 	let currentList = savedVehicleLists.find(":selected");
 
 	if (currentList.text() == "None") return;
+	if (currentVehicleList.children().length == 0) return;
 
-	listModal.hide();
+	let currentListAccess = savedVehicleLists.find(":selected").parent().attr("label");
 
+	$.post(
+		"https://races/delete_list",
+		JSON.stringify({
+			access: currentListAccess == "Public" ? "pub" : "pvt",
+			name: currentList.text(),
+		})
+	);
+
+	closeModal();
 	currentList.remove();
-
-	if (currentVehicleList.children().length == 0) return;
-
-	console.log("list has vehicles");
-
-	$("#delete_list").click(function () {
-		$.post(
-			"https://races/delete_list",
-			JSON.stringify({
-				access: $("#listPanel .public-access").prop("checked") ? "pub" : "pvt",
-				name: savedVehicleLists.find(":selected").text(),
-			})
-		);
-	});
-}
-
-function onPublicChange() {
-	let currentList = savedVehicleLists.find(":selected");
-
-	if (currentList.text() == "None") return;
-
-	if (publicSwitch.is(":checked")) {
-		currentList.detach().appendTo(savedVehicleLists.find('[label="Public"]'));
-	} else {
-		currentList.detach().appendTo(savedVehicleLists.find('[label="Private"]'));
-	}
-
-	if (currentVehicleList.children().length == 0) return;
-
-	console.log("list has vehicles");
 }
 
 function onModalConfirm() {
