@@ -21,8 +21,7 @@ let modalTextInput = listModal.find(`[name='text']`);
 let modalSwitch = listModal.find(`[name='public']`);
 let modalConfirm = listModal.find('button[value="confirm"]');
 let modalCancel = listModal.find('button[value="cancel"]');
-
-
+let modalError = listModal.find('.error');
 
 $(function () {
 	allVehicles.selectable();
@@ -209,6 +208,7 @@ function setupModalForDeletelist() {
 	listModal.find("h1").text("Are you sure you want to delete this list?");
 	modalConfirm.prop("disabled", false);
 	modalConfirm.data("action", "delete-list");
+	modalError.text('');
 	listModal.show();
 }
 
@@ -218,6 +218,7 @@ function setupModalForNewVehicleList() {
 	modalConfirm.data("action", "new-list");
 	modalConfirm.prop("disabled", "true");
 	modalSwitch.prop('checked', false).show();
+	modalError.text('');
 	modalTextInput.val("").show();
 	modalInputs.show();
 }
@@ -302,6 +303,15 @@ function createNewVehicleList() {
 		? savedVehicleLists.find('[label="Public"]')
 		: savedVehicleLists.find('[label="Private"]');
 
+	let existingList = groupToAppend.find(`[value='${name}']`);
+	
+	if(existingList.length > 0) {
+		modalError.text(`${name} already exists for ${public ? 'Public' : 'Private'} List, please pick a new name or change access`);
+		return;
+	}
+
+	modalError.text('');
+
 	groupToAppend.append(option);
 	listModal.hide();
 	currentVehicleList.empty();
@@ -325,6 +335,7 @@ function closeModal() {
 	listModal.find("h1").text("");
 	modalTextInput.val("");
 	modalConfirm.data("action", null);
+	modalError.text('');
 }
 
 function validateModalInput() {

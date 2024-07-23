@@ -75,6 +75,10 @@ input:checked+.slider:before {
     background-color: green;
 }
 
+.error {
+    color: red;
+}
+
 .center-view {
     display: inline-block;
     position: absolute;
