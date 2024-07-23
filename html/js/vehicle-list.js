@@ -68,7 +68,21 @@ function readVehicleListEvents(event) {
 		case "recieve_lists":
 			updateVehicleLists(data.public, data.private);
 			break;
+		case "set_list":
+			setList(data.isPublic, data.name);
+			break;
 	}
+}
+
+function setList(isPublic, name) {
+
+	let optionGroupToSearch = isPublic ? "Public" : "Private";
+
+	let listToSelect = savedVehicleLists.find(`[label="${optionGroupToSearch}"] option[value='${name}']`);
+
+	publicSwitch.prop('checked', isPublic);
+
+	listToSelect.prop('selected', 'selected');
 }
 
 function updateVehicleLists(publicList, privateList) {

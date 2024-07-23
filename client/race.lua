@@ -771,6 +771,16 @@ local function saveList(access, name, vehicles)
     TriggerServerEvent("races:saveLst", "pub" == access, name, vehicles)
 end
 
+RegisterNetEvent("races:setList")
+AddEventHandler("races:setList", function(isPublic, name)
+    SendNUIMessage({
+        type = "vehicle-list",
+        action = "set_list",
+        isPublic = isPublic,
+        name = name
+    })
+end)
+
 local function deleteLst(access, name)
 
     if access ~= "pvt" and access ~= "pub" then

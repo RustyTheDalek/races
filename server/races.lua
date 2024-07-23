@@ -905,6 +905,8 @@ AddEventHandler("races:saveLst", function(isPublic, name, vehicleList)
     else
         TriggerClientEvent("races:vehicleLists", source, publicVehicleListNames, privateVehicleListNames)
     end
+
+    TriggerClientEvent("races:setList", source, isPublic, name)
 end)
 
 RegisterNetEvent("races:overwriteLst")
