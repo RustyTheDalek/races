@@ -1779,6 +1779,10 @@ AddEventHandler("races:unregister", function(rIndex)
                 --Shouldn't need to reset here, but just incase
                 playerDisplay:ResetRaceBlips()
                 notifyPlayer("Race canceled.\n")
+                local player = PlayerPedId()
+                local vehicle = GetVehiclePedIsIn(player, false)
+                local entityToFreeze = vehicle ~= 0 and vehicle or player
+                FreezeEntityPosition(entityToFreeze, false)
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
                 ClearCurrentWaypoints()
