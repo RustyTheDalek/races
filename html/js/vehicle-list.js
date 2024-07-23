@@ -10,7 +10,7 @@ let publicSwitch = listPanel.find('input[name="public"]');
 let newList = listPanel.find("#new_list");
 let saveListBtn = listPanel.find("#save_list");
 let cancelListBtn = listPanel.find("#cancel_list");
-let listDelete = listPanel.find("#delete_list");
+let deleteListBtn = listPanel.find("#delete_list");
 let addVehicleClassButton = listPanel.find('#add_class');
 let removeVehicleClassButton = listPanel.find('#delete_class');
 
@@ -39,7 +39,7 @@ $(function () {
 
 	savedVehicleLists.on("change", onSavedVehicleListsChange);
 	newList.on("click", setupModalForNewVehicleList);
-	listDelete.on("click", setupModalForDeletelist);
+	deleteListBtn.on("click", setupModalForDeletelist);
 
 	modalTextInput.on("input", validateModalInput);
 	modalConfirm.on("click", onModalConfirm);
@@ -364,7 +364,7 @@ function removeSelectedVehicles() {
 function setVehicleListControls(active) {
 	saveListBtn.prop("disabled", !active);
 	cancelListBtn.prop("disabled", !active);
-	listDelete.prop("disabled", !active);
+	deleteListBtn.prop("disabled", !active);
 	$("#add-all").prop("disabled", !active);
 	$("#add-selected").prop("disabled", !active);
 	$("#remove-all").prop("disabled", !active);
