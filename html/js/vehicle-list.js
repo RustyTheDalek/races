@@ -1,11 +1,19 @@
 let listPanel = $("#listPanel");
+
 let allVehicles = $("#all-vehicles");
 let currentVehicleList = $("#current-list");
 let savedVehicleLists = $("#list_name");
 let registerVehicleLists = $('#vehicle-list-options');
+
 let publicSwitch = listPanel.find('input[name="public"]');
+
 let newList = listPanel.find("#new_list");
+let saveListBtn = listPanel.find("#save_list");
+let cancelList = listPanel.find("#cancel_list");
 let listDelete = listPanel.find("#delete_list");
+let addVehicleClassButton = listPanel.find('#add_class');
+let removeVehicleClassButton = listPanel.find('#delete_class');
+
 
 let listModal = $("#listModal");
 let modalInputs = listModal.find(`.input-options`);
@@ -14,8 +22,7 @@ let modalSwitch = listModal.find(`[name='public']`);
 let modalConfirm = listModal.find('button[value="confirm"]');
 let modalCancel = listModal.find('button[value="cancel"]');
 
-let addVehicleClassButton = listPanel.find('#add_class');
-let removeVehicleClassButton = listPanel.find('#delete_class');
+
 
 $(function () {
 	allVehicles.selectable();
@@ -38,6 +45,9 @@ $(function () {
 	modalTextInput.on("input", validateModalInput);
 	modalConfirm.on("click", onModalConfirm);
 	modalCancel.on("click", onModalCancel);
+
+	saveListBtn.on("click", saveList);
+	cancelList.on("click", reloadList);
 
 	window.addEventListener("message", readVehicleListEvents);
 });
@@ -154,12 +164,16 @@ function addVehicles(vehiclesToAdd) {
 			return $(a).text().toUpperCase().localeCompare($(b).text().toUpperCase());
 		})
 		.appendTo(currentVehicleList);
-
-	saveCurrentList();
 }
 
-function saveCurrentList() {
-	// if (currentVehicleList.children() == 0) return;
+function saveList() {
+	if (currentVehicleList.children() == 0) return;
+
+	console.log("Saving list");
+
+	console.log(currentVehicleList.children().map(function () {
+		return $(this).data('value');
+	}).get());
 
 	$.post(
 		"https://races/save_list",
@@ -167,7 +181,23 @@ function saveCurrentList() {
 			access: publicSwitch.prop("checked") ? "pub" : "pvt",
 			name: savedVehicleLists.find(":selected").text(),
 			vehicles: currentVehicleList.children().map(function () {
-				return $(this).text()
+				return  $(this).data('value')
+			}).get()
+		})
+	);
+}
+
+function reloadList() {
+
+	console.log("reloading list");
+
+	$.post(
+		"https://races/save_list",
+		JSON.stringify({
+			access: publicSwitch.prop("checked") ? "pub" : "pvt",
+			name: savedVehicleLists.find(":selected").text(),
+			vehicles: currentVehicleList.children().map(function () {
+				return $(this).data('value')
 			}).get()
 		})
 	);
@@ -257,8 +287,6 @@ function onPublicChange() {
 	if (currentVehicleList.children().length == 0) return;
 
 	console.log("list has vehicles");
-
-	saveCurrentList();
 }
 
 function onModalConfirm() {
@@ -299,6 +327,17 @@ function createNewVehicleList() {
 	setVehicleListControls(true);
 }
 
+function loadList(list) {
+	let selectedListAccess = list.find(":selected").parent().attr("label");
+	$.post(
+		"https://races/load_list",
+		JSON.stringify({
+			access: selectedListAccess,
+			name: list.val(),
+		})
+	);
+}
+
 function onModalCancel() {
 	listModal.hide();
 	listModal.find("h1").text("");
@@ -334,14 +373,10 @@ function addSelectedVehiclesToCurrentList() {
 
 function removeAll() {
 	currentVehicleList.children().detach();
-
-	saveCurrentList();
 }
 
 function removeSelectedVehicles() {
 	currentVehicleList.find(".ui-selected").detach();
-
-	saveCurrentList();
 }
 
 function setVehicleListControls(active) {
@@ -359,14 +394,7 @@ function onSavedVehicleListsChange() {
 			setVehicleListControls(false);
 			break;
 		default:
-			let selectedListAccess = $(this).find(":selected").parent().attr("label");
-			$.post(
-				"https://races/load_list",
-				JSON.stringify({
-					access: selectedListAccess,
-					name: this.value,
-				})
-			);
+			loadList($(this));
 			break;
 	}
 }
