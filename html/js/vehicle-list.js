@@ -44,7 +44,7 @@ $(function () {
 	publicSwitch.on("change", onPublicChange);
 	modalTextInput.on("input", validateModalInput);
 	modalConfirm.on("click", onModalConfirm);
-	modalCancel.on("click", onModalCancel);
+	modalCancel.on("click", closeModal);
 
 	saveListBtn.on("click", saveList);
 	cancelListBtn.on("click", loadList);
@@ -337,7 +337,7 @@ function loadList() {
 	);
 }
 
-function onModalCancel() {
+function closeModal() {
 	listModal.hide();
 	listModal.find("h1").text("");
 	modalTextInput.val("");
