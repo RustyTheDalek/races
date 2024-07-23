@@ -379,7 +379,7 @@ function onSavedVehicleListsChange() {
 			setVehicleListControls(false);
 			break;
 		default:
-			loadList($(this));
+			loadList();
 			break;
 	}
 }
