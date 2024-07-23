@@ -314,6 +314,7 @@ function onModalConfirm() {
 			break;
 		case "delete-list":
 			deleteList();
+			break;
 		default:
 			console.warn("No action set");
 			break;
