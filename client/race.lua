@@ -814,8 +814,6 @@ local function addClass(data)
 
     formattedList = getDisplayNamesFromVehicleList(vehicleList)
 
-    saveList(data.access, data.name, vehicleList)
-
     if true == panelShown then
         updateList()
     end
@@ -845,8 +843,6 @@ local function deleteClass(data)
     end
 
     formattedList = getDisplayNamesFromVehicleList(vehicleList)
-
-    saveList(data.access, data.name, vehicleList)
 
     if true == panelShown then
         updateList()
