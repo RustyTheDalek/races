@@ -869,7 +869,7 @@ AddEventHandler("races:loadLst", function(isPublic, name)
     local list = loadVehicleList(isPublic, source, name)
 
     if list == nil then
-        notifyPlayer(source, "Cannot load.   " .. (true == isPublic and "Public" or "Private") .. " vehicle list '" .. name .. "' not found.\n")
+        list = {}
     end
 
     TriggerClientEvent("races:loadLst", source, isPublic, name, list)

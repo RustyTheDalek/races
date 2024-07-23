@@ -1687,7 +1687,7 @@ end)
 
 RegisterNetEvent("races:loadLst")
 AddEventHandler("races:loadLst", function(isPublic, name, list)
-    if isPublic == nil and name == nil and list == nil then
+    if isPublic == nil or name == nil then
         notifyPlayer("Ignoring load vehicle list event.  Invalid parameters.\n")
         return
     end
