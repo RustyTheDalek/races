@@ -264,6 +264,10 @@ function deleteList() {
 
 	closeModal();
 	currentList.remove();
+
+	savedVehicleLists.find(`option[value='none']`).prop('selected', 'selected');
+	publicSwitch.prop('checked', false);
+	currentVehicleList.empty();
 }
 
 function onModalConfirm() {
