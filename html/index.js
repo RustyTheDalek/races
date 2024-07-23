@@ -152,9 +152,11 @@ $(function () {
 
   function populateTrackNames(selectToPopulate) {
 
-    console.log(selectToPopulate);
     let privateListGroup = selectToPopulate.find(`optgroup[label='Private']`);
     let publicListGroup = selectToPopulate.find(`optgroup[label='Public']`);
+
+    privateListGroup.empty();
+    publicListGroup.empty();
 
     populateOptgroup(pvtTrackNames, privateListGroup);
     populateOptgroup(pubTrackNames, publicListGroup);
