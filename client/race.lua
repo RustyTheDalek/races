@@ -1048,7 +1048,6 @@ local function showPanel(panel)
     elseif "list" == panel then
         SetNuiFocus(true, true)
         -- updateList()
-        print(dump(allVehiclesList))
         SendNUIMessage({
             type = "vehicle-list",
             action = "display_list",
