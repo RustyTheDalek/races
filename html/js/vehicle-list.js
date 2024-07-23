@@ -304,7 +304,7 @@ function createNewVehicleList() {
 		: savedVehicleLists.find('[label="Private"]');
 
 	let existingList = groupToAppend.find(`[value='${name}']`);
-	
+
 	if(existingList.length > 0) {
 		modalError.text(`${name} already exists for ${public ? 'Public' : 'Private'} List, please pick a new name or change access`);
 		return;
@@ -394,5 +394,13 @@ function onSavedVehicleListsChange() {
 			break;
 	}
 }
+
+$("#list_close").click(function () {
+
+	saveList();
+
+	$("#listPanel").hide();
+	$.post("https://races/close");
+});
 
 // #endregion

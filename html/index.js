@@ -623,11 +623,6 @@ $(function () {
     );
   });
 
-  $("#list_close").click(function () {
-    $("#listPanel").hide();
-    $.post("https://races/close");
-  });
-
   /* #endregion */
 
   /* reply panel */
