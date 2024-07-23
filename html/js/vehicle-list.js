@@ -9,7 +9,7 @@ let publicSwitch = listPanel.find('input[name="public"]');
 
 let newList = listPanel.find("#new_list");
 let saveListBtn = listPanel.find("#save_list");
-let cancelList = listPanel.find("#cancel_list");
+let cancelListBtn = listPanel.find("#cancel_list");
 let listDelete = listPanel.find("#delete_list");
 let addVehicleClassButton = listPanel.find('#add_class');
 let removeVehicleClassButton = listPanel.find('#delete_class');
@@ -47,7 +47,7 @@ $(function () {
 	modalCancel.on("click", onModalCancel);
 
 	saveListBtn.on("click", saveList);
-	cancelList.on("click", reloadList);
+	cancelListBtn.on("click", loadList);
 
 	window.addEventListener("message", readVehicleListEvents);
 });
@@ -201,22 +201,6 @@ function saveList() {
 	);
 }
 
-function reloadList() {
-
-	console.log("reloading list");
-
-	$.post(
-		"https://races/save_list",
-		JSON.stringify({
-			access: publicSwitch.prop("checked") ? "pub" : "pvt",
-			name: savedVehicleLists.find(":selected").text(),
-			vehicles: currentVehicleList.children().map(function () {
-				return $(this).data('value')
-			}).get()
-		})
-	);
-}
-
 function setupModalForDeletelist() {
 	let currentList = savedVehicleLists.find(":selected");
 
@@ -342,13 +326,13 @@ function createNewVehicleList() {
 	setVehicleListControls(true);
 }
 
-function loadList(list) {
-	let selectedListAccess = list.find(":selected").parent().attr("label");
+function loadList() {
+	let selectedListAccess = savedVehicleLists.find(":selected").parent().attr("label");
 	$.post(
 		"https://races/load_list",
 		JSON.stringify({
 			access: selectedListAccess,
-			name: list.val(),
+			name: savedVehicleLists.val(),
 		})
 	);
 }
