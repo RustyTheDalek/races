@@ -772,7 +772,8 @@ local function saveList(access, name, vehicles)
 end
 
 local function deleteLst(access, name)
-    if access ~= "pvt" and access == "pub" then
+
+    if access ~= "pvt" and access ~= "pub" then
         sendMessage("Cannot delete vehicle list.  Invalid access type.\n")
         return
     end

@@ -935,7 +935,8 @@ end)
 RegisterNetEvent("races:deleteLst")
 AddEventHandler("races:deleteLst", function(isPublic, name)
     local source = source
-    if isPublic == nil or name ~= nil then
+
+    if isPublic == nil or name == nil then
         notifyPlayer(source, "Ignoring delete vehicle list event.  Invalid parameters.\n")
         return
     end
