@@ -241,3 +241,43 @@ function getTableSize(table)
 
     return count
 end
+
+function SetEntityCoordsVector3(entity, coord, alive, deadFlag, ragdollFlag, clearArea)
+
+    alive = alive ~= nil and alive or false
+    deadFlag = deadFlag ~= nil and deadFlag or false
+    ragdollFlag = ragdollFlag ~= nil and ragdollFlag or false
+    clearArea = clearArea ~= nil and clearArea or false
+
+    SetEntityCoords(entity, coord.x, coord.y, coord.z, alive, deadFlag, ragdollFlag, clearArea)
+end
+
+function getVehiclePassenegers(vehicle)
+    local passengers = {}
+    for i = 0, GetVehicleModelNumberOfSeats(GetEntityModel(vehicle)) - 2 do
+        local passenger = GetPedInVehicleSeat(vehicle, i)
+        if passenger ~= 0 then
+            passengers[#passengers + 1] = { ped = passenger, seat = i }
+        end
+    end
+
+    return passengers
+end
+
+function repairVehicle(vehicle)
+    SetVehicleEngineHealth(vehicle, 1000.0)
+    SetVehicleBodyHealth(vehicle, 1000.0)
+    SetVehiclePetrolTankHealth(vehicle, 1000.0)
+    SetVehicleDeformationFixed(vehicle)
+    SetVehicleFixed(vehicle)
+end
+
+function putPedInVehicle(ped, vehicleHash, coord)
+    coord = coord or GetEntityCoords(ped)
+    local vehicle = CreateVehicle(vehicleHash, coord.x, coord.y, coord.z, GetEntityHeading(ped), true, false)
+    SetModelAsNoLongerNeeded(vehicleHash)
+    SetVehicleEngineOn(vehicle, true, true, false)
+    SetPedIntoVehicle(ped, vehicle, -1)
+    SetVehRadioStation(vehicle, "OFF")
+    return vehicle
+end

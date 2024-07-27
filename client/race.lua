@@ -91,6 +91,7 @@ local currentRace = {
     raceType = ""
 }
 
+local respawn = Respawn:New()
 local ghosting = Ghosting:New()
 local playerDisplay = PlayerDisplay:New()
 local currentLapTimer = Timer:New()
@@ -182,21 +183,21 @@ function SetSpawning()
 
     end)
 
-    exports.spawnmanager:setAutoSpawn(true)
+    exports.spawnmanager:setAutoSpawn(false)
     exports.spawnmanager:forceRespawn()
 end
 
-AddEventHandler('onClientGameTypeStart', SetSpawning)
-AddEventHandler('onClientResourceStart', function(resourceName)
+-- AddEventHandler('onClientGameTypeStart', SetSpawning)
+-- AddEventHandler('onClientResourceStart', function(resourceName)
 
-    if(GetCurrentResourceName() ~= resourceName) then
-        return
-    end
-    SetSpawning()
-end)
-AddEventHandler('baseevents:onPlayerDied', SetSpawning)
-AddEventHandler('baseevents:onPlayerKilled', SetSpawning)
-AddEventHandler('baseevents:onPlayerWasted', SetSpawning)
+--     if(GetCurrentResourceName() ~= resourceName) then
+--         return
+--     end
+--     SetSpawning()
+-- end)
+-- AddEventHandler('baseevents:onPlayerDied', SetSpawning)
+-- AddEventHandler('baseevents:onPlayerKilled', SetSpawning)
+-- AddEventHandler('baseevents:onPlayerWasted', SetSpawning)
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -265,14 +266,16 @@ local function minutesSeconds(milliseconds)
     return minutes, seconds
 end
 
-local function putPedInVehicle(ped, vehicleHash, coord)
-    coord = coord or GetEntityCoords(ped)
-    local vehicle = CreateVehicle(vehicleHash, coord.x, coord.y, coord.z, GetEntityHeading(ped), true, false)
-    SetModelAsNoLongerNeeded(vehicleHash)
-    SetVehicleEngineOn(vehicle, true, true, false)
-    SetPedIntoVehicle(ped, vehicle, -1)
-    SetVehRadioStation(vehicle, "OFF")
-    return vehicle
+local function updateRaceVehicle(vehicle)
+    raceVehicleHash = GetEntityModel(vehicle)
+    raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
+    respawn:UpdateRaceVehicle(raceVehicleHash, raceVehicleName)
+end
+
+local function resetRaceVehicle()
+    raceVehicleHash = nil
+    raceVehicleName = nil
+    respawn:UpdateRaceVehicle(nil, nil)
 end
 
 local function switchVehicle(ped, vehicleHash)
@@ -289,8 +292,7 @@ local function switchVehicle(ped, vehicleHash)
     if(CarTierUIActive()) then
         print("cartierspawn")
         vehicle = exports.CarTierUI:RequestVehicle(vehicleHash)
-        raceVehicleHash = GetEntityModel(vehicle)
-        raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
+        updateRaceVehicle(vehicle)
     else
         print("defaultspawn")
         local pedVehicle = GetVehiclePedIsIn(ped, false)
@@ -452,8 +454,10 @@ local function finishRace(dnf)
     SetLeaderboardLower(true)
     ResetReady()
     currentVehicleName = nil
-    raceVehicleHash = nil
-    raceVehicleName = nil
+    updateRaceVehicle(nil, nil)
+    respawn:SetRespawnPosition(configData.data['spawning']['spawnLocation'])
+    respawn:SetRespawnHeading(configData.data['spawning']['spawnLocation'].heading)
+
     currentRace.currentTrack = ""
     currentRace.raceType = ""
     currentTrack:RestoreBlips()
@@ -862,8 +866,7 @@ end
 local function leave()
     local player = PlayerPedId()
     currentVehicleName = nil
-    raceVehicleHash = nil
-    raceVehicleName = nil
+    resetRaceVehicle()
     currentGridIndex = -1
     currentGridPosition = nil
     currentGridHeading = nil
@@ -895,77 +898,6 @@ end
 local function endrace()
     TriggerServerEvent("races:endrace")
 end
-
-local function repairVehicle(vehicle)
-    SetVehicleEngineHealth(vehicle, 1000.0)
-    SetVehicleBodyHealth(vehicle, 1000.0)
-    SetVehiclePetrolTankHealth(vehicle, 1000.0)
-    SetVehicleDeformationFixed(vehicle)
-    SetVehicleFixed(vehicle)
-end
-
-local function respawn()
-    if racingStates.Racing == raceState then
-        ClearRespawnIndicator()
-        if(currentRace.raceType ~= 'ghost') then
-            ghosting:StartGhosting(configData['ghostingTime'])
-        end
-        local passengers = {}
-        local player = PlayerPedId()
-        local vehicle = GetVehiclePedIsIn(player, true)
-        local currentVehicleHash = GetEntityModel(vehicle)
-        local coord = startCoord
-        local heading = GetEntityHeading(player)
-        coord, heading = currentTrack:GetTrackRespawnPosition(previousWaypoint)
-
-        print(vehicle)
-        print(currentVehicleHash)
-
-        --Spawn vehicle is there is none
-        if vehicle == 0 and raceVehicleHash ~= nil then
-            if(CarTierUIActive()) then
-                print("carTierSpawn")
-                vehicle = exports.CarTierUI:RequestVehicle(raceVehicleName)
-                raceVehicleHash = GetEntityModel(vehicle)
-                SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
-                SetVehicleOnGroundProperly(vehicle)
-                SetEntityHeading(vehicle, heading)
-                SetVehicleEngineOn(vehicle, true, true, false)
-                SetVehRadioStation(vehicle, "OFF")
-                SetPedIntoVehicle(player, vehicle, -1)
-            else
-                print("No vehicle found")
-                RequestModel(raceVehicleName)
-                while HasModelLoaded(raceVehicleName) == false do
-                    Citizen.Wait(0)
-                end
-                vehicle = putPedInVehicle(player, raceVehicleName, coord)
-                SetEntityAsNoLongerNeeded(vehicle)
-                SetEntityHeading(vehicle, heading)
-                repairVehicle(vehicle)
-                for _, passenger in pairs(passengers) do
-                    SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
-                end
-            end
-        elseif raceVehicleHash == nil then
-            print("Respawning on foot")
-            SetEntityCoords(player, coord.x, coord.y, coord.z, false, false, false, true)
-            SetEntityHeading(player, heading)
-        else
-            print("Using previous vehicle found")
-            repairVehicle(vehicle)
-            SetEntityCoords(vehicle, coord.x, coord.y, coord.z, false, false, false, true)
-            SetVehicleOnGroundProperly(vehicle)
-            SetEntityHeading(vehicle, heading)
-            SetVehicleEngineOn(vehicle, true, true, false)
-            SetVehRadioStation(vehicle, "OFF")
-            SetPedIntoVehicle(player, vehicle, -1)
-        end
-    else
-        sendMessage("Cannot respawn.  Not in a race.\n")
-    end
-end
-
 local function viewResults(chatOnly)
 
     print(dump(results))
@@ -1341,7 +1273,7 @@ RegisterNUICallback("leave", function()
 end)
 
 RegisterNUICallback("respawn", function()
-    respawn()
+    respawn:Respawn(PlayerPedId())
 end)
 
 RegisterNUICallback("results", function()
@@ -1548,7 +1480,7 @@ RegisterCommand("races", function(_, args)
     elseif "end" == args[1] then
         endrace()
     elseif "respawn" == args[1] then
-        respawn()
+        respawn:Respawn(PlayerPedId())
     elseif "results" == args[1] then
         viewResults(true)
     elseif "spawn" == args[1] then
@@ -1565,6 +1497,8 @@ RegisterCommand("races", function(_, args)
         notifyPlayer(GetPlayerServerId(PlayerId()))
     elseif "lobby" == args[1] then
         TeleportPlayer(getOffsetSpawn(lobbySpawn), lobbySpawn.heading)
+    elseif "killme" == args[1] then
+        SetEntityHealth(PlayerPedId(), 0)
         --[[
     elseif "test" == args[1] then
         if "0" == args[2] then
@@ -1837,7 +1771,8 @@ AddEventHandler("races:start", function(rIndex, delay)
                     currentLap = 1
                     numRacers = -1
                     results = {}
-                    startCoord = GetEntityCoords(PlayerPedId())
+                    respawn:SetRespawnPosition(GetEntityCoords(PlayerPedId()))
+                    respawn:SetRespawnHeading(GetEntityHeading(PlayerPedId()))
 
                     if startVehicle ~= nil then
                         local vehicle = switchVehicle(PlayerPedId(), startVehicle)
@@ -1852,9 +1787,7 @@ AddEventHandler("races:start", function(rIndex, delay)
 
                     local player = PlayerPedId()
                     local vehicle = GetVehiclePedIsIn(player, true)
-                    raceVehicleHash = GetEntityModel(vehicle)
-                    raceVehicleName = GetDisplayNameFromVehicleModel(raceVehicleHash)
-
+                    updateRaceVehicle(vehicle)
                     TeleportPlayer(currentGridPosition, currentGridHeading)
 
                     StartRaceEffects()
@@ -1905,7 +1838,7 @@ end)
 
 RegisterNetEvent("races:respawn")
 AddEventHandler("races:respawn", function()
-    respawn()
+    respawn:Respawn(PlayerPedId())
 end)
 
 RegisterNetEvent("races:hide")
@@ -2530,13 +2463,6 @@ function SetRespawnIndicator(time)
     })
 end
 
-function ClearRespawnIndicator()
-    SendNUIMessage({
-        type = 'leaderboard',
-        action = 'clear_respawn'
-    })
-end
-
 function UpdateVehicleName(vehicleName)
     if(vehicleName ~= nil) then
         currentVehicleName = vehicleName
@@ -2552,7 +2478,7 @@ function UpdateVehicleName(vehicleName)
         local player = PlayerPedId()
         if IsPedInAnyVehicle(player, false) == 1 then
             local vehicle = GetVehiclePedIsIn(player, false)
-            raceVehicleHash = GetEntityModel(vehicle)
+            updateRaceVehicle(vehicle)
             currentVehicleName = GetLabelText(GetDisplayNameFromVehicleModel(raceVehicleHash))
         else
             currentVehicleName = "On Feet"
@@ -2588,7 +2514,19 @@ AddEventHandler("races:config", function(_configData)
     lobbySpawn = _configData['spawning']['spawnLocation']
     spawnOffsetVector = _configData['spawning']['spawnOffsetVector']
 
-    SetSpawning()
+    respawn:SetRespawnPosition(lobbySpawn)
+    respawn:SetRespawnHeading(lobbySpawn.heading)
+    exports.spawnmanager:setAutoSpawn(false)
+    exports.spawnmanager:forceRespawn()
+    exports.spawnmanager:spawnPlayer({
+        x = lobbySpawn.x,
+        y = lobbySpawn.y,
+        z = lobbySpawn.z,
+        heading = lobbySpawn.heading,
+        skipFade = true
+    })
+
+    -- SetSpawning()
 
 end)
 
@@ -2676,7 +2614,11 @@ function HandleRespawn(currentTime)
             if currentTime - respawnTime > respawnTimer then
                 respawnCtrlPressed = false
                 respawnLock = true
-                respawn()
+                respawn:Respawn(PlayerPedId())
+
+                if(raceType ~= 'ghost') then
+                    ghosting:StartGhosting(configData['ghostingTime'])
+                end
             end
         elseif respawnLock == false then
             SetRespawnIndicator(respawnTimer / 1000)
@@ -2684,7 +2626,7 @@ function HandleRespawn(currentTime)
             respawnTime = currentTime
         end
     else
-        ClearRespawnIndicator()
+        respawn:ClearRespawnIndicator()
         respawnCtrlPressed = false
     end
 
@@ -2756,6 +2698,10 @@ function OnHitCheckpoint(player, waypointHit)
     ClearCurrentWaypoints()
 
     currentSection, currentWaypoint, currentSectionLength = currentTrack:CalculateProgress(waypointHit)
+
+    local coord, heading = currentTrack:GetTrackRespawnPosition(previousWaypoint)
+    respawn:SetRespawnPosition(coord)
+    respawn:SetRespawnHeading(heading)
 
     --If the waypoint points to at least one other waypoint
     if not currentTrack:AtEnd(waypointHit, waypointsHit) then
@@ -2954,8 +2900,9 @@ function MainUpdate()
         local player = PlayerPedId()
         local playerCoord = GetEntityCoords(player)
         local heading = GetEntityHeading(player)
-
         local currentTime = GetGameTimer()
+
+        respawn:Update(player)
 
         if racingStates.Editing == raceState then
             trackEditor:Update(playerCoord, heading)
