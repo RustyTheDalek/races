@@ -20,9 +20,9 @@ function Ghosting:New(o)
     return o
 end
 
-function Ghosting:LoadConfig(configData)
+function Ghosting:LoadConfig(defaultTime, configData)
     if(configData~= nil) then
-        self.defaultLength = configData['ghostingTime']
+        self.defaultLength = defaultTime
         lowGhostingAlpha = configData['lowGhostingAlpha']
         lowPlayerGhostingAlpha = configData['lowPlayerGhostingAlpha']
         highGhostingAlpha = configData['highGhostingAlpha']

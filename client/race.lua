@@ -2443,7 +2443,7 @@ AddEventHandler("races:config", function(_configData)
     configData = _configData
     print("Loaded config")
 
-    ghosting:LoadConfig(configData['ghosting'])
+    ghosting:LoadConfig(configData['ghostingTime'], configData['ghosting'])
     playerDisplay:LoadConfig(configData['playerDisplay'])
 
     lobbySpawn = _configData['spawning']['spawnLocation']
