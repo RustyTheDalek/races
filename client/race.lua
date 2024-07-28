@@ -66,13 +66,6 @@ local currentVehicleName = nil            -- name of current vehicle being drive
 local randVehicles = {}                   -- list of random vehicles used in random vehicle races
 local randVehiclesUsed = {}               -- list of random vehicles already used in a random vehicle race
 
-
-local respawnLock = false
-local respawnCtrlPressed = false          -- flag indicating if respawn crontrol is pressed
-local respawnTime = -1                    -- time when respawn control pressed
-local respawnTimer = 500
-local startCoord = nil                    -- coordinates of vehicle once race has started
-
 local results = {}                        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
 
 local starts = {}                         -- starts[playerID] = {isPublic, trackName, owner, tier, laps, timeout, rtype, restrict, vclass, svehicle, vehicleList, blip, checkpoint, gridData} - registration points
@@ -91,10 +84,16 @@ local currentRace = {
     raceType = ""
 }
 
-local respawn = Respawn:New()
+function RaceType()
+    return currentRace.raceType
+end
+
 local ghosting = Ghosting:New()
+local respawn = Respawn:New()
 local playerDisplay = PlayerDisplay:New()
 local currentLapTimer = Timer:New()
+
+respawn:InjectGhosting(ghosting)
 
 local currentTrack = Track:New()
 local trackEditor = TrackEditor:New()
@@ -122,7 +121,6 @@ local function ClearGrid()
     })
 end
 
-
 local function getOffsetSpawn(startingSpawn)
     local offsetSpawn = vector3(startingSpawn.x, startingSpawn.y, startingSpawn.z)
     local offsetVector = vector3(spawnOffsetVector.x, spawnOffsetVector.y, spawnOffsetVector.z)
@@ -131,73 +129,6 @@ local function getOffsetSpawn(startingSpawn)
 
     return offsetSpawn, startingSpawn.heading
 end
-
-function SetSpawning()
-
-    while(exports == nil) do
-        print("Exports nil. waiting")
-        Citizen.Wait(1)
-    end
-
-    print("Setting autospawn")
-    exports.spawnmanager:setAutoSpawnCallback(function()
-
-        print("Overriding auto spawn")
-
-        local spawnPosition = lobbySpawn
-        local heading = 0
-
-        if racingStates.Racing == raceState then
-            spawnPosition = startCoord
-            spawnPosition, heading = currentTrack:GetTrackRespawnPosition(previousWaypoint)
-        elseif racingStates.Registering == raceState then
-            spawnPosition = startCoord
-        elseif racingStates.Joining == raceState then
-            spawnPosition = starts[raceIndex].registerPosition
-        elseif racingStates.Idle == raceState then
-            spawnPosition, heading = getOffsetSpawn(lobbySpawn)
-        end
-        exports.spawnmanager:spawnPlayer({
-            x = spawnPosition.x,
-            y = spawnPosition.y,
-            z = spawnPosition.z,
-            heading = heading,
-            skipFade = true
-        })
-
-        local player = PlayerPedId()
-        local currentVehicle = GetVehiclePedIsIn(player, false)
-        local lastVehicle = GetVehiclePedIsIn(player, true)
-
-        local vehicleToUse = currentVehicle ~= 0 and currentVehicle or lastVehicle
-
-        if(vehicleToUse ~= 0) then
-
-            print(("Player had vehicle %i"):format(vehicleToUse))
-            local coords = GetOffsetFromCoordAndHeadingInWorldCoords(spawnPosition.x, spawnPosition.y, spawnPosition.z, spawnPosition.heading, 3.0, 0.0, 0)
-            SetEntityCoords(vehicleToUse, coords.x, coords.y, coords.z, false, false, false, false)
-            SetEntityHeading(vehicleToUse, spawnPosition.heading)
-            SetVehicleOnGroundProperly(vehicleToUse)
-            SetPedIntoVehicle(player, vehicleToUse, -1)
-        end
-
-    end)
-
-    exports.spawnmanager:setAutoSpawn(false)
-    exports.spawnmanager:forceRespawn()
-end
-
--- AddEventHandler('onClientGameTypeStart', SetSpawning)
--- AddEventHandler('onClientResourceStart', function(resourceName)
-
---     if(GetCurrentResourceName() ~= resourceName) then
---         return
---     end
---     SetSpawning()
--- end)
--- AddEventHandler('baseevents:onPlayerDied', SetSpawning)
--- AddEventHandler('baseevents:onPlayerKilled', SetSpawning)
--- AddEventHandler('baseevents:onPlayerWasted', SetSpawning)
 
 math.randomseed(GetCloudTimeAsInt())
 
@@ -455,8 +386,7 @@ local function finishRace(dnf)
     ResetReady()
     currentVehicleName = nil
     updateRaceVehicle(nil, nil)
-    respawn:SetRespawnPosition(configData.data['spawning']['spawnLocation'])
-    respawn:SetRespawnHeading(configData.data['spawning']['spawnLocation'].heading)
+    respawn:resetRespawn()
 
     currentRace.currentTrack = ""
     currentRace.raceType = ""
@@ -871,6 +801,7 @@ local function leave()
     currentGridPosition = nil
     currentGridHeading = nil
     fpsMonitor:StopTracking()
+    respawn:ResetRespawn()
 
     if racingStates.Joining == raceState then
         raceState = racingStates.Idle
@@ -1492,11 +1423,9 @@ RegisterCommand("races", function(_, args)
     elseif "upgrade" == args[1] then
         resetupgrades()
     elseif "ghost" == args[1] then
-        ghosting:StartGhosting(configData['ghostingTime'])
+        ghosting:StartGhostingDefault()
     elseif "source" == args[1] then
         notifyPlayer(GetPlayerServerId(PlayerId()))
-    elseif "lobby" == args[1] then
-        TeleportPlayer(getOffsetSpawn(lobbySpawn), lobbySpawn.heading)
     elseif "killme" == args[1] then
         SetEntityHealth(PlayerPedId(), 0)
         --[[
@@ -1698,6 +1627,12 @@ function(rIndex, waypoint, isPublic, trackName, owner, rdata)
         registerPosition = waypoint.coord,
         map = rdata.map
     }
+
+    if(rIndex == GetPlayerServerId(PlayerId())) then
+        respawn:SetRespawnPosition(waypoint.coord)
+        respawn:SetRespawnHeading(waypoint.heading)
+    end
+
 end)
 
 RegisterNetEvent("races:unregister")
@@ -1707,7 +1642,13 @@ AddEventHandler("races:unregister", function(rIndex)
             currentTrack:DeleteGridCheckPoints()
             removeRegistrationPoint(rIndex)
         end
+
         if rIndex == raceIndex then
+
+            if(rIndex == GetPlayerServerId(PlayerId())) then
+                respawn:resetRespawn()
+            end
+
             if racingStates.Joining == raceState then
                 raceState = racingStates.Idle
                 --Shouldn't need to reset here, but just incase
@@ -2282,6 +2223,9 @@ AddEventHandler("races:moveToGrid", function(gridIndex, gridPosition, gridHeadin
     currentGridPosition = gridPosition
     currentGridHeading = gridHeading
 
+    respawn:SetRespawnPosition(currentGridPosition)
+    respawn:SetRespawnHeading(gridHeading)
+
     TeleportPlayer(gridPosition, gridHeading)
 
 end)
@@ -2455,14 +2399,6 @@ function AddRacerToLeaderboard(racerSource, racerName)
     })
 end
 
-function SetRespawnIndicator(time)
-    SendNUIMessage({
-        type = 'leaderboard',
-        action = 'set_respawn',
-        time = time
-    })
-end
-
 function UpdateVehicleName(vehicleName)
     if(vehicleName ~= nil) then
         currentVehicleName = vehicleName
@@ -2514,20 +2450,19 @@ AddEventHandler("races:config", function(_configData)
     lobbySpawn = _configData['spawning']['spawnLocation']
     spawnOffsetVector = _configData['spawning']['spawnOffsetVector']
 
-    respawn:SetRespawnPosition(lobbySpawn)
-    respawn:SetRespawnHeading(lobbySpawn.heading)
+    local offsetSpawn = getOffsetSpawn(lobbySpawn)
+
+    respawn:SetLobbySpawn(offsetSpawn)
+
     exports.spawnmanager:setAutoSpawn(false)
     exports.spawnmanager:forceRespawn()
     exports.spawnmanager:spawnPlayer({
-        x = lobbySpawn.x,
-        y = lobbySpawn.y,
-        z = lobbySpawn.z,
-        heading = lobbySpawn.heading,
+        x = offsetSpawn.x,
+        y = offsetSpawn.y,
+        z = offsetSpawn.z,
+        heading = offsetSpawn.heading,
         skipFade = true
     })
-
-    -- SetSpawning()
-
 end)
 
 RegisterNetEvent("races:clearLeaderboard")
@@ -2606,33 +2541,6 @@ function RaceStartCameraTransition()
     DestroyAllCams(true)
 
     print("Stage 6")
-end
-
-function HandleRespawn(currentTime)
-    if IsControlPressed(0, 19) == 1 then -- X key or A button or cross button
-        if true == respawnCtrlPressed then
-            if currentTime - respawnTime > respawnTimer then
-                respawnCtrlPressed = false
-                respawnLock = true
-                respawn:Respawn(PlayerPedId())
-
-                if(raceType ~= 'ghost') then
-                    ghosting:StartGhosting(configData['ghostingTime'])
-                end
-            end
-        elseif respawnLock == false then
-            SetRespawnIndicator(respawnTimer / 1000)
-            respawnCtrlPressed = true
-            respawnTime = currentTime
-        end
-    else
-        respawn:ClearRespawnIndicator()
-        respawnCtrlPressed = false
-    end
-
-    if IsControlReleased(0, 19) == 1 then
-        respawnLock = false
-    end
 end
 
 --Returns true when the race is finished
@@ -2727,8 +2635,6 @@ function OnHitCheckpoint(player, waypointHit)
 end
 
 function RaceUpdate(player, playerCoord, currentTime)
-    HandleRespawn(currentTime)
-
     ghosting:Update();
     currentLapTimer:Update()
     local minutes, seconds = minutesSeconds(currentLapTimer.length)
@@ -2902,7 +2808,7 @@ function MainUpdate()
         local heading = GetEntityHeading(player)
         local currentTime = GetGameTimer()
 
-        respawn:Update(player)
+        respawn:Update(player, currentTime)
 
         if racingStates.Editing == raceState then
             trackEditor:Update(playerCoord, heading)
