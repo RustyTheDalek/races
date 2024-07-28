@@ -1870,6 +1870,7 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 playerDisplay:SetOwnRacerBlip()
 
                 currentRace.trackName = starts[rIndex].trackName
+                currentRace.raceType = starts[rIndex].rtype ~= nil and starts[rIndex].rtype  or 'normal'
 
                 local raceData = {
                     laps = starts[rIndex].laps,
@@ -1913,10 +1914,8 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                     print(dump(starts[rIndex]))
                 elseif "wanted" == starts[rIndex].rtype then
                     msg = msg .. " : using wanted race mode"
-                    currentRace.raceType = 'wanted'
                 elseif starts[rIndex].rtype == "ghost" then
                     msg = msg .. " : using ghost race mode"
-                    currentRace.raceType = 'ghost'
                 end
 
                 if(starts[rIndex].map ~= "") then
