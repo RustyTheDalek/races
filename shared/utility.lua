@@ -247,7 +247,7 @@ function SetEntityCoordsVector3(entity, coord, alive, deadFlag, ragdollFlag, cle
     alive = alive ~= nil and alive or false
     deadFlag = deadFlag ~= nil and deadFlag or false
     ragdollFlag = ragdollFlag ~= nil and ragdollFlag or false
-    clearArea = clearArea ~= nil and clearArea or false
+    clearArea = clearArea ~= nil and clearArea or true
 
     SetEntityCoords(entity, coord.x, coord.y, coord.z, alive, deadFlag, ragdollFlag, clearArea)
 end
