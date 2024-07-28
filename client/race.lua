@@ -793,6 +793,15 @@ local function ClearCurrentWaypoints()
 
 end
 
+local function setFreezeOnPlayer(player, freeze)
+
+    FreezeEntityPosition(player, freeze)
+
+    if IsPedInAnyVehicle(player, false) then
+        FreezeEntityPosition(GetVehiclePedIsIn(player, false), freeze)
+    end
+end
+
 local function leave()
     local player = PlayerPedId()
     currentVehicleName = nil
@@ -811,9 +820,7 @@ local function leave()
         playerDisplay:ResetRaceBlips()
         sendMessage("Left race.\n")
     elseif racingStates.Racing == raceState then
-        if IsPedInAnyVehicle(player, false) == 1 then
-            FreezeEntityPosition(GetVehiclePedIsIn(player, false), false)
-        end
+        setFreezeOnPlayer(player, false)
         RenderScriptCams(false, false, 0, true, true)
         ClearCurrentWaypoints()
         finishRace(true)
@@ -1649,15 +1656,14 @@ AddEventHandler("races:unregister", function(rIndex)
                 respawn:resetRespawn()
             end
 
+            local player = PlayerPedId()
+
             if racingStates.Joining == raceState then
                 raceState = racingStates.Idle
                 --Shouldn't need to reset here, but just incase
                 playerDisplay:ResetRaceBlips()
                 notifyPlayer("Race canceled.\n")
-                local player = PlayerPedId()
-                local vehicle = GetVehiclePedIsIn(player, false)
-                local entityToFreeze = vehicle ~= 0 and vehicle or player
-                FreezeEntityPosition(entityToFreeze, false)
+                setFreezeOnPlayer(player, false)
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
                 ClearCurrentWaypoints()
@@ -1665,10 +1671,7 @@ AddEventHandler("races:unregister", function(rIndex)
                 --Shouldn't need to reset here, but just incase
                 playerDisplay:ResetRaceBlips()
                 RenderScriptCams(false, false, 0, true, true)
-                local player = PlayerPedId()
-                if IsPedInAnyVehicle(player, false) == 1 then
-                    FreezeEntityPosition(GetVehiclePedIsIn(player, false), false)
-                end
+                setFreezeOnPlayer(player, false)
                 if originalVehicleHash ~= nil then
                     local vehicle = switchVehicle(player, originalVehicleHash)
                     if vehicle ~= nil then
@@ -1687,8 +1690,7 @@ end)
 RegisterNetEvent("races:greenflag")
 AddEventHandler("races:greenflag", function()
     local player = PlayerPedId()
-    local vehicle = GetVehiclePedIsIn(player, false)
-    FreezeEntityPosition(vehicle, false)
+    setFreezeOnPlayer(player, false)
     raceState = racingStates.Racing
     PlaySoundFrontend(-1, "TIMER_STOP", "HUD_MINI_GAME_SOUNDSET", true)
     currentLapTimer:Start()
@@ -1741,9 +1743,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     SetLeaderboardLower(false)
                     StartCountdownLights(delay)
 
-                    if IsPedInAnyVehicle(player, false) == 1 then
-                        FreezeEntityPosition(GetVehiclePedIsIn(player, false), true)
-                    end
+                    setFreezeOnPlayer(player, true)
                     Citizen.CreateThread(RaceStartCameraTransition)
 
                 elseif racingStates.Racing == raceState then
@@ -2145,10 +2145,7 @@ end)
 RegisterNetEvent("races:freezeplayer")
 AddEventHandler("races:freezeplayer", function()
     print("freezing player")
-    if IsPedInAnyVehicle(PlayerPedId(), false) == 1 then
-        print('vehicle frozen')
-        FreezeEntityPosition(GetVehiclePedIsIn(PlayerPedId(), false), true)
-    end
+    setFreezeOnPlayer(PlayerPedId(), true)
 end)
 
 RegisterNetEvent("races:startPreRaceCountdown")
@@ -2335,7 +2332,7 @@ function HandleJoinState(player)
     if(currentGridPosition ~= nil) then
         local vehicle = GetVehiclePedIsIn(player, false)
         local entityToFreeze = vehicle ~= 0 and vehicle or player
-        FreezeEntityPosition(entityToFreeze, true)
+        setFreezeOnPlayer(player, true)
         SetEntityHeading(entityToFreeze, currentGridHeading)
         local playerCoord = GetEntityCoords(player)
         local distanceFromGridPosition = #(playerCoord - currentGridPosition)
