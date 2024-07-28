@@ -9,7 +9,8 @@ Ghosting = {
     length = 0,
     currentGhostedAlpha = 0,
     timer = Timer:New(),
-    flickerTimer = Timer:New()
+    flickerTimer = Timer:New(),
+    defaultLength = 0
 }
 
 function Ghosting:New(o)
@@ -21,6 +22,7 @@ end
 
 function Ghosting:LoadConfig(configData)
     if(configData~= nil) then
+        self.defaultLength = configData['ghostingTime']
         lowGhostingAlpha = configData['lowGhostingAlpha']
         lowPlayerGhostingAlpha = configData['lowPlayerGhostingAlpha']
         highGhostingAlpha = configData['highGhostingAlpha']
@@ -46,7 +48,6 @@ function Ghosting:SetAlpha()
     SetGhostedEntityAlpha(self.currentGhostedAlpha)
 end
 
-
 function Ghosting:StartGhostingNoTimer()
 
     SendNUIMessage({
@@ -63,6 +64,10 @@ function Ghosting:StartGhostingNoTimer()
 
     TriggerServerEvent('ghosting:setplayeralpha', lowGhostingAlpha)
 
+end
+
+function Ghosting:StartGhostingDefault()
+    self:StartGhosting(self.defaultLength)
 end
 
 function Ghosting:StartGhosting(newLength)
