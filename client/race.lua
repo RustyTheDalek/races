@@ -2462,6 +2462,10 @@ AddEventHandler("races:config", function(_configData)
         heading = offsetSpawn.heading,
         skipFade = true
     })
+
+    Citizen.Wait(0)
+
+    respawn:Respawn()
 end)
 
 RegisterNetEvent("races:clearLeaderboard")
