@@ -1,10 +1,16 @@
 Respawn = {
+    lobbyPosition = nil,
+    lobbyHeading = nil,
     respawnPosition = nil,
-    respawnTimer = 500,
     respawnHeading = nil,
+    respawnTimer = 500,
     raceVehicleHash = nil,
     raceVehicleName = nil,
-    vehicle = nil
+    vehicle = nil,
+    respawnLock = false,
+    respawnCtrlPressed = false, -- flag indicating if respawn crontrol is pressed
+    respawnTime = -1,           -- time when respawn control pressed
+    ghosting = nil
 }
 
 function Respawn:New(o)
@@ -14,12 +20,27 @@ function Respawn:New(o)
     return o
 end
 
+function Respawn:InjectGhosting(ghosting)
+    self.ghosting = ghosting
+end
+
+function Respawn:SetLobbySpawn(lobbySpawn)
+    self.lobbyPosition = lobbySpawn
+    self.lobbyHeading = lobbySpawn.heading    
+    self:ResetRespawn()
+end
+
 function Respawn:SetRespawnPosition(newPosition)
     self.respawnPosition = newPosition
 end
 
 function Respawn:SetRespawnHeading(newHeading)
     self.respawnHeading = newHeading
+end
+
+function Respawn:ResetRespawn()
+    self.respawnPosition = self.lobbyPosition
+    self.respawnHeading = self.lobbyHeading
 end
 
 function Respawn:UpdateRaceVehicle(raceVehicleHash, raceVehicleName)
@@ -33,12 +54,52 @@ function Respawn:UpdateCurrentVehicle(player)
     self.vehicle = currentVehicle ~= 0 and currentVehicle or lastVehicle
 end
 
-function Respawn:Update(player)
+function Respawn:Update(player, currentTime)
     if IsEntityDead(player) then
         Respawn:UpdateCurrentVehicle(player)
         self:Revive(player)
         Citizen.Wait(0)
         self:Respawn()
+        return
+    end
+
+    self:Input(player, currentTime)
+
+end
+
+function Respawn:Input(player, currentTime)
+
+    if (RaceState() == racingStates.RaceCountdown or RaceState() == racingStates.Joining) then return end
+
+    self:IsRespawnPressed(player, currentTime)
+
+    if IsControlJustReleased(0, 19) then
+        self.respawnLock = false
+    end
+end
+
+function Respawn:IsRespawnPressed(player, currentTime)
+    if not IsControlPressed(0, 19) then -- X key or A button or cross button
+        self:ClearRespawnIndicator()
+        self.respawnCtrlPressed = false
+        return
+    end
+
+    --If starting to press but not currently pressing it
+    if self.respawnCtrlPressed == false and self.respawnLock == false then
+        self:SetRespawnIndicator(self.respawnTimer / 1000)
+        self.respawnCtrlPressed = true
+        self.respawnTime = currentTime
+        return
+    end
+
+    if self.respawnCtrlPressed and currentTime - self.respawnTime > self.respawnTimer then
+        self.respawnCtrlPressed = false
+        self.respawnLock = true
+        self:Respawn(player)
+        if(RaceType() ~= nil and RaceType() ~= "" and RaceType() ~= 'ghost') then
+            self.ghosting:StartGhostingDefault()
+        end
     end
 end
 
@@ -73,11 +134,10 @@ function Respawn:Respawn()
     if (self.vehicle ~= 0) then
         print("Using previous vehicle found")
         repairVehicle(self.vehicle)
-    elseif self.vehicle == 0 and self.raceVehicleHash ~= nil then
+    elseif self.vehicle == 0 and self.raceVehicleHash ~= nil and self.raceVehicleHash ~= 0 then
         self.vehicle = self:RespawnWithNewVehicle(player, passengers)
     else
         print("Respawning on foot")
-        self:TeleportToRespawnPosition(player)
     end
     
     local entityToMove = player
@@ -125,6 +185,14 @@ function Respawn:RespawnWithRaces(player, passengers)
         SetPedIntoVehicle(passenger.ped, vehicle, passenger.seat)
     end
     return vehicle
+end
+
+function Respawn:SetRespawnIndicator(time)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'set_respawn',
+        time = time
+    })
 end
 
 function Respawn:ClearRespawnIndicator()
