@@ -1731,9 +1731,11 @@ AddEventHandler("races:start", function(rIndex, delay)
                     raceState = racingStates.RaceCountdown
 
                     local player = PlayerPedId()
-                    local vehicle = GetVehiclePedIsIn(player, true)
+                    local currentVehicle = GetVehiclePedIsIn(player, true)
+                    local lastVehicle = GetVehiclePedIsIn(player, false)
+                    local vehicle = currentVehicle ~= 0 and currentVehicle or lastVehicle
                     updateRaceVehicle(vehicle)
-                    TeleportPlayer(currentGridPosition, currentGridHeading)
+                    respawn:Respawn()
 
                     StartRaceEffects()
 
