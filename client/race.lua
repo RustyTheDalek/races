@@ -386,7 +386,7 @@ local function finishRace(dnf)
     ResetReady()
     currentVehicleName = nil
     updateRaceVehicle(nil, nil)
-    respawn:resetRespawn()
+    respawn:ResetRespawn()
 
     currentRace.currentTrack = ""
     currentRace.raceType = ""
@@ -2464,7 +2464,6 @@ AddEventHandler("races:config", function(_configData)
     })
 
     Citizen.Wait(0)
-
     respawn:Respawn()
 end)
 
