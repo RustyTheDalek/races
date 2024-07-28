@@ -104,7 +104,6 @@ function Respawn:IsRespawnPressed(player, currentTime)
 end
 
 function Respawn:Revive(player)
-    print("Reviving")
     local playerPos = GetEntityCoords(player)
     local heading = GetEntityHeading(player)
     NetworkResurrectLocalPlayer(playerPos, heading, false, false) 
@@ -118,8 +117,6 @@ function Respawn:TeleportToRespawnPosition(entity)
 end
 
 function Respawn:Respawn()
-    print("Respawning")
-
     local player = PlayerPedId()
 
     if (self.vehicle == nil) then
@@ -128,16 +125,11 @@ function Respawn:Respawn()
 
     self:ClearRespawnIndicator()
     local passengers = getVehiclePassenegers(self.vehicle)
-
-    print(("Vehicle: %i"):format(self.vehicle))
     
     if (self.vehicle ~= 0) then
-        print("Using previous vehicle found")
         repairVehicle(self.vehicle)
     elseif self.vehicle == 0 and self.raceVehicleHash ~= nil and self.raceVehicleHash ~= 0 then
         self.vehicle = self:RespawnWithNewVehicle(player, passengers)
-    else
-        print("Respawning on foot")
     end
     
     local entityToMove = player
@@ -163,16 +155,12 @@ function Respawn:RespawnWithNewVehicle(player, passengers)
 end
 
 function Respawn:RespawnWithCarTier()
-    print("carTierSpawn")
     vehicle = exports.CarTierUI:RequestVehicle(self.raceVehicleName)
-    print("Car tier done")
     self.raceVehicleHash = GetEntityModel(vehicle)
     return vehicle
 end
 
 function Respawn:RespawnWithRaces(player, passengers)
-    print("No vehicle found")
-    print(self.raceVehicleName)
     RequestModel(self.raceVehicleName)
     while HasModelLoaded(self.raceVehicleName) == false do
         Citizen.Wait(0)
