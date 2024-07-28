@@ -799,6 +799,8 @@ local function setFreezeOnPlayer(player, freeze)
 
     if IsPedInAnyVehicle(player, false) then
         FreezeEntityPosition(GetVehiclePedIsIn(player, false), freeze)
+    else
+        FreezeEntityPosition(GetVehiclePedIsIn(player, true), freeze)
     end
 end
 
