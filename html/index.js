@@ -625,43 +625,46 @@ $(function () {
 
   /* #endregion */
 
-  /* reply panel */
-  $("#reply_close").click(function () {
-    $("#replyPanel").hide();
-    replyOpen = false;
-    if ("main" == openPanel) {
-      $("#mainPanel").show();
-    } else if ("edit" == openPanel) {
-      $("#editPanel").show();
-    } else if ("register" == openPanel) {
-      $("#registerPanel").show();
-    } else if ("list" == openPanel) {
-      $("#listPanel").show();
-    }
-  });
-
-  document.onkeyup = function (data) {
-    if (data.key == "Escape") {
-      if (true == replyOpen) {
-        $("#replyPanel").hide();
-        replyOpen = false;
-        if ("main" == openPanel) {
+  function openCurrentPanel() {
+    switch (openPanel) {
+      case "main":
           $("#mainPanel").show();
-        } else if ("edit" == openPanel) {
+        break;
+      case "edit":
           $("#editPanel").show();
-        } else if ("register" == openPanel) {
+        break;
+      case "register":
           $("#registerPanel").show();
-        } else if ("list" == openPanel) {
+        break;
+      case "list":
           $("#listPanel").show();
-        }
-      } else {
+        break;
+      default:
         $("#mainPanel").hide();
         $("#editPanel").hide();
         $("#registerPanel").hide();
         $("#listPanel").hide();
         $.post("https://races/close");
+        break;
       }
     }
+
+  /* reply panel */
+  $("#reply_close").click(function () {
+    $("#replyPanel").hide();
+    replyOpen = false;
+    openCurrentPanel();
+  });
+
+  document.onkeyup = function (data) {
+    if (data.key != "Escape") return;
+
+    if (replyOpen) {
+      $("#replyPanel").hide();
+      replyOpen = false;
+    }
+
+    openCurrentPanel();
   };
 
   if (window.jQuery) {
