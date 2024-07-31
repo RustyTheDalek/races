@@ -134,8 +134,7 @@ $(function () {
   }
 
   function populateOptgroup(data, optgroup) {
-
-    if(!Array.isArray(data)) {
+    if (!Array.isArray(data)) {
       console.warn("data isn't an array");
       return;
     }
@@ -151,7 +150,6 @@ $(function () {
   }
 
   function populateTrackNames(selectToPopulate) {
-
     let privateListGroup = selectToPopulate.find(`optgroup[label='Private']`);
     let publicListGroup = selectToPopulate.find(`optgroup[label='Public']`);
 
@@ -212,7 +210,10 @@ $(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#main_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#main_name").val(),
       })
     );
@@ -222,7 +223,10 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#main_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#main_name").val(),
       })
     );
@@ -232,7 +236,10 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $('#main_name').find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#main_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
       })
     );
   });
@@ -339,7 +346,10 @@ $(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#edit_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#edit_name").val(),
       })
     );
@@ -349,7 +359,10 @@ $(function () {
     $.post(
       "https://races/overwrite",
       JSON.stringify({
-        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#edit_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#edit_name").val(),
         map: $("#map").val(),
       })
@@ -360,7 +373,10 @@ $(function () {
     $.post(
       "https://races/delete",
       JSON.stringify({
-        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#edit_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#edit_name").val(),
       })
     );
@@ -370,7 +386,10 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#edit_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#edit_name").val(),
       })
     );
@@ -380,7 +399,10 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $("#edit_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#edit_name").find(":selected").parent().attr("label") === "Public"
+            ? "pub"
+            : "pvt",
       })
     );
   });
@@ -438,7 +460,11 @@ $(function () {
     $.post(
       "https://races/load",
       JSON.stringify({
-        access:  $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#register_name").find(":selected").parent().attr("label") ===
+          "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#register_name").val(),
       })
     );
@@ -448,7 +474,11 @@ $(function () {
     $.post(
       "https://races/blt",
       JSON.stringify({
-        access: $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#register_name").find(":selected").parent().attr("label") ===
+          "Public"
+            ? "pub"
+            : "pvt",
         trackName: $("#register_name").val(),
       })
     );
@@ -458,7 +488,11 @@ $(function () {
     $.post(
       "https://races/list",
       JSON.stringify({
-        access: $("#register_name").find(":selected").parent().attr("label") === "Public" ? 'pub' : 'pvt',
+        access:
+          $("#register_name").find(":selected").parent().attr("label") ===
+          "Public"
+            ? "pub"
+            : "pvt",
       })
     );
   });
@@ -603,16 +637,16 @@ $(function () {
   function openCurrentPanel() {
     switch (openPanel) {
       case "main":
-          $("#mainPanel").show();
+        $("#mainPanel").show();
         break;
       case "edit":
-          $("#editPanel").show();
+        $("#editPanel").show();
         break;
       case "register":
-          $("#registerPanel").show();
+        $("#registerPanel").show();
         break;
       case "list":
-          $("#listPanel").show();
+        $("#listPanel").show();
         break;
       default:
         $("#mainPanel").hide();
@@ -621,8 +655,8 @@ $(function () {
         $("#listPanel").hide();
         $.post("https://races/close");
         break;
-      }
     }
+  }
 
   /* reply panel */
   $("#reply_close").click(function () {
