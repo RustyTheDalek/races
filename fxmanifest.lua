@@ -19,7 +19,8 @@ shared_scripts {
 client_scripts {
     "lib/*.lua",
     "client/respawn.lua",
-    "client/race.lua"
+    "client/race.lua",
+    "client/*.lua"
 }
 
 server_scripts {
