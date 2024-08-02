@@ -134,14 +134,6 @@ math.randomseed(GetCloudTimeAsInt())
 
 TriggerServerEvent("races:init")
 
-local function notifyPlayer(msg)
-    TriggerEvent("chat:addMessage", {
-        color = { 255, 0, 0 },
-        multiline = true,
-        args = { "[races:client]", msg }
-    })
-end
-
 function sendMessage(msg)
     if true == panelShown then
         SendNUIMessage({
@@ -210,13 +202,13 @@ local function resetRaceVehicle()
 end
 
 local function switchVehicle(ped, vehicleHash)
-    sendMessage("Vehicle Hash " .. (vehicleHash))
-    sendMessage("Vehicle Display name " .. GetDisplayNameFromVehicleModel(vehicleHash))
-    sendMessage("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
+    print("Vehicle Hash " .. (vehicleHash))
+    print("Vehicle Display name " .. GetDisplayNameFromVehicleModel(vehicleHash))
+    print("Switched to " .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)))
     local vehicle = nil
 
     if(vehicleHash == nil) then
-        sendMessage("Vehicle Hash nil, not swapping")
+        Notifications.warn("Vehicle Hash nil, not swapping")
         return
     end
 
@@ -426,60 +418,60 @@ local function edit()
             TeleportPlayer(startWaypoint.coord, startWaypoint.heading)
         end
 
-        sendMessage("Editing started.\n")
+        Notifications.toast("Editing started.\n")
     elseif racingStates.Editing == raceState then
         raceState = racingStates.Idle
         trackEditor:StopEditing()
-        sendMessage("Editing stopped.\n")
+        Notifications.toast("Editing stopped.\n")
     else
-        sendMessage("Cannot edit waypoints.  Leave race first.\n")
+        Notifications.toast("Cannot edit waypoints.  Leave race first.\n")
     end
 end
 
 local function clear()
     if racingStates.Idle == raceState then
         currentTrack:Clear()
-        sendMessage("Waypoints cleared.\n")
+        Notifications.toast("Waypoints cleared.\n")
     elseif racingStates.Editing == raceState then
         trackEditor:Clear()
-        sendMessage("Waypoints cleared.\n")
+        Notifications.toast("Waypoints cleared.\n")
     else
-        sendMessage("Cannot clear waypoints.  Leave race first.\n")
+        Notifications.error("Cannot clear waypoints.  Leave race first.\n")
     end
 end
 
 local function reverse()
     if currentTrack:GetTotalWaypoints() < 2 then
-        sendMessage("Cannot reverse waypoints.  Track needs to have at least 2 waypoints.\n")
+        Notifications.warn("Cannot reverse waypoints.  Track needs to have at least 2 waypoints.\n")
         return
     end
 
     if racingStates.Idle == raceState then
         currentTrack.savedTrackName = nil
         currentTrack:LoadWaypointBlips(currentTrack:WaypointsToCoordsRev())
-        sendMessage("Waypoints reversed.\n")
+        Notifications.toast("Waypoints reversed.\n")
     elseif racingStates.Editing == raceState then
         trackEditor:Reverse()
-        sendMessage("Waypoints reversed.\n")
+        Notifications.toast("Waypoints reversed.\n")
     else
-        sendMessage("Cannot reverse waypoints.  Leave race first.\n")
+        Notifications.warn("Cannot reverse waypoints.  Leave race first.\n")
     end
 end
 
 local function loadTrack(access, trackName)
     
     if "pvt" ~= access and "pub" ~= access then
-        sendMessage("Cannot load.  Invalid access type.\n")
+        Notifications.error("Cannot load.  Invalid access type.\n")
         return
     end
 
     if trackName == nil then
-        sendMessage("Cannot load.  Name required.\n")
+        Notifications.error("Cannot load.  Name required.\n")
         return
     end
 
     if racingStates.Idle ~= raceState and racingStates.Editing ~= raceState then
-        sendMessage("Cannot load.  Leave race first.\n")
+        Notifications.error("Cannot load.  Leave race first.\n")
         return
     end
 
@@ -491,10 +483,10 @@ local function deleteTrack(access, trackName)
         if trackName ~= nil then
             TriggerServerEvent("races:delete", "pub" == access, trackName)
         else
-            sendMessage("Cannot delete.  Name required.\n")
+            Notifications.error("Cannot delete.  Name required.\n")
         end
     else
-        sendMessage("Cannot delete.  Invalid access type.\n")
+        Notifications.error("Cannot delete.  Invalid access type.\n")
     end
 end
 
@@ -503,10 +495,10 @@ local function bestLapTimes(access, trackName)
         if trackName ~= nil then
             TriggerServerEvent("races:blt", "pub" == access, trackName)
         else
-            sendMessage("Cannot list best lap times.  Name required.\n")
+            Notifications.error("Cannot list best lap times.  Name required.\n")
         end
     else
-        sendMessage("Cannot list best lap times.  Invalid access type.\n")
+        Notifications.error("Cannot list best lap times.  Invalid access type.\n")
     end
 end
 
@@ -514,7 +506,7 @@ local function listTracks(access)
     if "pvt" == access or "pub" == access then
         TriggerServerEvent("races:list", "pub" == access)
     else
-        sendMessage("Cannot list tracks.  Invalid access type.\n")
+        Notifications.error("Cannot list tracks.  Invalid access type.\n")
     end
 end
 
@@ -525,31 +517,31 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
     laps = (nil == laps or "." == laps) and defaultLaps or math.tointeger(tonumber(laps))
     
     if laps == nil or laps <= 0 then
-        sendMessage("Invalid number of laps.\n")
+        Notifications.error("Invalid number of laps.\n")
         return
     end
 
     timeout = (nil == timeout or "." == timeout) and defaultTimeout or math.tointeger(tonumber(timeout))
     if timeout == nil or timeout <= 0 then
-        sendMessage("Invalid DNF timeout.\n")
+        Notifications.error("Invalid DNF timeout.\n")
         return
     end
 
     if raceState == racingStates.Editing then
-        sendMessage("Cannot register. Stop editing first.\n")
+        Notifications.warn("Cannot register. Stop editing first.\n")
         return
     elseif raceState ~= racingStates.Idle then
-        sendMessage("Cannot register. Leave race first.\n")
+        Notifications.error("Cannot register. Leave race first.\n")
         return
     end
 
     if currentTrack:GetTotalWaypoints() <= 1 then
-        sendMessage("Cannot register.  Track needs to have at least 2 waypoints.\n")
+        Notifications.error("Cannot register.  Track needs to have at least 2 waypoints.\n")
         return
     end
 
     if (laps > 1 and  currentTrack.startIsFinish == false) then
-        sendMessage("For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
+        Notifications.error("For multi-lap races, start and finish waypoints need to be the same: While editing waypoints, select finish waypoint first, then select start waypoint.  To separate start/finish waypoint, add a new waypoint or select start/finish waypoint first, then select highest numbered waypoint.\n")
         return
     end
 
@@ -568,13 +560,13 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
     if "rest" == rtype then
         restrict = arg7
         if nil == restrict or IsModelInCdimage(restrict) ~= 1 or IsModelAVehicle(restrict) ~= 1 then
-            sendMessage("Cannot register.  Invalid restricted vehicle.\n")
+            Notifications.error("Cannot register.  Invalid restricted vehicle.\n")
             return
         end
     elseif "class" == rtype then
         vclass = math.tointeger(tonumber(arg7))
         if nil == vclass or vclass < -1 or vclass > 21 then
-            sendMessage("Cannot register.  Invalid vehicle class.\n")
+            Notifications.error("Cannot register.  Invalid vehicle class.\n")
             return
         end
         if -1 == vclass then
@@ -589,7 +581,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
     elseif "rand" == rtype then
 
         if(arg9 == nil) then
-            sendMessage("Cannot register.  Vehicle list is empty.\n")
+            Notifications.error("Cannot register.  Vehicle list is empty.\n")
             return
         end
 
@@ -602,17 +594,17 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
 
         vclass = math.tointeger(tonumber(arg7))
         if vclass ~= nil and (vclass < 0 or vclass > 21) then
-            sendMessage("Cannot register.  Invalid vehicle class.\n")
+            Notifications.error("Cannot register.  Invalid vehicle class.\n")
             return
         end
         
         svehicle = arg8
         if svehicle ~= nil then
             if IsModelInCdimage(svehicle) ~= 1 or IsModelAVehicle(svehicle) ~= 1 then
-                sendMessage("Cannot register.  Invalid start vehicle.\n")
+                Notifications.error("Cannot register.  Invalid start vehicle.\n")
                 return
             elseif vclass ~= nil and GetVehicleClassFromName(svehicle) ~= vclass then
-                sendMessage(
+                Notifications.error(
                 "Cannot register.  Start vehicle not of restricted vehicle class.\n")
                 return
             end
@@ -622,7 +614,7 @@ local function register(tier, specialClass, laps, timeout, rtype, arg7, arg8, ar
     elseif "ghost" == rtype then
         print("ghost race type")
     elseif rtype ~= nil then
-        sendMessage("Cannot register.  Unknown race type.\n")
+        Notifications.error("Cannot register.  Unknown race type.\n")
         return
     end
     local rdata = {
@@ -667,18 +659,18 @@ local function startRace(delay, override)
     if delay ~= nil and delay >= 5 then
         TriggerServerEvent("races:start", delay, override)
     else
-        sendMessage("Cannot start.  Invalid delay.\n")
+        Notifications.error("Cannot start.  Invalid delay.\n")
     end
 end
 
 local function loadLst(access, name)
     if access ~= "Private" and access ~= "Public" then
-        sendMessage("Cannot load vehicle list.  Invalid access type.\n")
+        Notifications.error("Cannot load vehicle list.  Invalid access type.\n")
         return
     end
 
     if name == nil then
-        sendMessage("Cannot load vehicle list.  Name required.\n")
+        Notifications.error("Cannot load vehicle list.  Name required.\n")
     end
     
     TriggerServerEvent("races:loadLst", access == "Public", name)
@@ -687,12 +679,12 @@ end
 local function saveList(access, name, vehicles)
 
     if (access ~= "pvt" and access ~= "pub") then
-        sendMessage("Cannot save vehicle list.  Invalid access type.\n")
+        Notifications.error("Cannot save vehicle list.  Invalid access type.\n")
         return
     end
 
     if name == nil then
-        sendMessage("Cannot save vehicle list.  Name required.\n")
+        Notifications.error("Cannot save vehicle list.  Name required.\n")
         return
     end
 
@@ -718,12 +710,12 @@ end)
 local function deleteLst(access, name)
 
     if access ~= "pvt" and access ~= "pub" then
-        sendMessage("Cannot delete vehicle list.  Invalid access type.\n")
+        Notifications.error("Cannot delete vehicle list.  Invalid access type.\n")
         return
     end
 
     if name == nil then
-        sendMessage("Cannot delete vehicle list.  Name required.\n")
+        Notifications.error("Cannot delete vehicle list.  Name required.\n")
         return
     end
     
@@ -734,7 +726,7 @@ local function addClass(data)
     local class = math.tointeger(tonumber(data.class))
 
     if class == nil or class < 0 or class > 21 then
-        sendMessage("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
+        Notifications.error("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
         return
     end
 
@@ -758,7 +750,7 @@ local function deleteClass(data)
     local class = math.tointeger(tonumber(data.class))
 
     if class == nil or class < 0 or class > 21 then
-        sendMessage("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
+        Notifications.error("Cannot add vehicles to vehicle list.  Invalid vehicle class.\n")
         return
     end
     
@@ -820,7 +812,7 @@ local function leave()
         ClearLeaderboard()
         TriggerServerEvent("races:leave", raceIndex)
         playerDisplay:ResetRaceBlips()
-        sendMessage("Left race.\n")
+        Notifications.toast("Left race.\n")
     elseif racingStates.Racing == raceState then
         setFreezeOnPlayer(player, false)
         RenderScriptCams(false, false, 0, true, true)
@@ -829,9 +821,9 @@ local function leave()
         playerDisplay:ResetRaceBlips()
         ResetReady()
         ClearLeaderboard()
-        sendMessage("Left race.\n")
+        Notifications.toast("Left race.\n")
     else
-        sendMessage("Cannot leave.  Not joined to any race.\n")
+        Notifications.warn("Cannot leave.  Not joined to any race.\n")
     end
 end
 
@@ -865,6 +857,7 @@ local function viewResults(chatOnly)
     else
         msg = "No results.\n"
     end
+    --TODO:Disply race results in NUI
     if true == chatOnly then
         notifyPlayer(msg)
     else
@@ -889,9 +882,9 @@ local function spawn(vehicleHash)
             local vehicle = putPedInVehicle(PlayerPedId(), vehicleHash, nil)
             SetEntityAsNoLongerNeeded(vehicle)
     
-            sendMessage("'" .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)) .. "' spawned.\n")
+            Notifications.toast("'" .. GetLabelText(GetDisplayNameFromVehicleModel(vehicleHash)) .. "' spawned.\n")
         else
-            sendMessage("Cannot spawn vehicle.  Invalid vehicle.\n")
+            Notifications.error("Cannot spawn vehicle.  Invalid vehicle.\n")
         end
     end
 end
@@ -933,7 +926,7 @@ local function showPanel(panel)
             allVehicles = allVehiclesList
         })
     else
-        notifyPlayer("Invalid panel.\n")
+        Notifications.warn("Invalid panel.\n")
         panelShown = false
     end
 end
@@ -1085,13 +1078,13 @@ RegisterNUICallback("overwrite", function(data)
                 if currentTrack:GetTotalWaypoints() > 1 then
                     TriggerServerEvent("races:overwrite", "pub" == data.access, data.trackName, currentTrack:SerialiseWaypoints(), data.map)
                 else
-                    sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
+                    Notifications.error("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
                 end
             else
-                sendMessage("Cannot overwrite.  Name required.\n")
+                Notifications.error("Cannot overwrite.  Name required.\n")
             end
         else
-            sendMessage("Cannot overwrite.  Invalid access type.\n")
+            Notifications.error("Cannot overwrite.  Invalid access type.\n")
         end
     end
 end)
@@ -1254,9 +1247,9 @@ RegisterNUICallback("setnewmap", function(data)
     currentTrack.map = data.map
     
     if(currentTrack.map ~= "") then
-        notifyPlayer(("Map changed to %s"):format(data.map))
+        Notifications.toast(("Map changed to %s"):format(data.map))
     else
-        notifyPlayer("Map unset")
+        Notifications.toast("Map unset")
     end
 end)
 
@@ -1369,7 +1362,7 @@ RegisterCommand("races", function(_, args)
         "/races speedo (unit) - change unit of speed measurement to (unit) = {imp, met}; otherwise toggle display of speedometer if (unit) is not specified\n"
         msg = msg ..
         "/races panel (panel) - display (panel) = {edit, register, list} panel; otherwise display main panel if (panel) is not specified\n"
-        notifyPlayer(msg)
+        Notifications.chat(msg)
     elseif "edit" == args[1] then
         edit()
     elseif "clear" == args[1] then
@@ -1390,13 +1383,13 @@ RegisterCommand("races", function(_, args)
                     if currentTrack:GetTotalWaypoints() > 1 then
                         TriggerServerEvent("races:overwrite", "pub" == args[2], args[3], currentTrack:SerialiseWaypoints(), args[4])
                     else
-                        sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
+                        Notifications.error("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
                     end
                 else
-                    sendMessage("Cannot overwrite.  Name required.\n")
+                    Notifications.error("Cannot overwrite.  Name required.\n")
                 end
             else
-                sendMessage("Cannot overwrite.  Invalid access type.\n")
+                Notifications.error("Cannot overwrite.  Invalid access type.\n")
             end
         end
     elseif "delete" == args[1] then
@@ -1433,8 +1426,6 @@ RegisterCommand("races", function(_, args)
         resetupgrades()
     elseif "ghost" == args[1] then
         ghosting:StartGhostingDefault()
-    elseif "source" == args[1] then
-        notifyPlayer(GetPlayerServerId(PlayerId()))
     elseif "killme" == args[1] then
         SetEntityHealth(PlayerPedId(), 0)
         --[[
@@ -1486,10 +1477,11 @@ RegisterCommand("races", function(_, args)
         end
 --]]
     else
-        notifyPlayer("Unknown command.\n")
+        Notifications.warn("Unknown command.\n")
     end
 end)
 
+--TODO: Rework this
 RegisterNetEvent("races:message")
 AddEventHandler("races:message", function(msg)
     sendMessage(msg)
@@ -1498,12 +1490,12 @@ end)
 RegisterNetEvent("races:load")
 AddEventHandler("races:load", function(isPublic, trackName, track)
     if isPublic == nil or trackName == nil and track.waypoints == nil then
-        notifyPlayer("Ignoring load event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring load event.  Invalid parameters.\n")
         return
     end
 
     if racingStates.Idle ~= raceState and racingStates.Editing ~= raceState then
-        notifyPlayer("Ignoring load event.  Currently joined to race.\n")
+        Notifications.warn("Ignoring load event.  Currently joined to race.\n")
         return
     end
 
@@ -1513,16 +1505,16 @@ AddEventHandler("races:load", function(isPublic, trackName, track)
         trackEditor:Load(isPublic, trackName, track)
     end
 
-    sendMessage("Loaded " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+    Notifications.toast("Loaded " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
 end)
 
 RegisterNetEvent("races:save")
 AddEventHandler("races:save", function(isPublic, trackName)
     if isPublic ~= nil and trackName ~= nil then
         trackEditor:OnUpdateTrackMetaData(isPublic, trackName)
-        sendMessage("Saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
+        Notifications.toast("Saved " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. "'.\n")
     else
-        notifyPlayer("Ignoring save event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring save event.  Invalid parameters.\n")
     end
 end)
 
@@ -1530,9 +1522,9 @@ RegisterNetEvent("races:overwrite")
 AddEventHandler("races:overwrite", function(isPublic, trackName, map)
     if isPublic ~= nil and trackName ~= nil then
         trackEditor:OnUpdateTrackMetaData(isPublic, trackName)
-        sendMessage("Overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. (nil ~= map and " with map " .. map or "") ..  "'.\n")
+        Notifications.toast("Overwrote " .. (true == isPublic and "public" or "private") .. " track '" .. trackName .. (nil ~= map and " with map " .. map or "") ..  "'.\n")
     else
-        notifyPlayer("Ignoring overwrite event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring overwrite event.  Invalid parameters.\n")
     end
 end)
 
@@ -1548,19 +1540,19 @@ AddEventHandler("races:blt", function(isPublic, trackName, bestLaps)
                 ("%d - %s - %02d:%05.2f using %s\n"):format(pos, bestLap.playerName, minutes, seconds,
                 bestLap.vehicleName)
             end
-            sendMessage(msg)
+            Notifications.toast(msg)
         else
-            sendMessage("No best lap times for " .. msg .. ".\n")
+            Notifications.warn("No best lap times for " .. msg .. ".\n")
         end
     else
-        notifyPlayer("Ignoring best lap times event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring best lap times event.  Invalid parameters.\n")
     end
 end)
 
 RegisterNetEvent("races:loadLst")
 AddEventHandler("races:loadLst", function(isPublic, name, list)
     if isPublic == nil or name == nil then
-        notifyPlayer("Ignoring load vehicle list event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring load vehicle list event.  Invalid parameters.\n")
         return
     end
 
@@ -1578,7 +1570,7 @@ AddEventHandler("races:register",
 function(rIndex, waypoint, isPublic, trackName, owner, rdata)
 
     if rIndex == nil and waypoint == nil and isPublic == nil and owner == nil and rdata.tier == nil and rdata.laps == nil and rdata.timeout == nil and rdata == nil then
-        notifyPlayer("[R]Ignoring register event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring register event.  Invalid parameters.\n")
         return
     end
 
@@ -1664,7 +1656,7 @@ AddEventHandler("races:unregister", function(rIndex)
                 raceState = racingStates.Idle
                 --Shouldn't need to reset here, but just incase
                 playerDisplay:ResetRaceBlips()
-                notifyPlayer("Race canceled.\n")
+                Notifications.toast("Race canceled.\n")
                 setFreezeOnPlayer(player, false)
             elseif racingStates.Racing == raceState then
                 raceState = racingStates.Idle
@@ -1681,11 +1673,11 @@ AddEventHandler("races:unregister", function(rIndex)
                         SetEntityAsNoLongerNeeded(vehicle)
                     end
                 end
-                notifyPlayer("Race canceled.\n")
+                Notifications.toast("Race canceled.\n")
             end
         end
     else
-        notifyPlayer("Ignoring unregister event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring unregister event.  Invalid parameters.\n")
     end
 end)
 
@@ -1742,7 +1734,7 @@ AddEventHandler("races:start", function(rIndex, delay)
                     repairVehicle(vehicle)
                     resetupgrades(vehicle)
                     ClearReady();
-                    notifyPlayer("Vehicle fixed.\n")
+                    Notifications.toast("Vehicle fixed.\n")
 
                     SetLeaderboardLower(false)
                     StartCountdownLights(delay)
@@ -1751,18 +1743,18 @@ AddEventHandler("races:start", function(rIndex, delay)
                     Citizen.CreateThread(RaceStartCameraTransition)
 
                 elseif racingStates.Racing == raceState then
-                    notifyPlayer("Ignoring start event.  Already in a race.\n")
+                    Notifications.warn("Ignoring start event.  Already in a race.\n")
                 elseif racingStates.Editing == raceState then
-                    notifyPlayer("Ignoring start event.  Currently editing.\n")
+                    Notifications.warn("Ignoring start event.  Currently editing.\n")
                 else
-                    notifyPlayer("Ignoring start event.  Currently idle.\n")
+                    Notifications.warn("Ignoring start event.  Currently idle.\n")
                 end
             end
         else
-            notifyPlayer("Ignoring start event.  Invalid delay.\n")
+            Notifications.warn("Ignoring start event.  Invalid delay.\n")
         end
     else
-        notifyPlayer("Ignoring start event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring start event.  Invalid parameters.\n")
     end
 end)
 
@@ -1792,10 +1784,10 @@ AddEventHandler("races:hide", function(rIndex)
         if starts[rIndex] ~= nil then
             removeRegistrationPoint(rIndex)
         else
-            notifyPlayer("Ignoring hide event.  Race does not exist.\n")
+            Notifications.warn("Ignoring hide event.  Race does not exist.\n")
         end
     else
-        notifyPlayer("Ignoring hide event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring hide event.  Invalid parameters.\n")
     end
 end)
 
@@ -1838,7 +1830,7 @@ end
 RegisterNetEvent("races:leavenotification")
 AddEventHandler("races:leavenotification", function(message, rIndex, numRacing, registrationCoords)
     UpdateRegistrationCheckpoint(rIndex, registrationCoords, numRacing)
-    sendMessage(message)
+    Notifications.toast(message)
 end)
 
 RegisterNetEvent("races:removeFromLeaderboard")
@@ -1861,12 +1853,12 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 customClassVehicleList = {}
                 startVehicle = starts[rIndex].svehicle
                 if (startVehicle ~= nil) then
-                    sendMessage("Pre-loading starting car...")
+                    Notifications.toast("Pre-loading starting car...")
                     RequestModel(startVehicle)
                     while HasModelLoaded(startVehicle) == false do
                         Citizen.Wait(0)
                     end
-                    sendMessage("Starting car loaded...")
+                    Notifications.toast("Starting car loaded...")
                 end
                 randVehicles = {}
                 currentTrack:LoadWaypointBlips(waypoints)
@@ -1927,20 +1919,20 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
                 end
 
                 msg = msg .. ".\n"
-                notifyPlayer(msg)
+                Notifications.toast(msg)
                 SendToRaceTier(tier, specialClass)
                 UpdateVehicleName()
                 SendVehicleName()
             elseif racingStates.Editing == raceState then
-                notifyPlayer("Ignoring join event.  Currently editing.\n")
+                Notifications.warn("Ignoring join event.  Currently editing.\n")
             else
-                notifyPlayer("Ignoring join event.  Already joined to a race.\n")
+                Notifications.warn("Ignoring join event.  Already joined to a race.\n")
             end
         else
-            notifyPlayer("Ignoring join event.  Race does not exist.\n")
+            Notifications.warn("Ignoring join event.  Race does not exist.\n")
         end
     else
-        notifyPlayer("Ignoring join event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring join event.  Invalid parameters.\n")
     end
 end)
 
@@ -1972,10 +1964,10 @@ AddEventHandler("races:finish", function(finishData)
         if rIndex == raceIndex then
             if -1 == raceFinishTime then
                 if -1 == raceBestLapTime then
-                    notifyPlayer(playerName .. " did not finish.\n")
+                    Notifications.toast(playerName .. " did not finish.\n")
                 else
                     local minutes, seconds = minutesSeconds(raceBestLapTime)
-                    notifyPlayer(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(
+                    Notifications.toast(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(
                     playerName, minutes, seconds, raceVehicleName))
                 end
             else
@@ -1986,14 +1978,14 @@ AddEventHandler("races:finish", function(finishData)
                 end
                 local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
                 local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
-                notifyPlayer(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s with an average FPS of %.2f.\n"):format(
+                Notifications.toast(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s with an average FPS of %.2f.\n"):format(
                 playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName, averageFPS))
             end
             ResetCarTier();
             playerDisplay:ResetRaceBlips()
         end
     else
-        notifyPlayer("Ignoring finish event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring finish event.  Invalid parameters.\n")
     end
 end)
 
@@ -2017,7 +2009,7 @@ AddEventHandler("races:onendrace", function(rIndex, raceResults)
             viewResults(true)
         end
     else
-        notifyPlayer("Ignoring results event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring results event.  Invalid parameters.\n")
     end
 
     Citizen.Wait(5000)
@@ -2042,7 +2034,7 @@ AddEventHandler("races:position", function(rIndex, pos, numR)
             numRacers = numR
         end
     else
-        notifyPlayer("Ignoring position event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring position event.  Invalid parameters.\n")
     end
 end)
 
@@ -2088,7 +2080,7 @@ end)
 RegisterNetEvent("races:allVehicles")
 AddEventHandler("races:allVehicles", function(allVehicles)
     if allVehicles == nil then
-        notifyPlayer("Ignoring allVehicles event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring allVehicles event.  Invalid parameters.\n")
         return
     end
 
@@ -2098,7 +2090,7 @@ end)
 RegisterNetEvent("races:trackNames")
 AddEventHandler("races:trackNames", function(isPublic, trackNames)
     if isPublic == nil or trackNames == nil then
-        notifyPlayer("Ignoring trackNames event.  Invalid parameters.\n")
+        Notifications.warn("Ignoring trackNames event.  Invalid parameters.\n")
         return
     end
 
@@ -2343,9 +2335,9 @@ function HandleJoinState(player)
         
         if(distanceFromGridPosition > 3.0) then 
             if(GetPlayerName(PlayerId()) == "Payne") then
-                sendMessage("Come on Payne, try and be a bit more patient please...") 
+                Notifications.toast("Come on Payne, try and be a bit more patient please...") 
             else
-                sendMessage("You moved too far from your grid position, resettting")
+                Notifications.toast("You moved too far from your grid position, resettting")
             end
             TeleportPlayer(currentGridPosition, currentGridHeading)
         end
@@ -2569,7 +2561,7 @@ function OnNewLap(player)
             end
 
             local randIndex = math.random(#randVehiclesNotUsed)
-            sendMessage("Random Index: " .. randIndex)
+            Notifications.toast("Random Index: " .. randIndex)
             table.insert(randVehiclesUsed, randVehiclesNotUsed[randIndex])
             local randVehicle = switchVehicle(player,
             randVehiclesNotUsed[randIndex])
@@ -2724,29 +2716,29 @@ function IdleUpdate(player, playerCoord)
                 if vehicle ~= nil then
                     if GetEntityModel(vehicle) ~= GetHashKey(starts[closestIndex].restrict) then
                         joinRace = false
-                        notifyPlayer("Cannot join race.  Player needs to be in restricted vehicle.")
+                        Notifications.warn("Cannot join race.  Player needs to be in restricted vehicle.")
                     end
                 else
                     joinRace = false
-                    notifyPlayer("Cannot join race.  Player needs to be in restricted vehicle.")
+                    Notifications.warn("Cannot join race.  Player needs to be in restricted vehicle.")
                 end
             elseif "class" == starts[closestIndex].rtype then
                 if starts[closestIndex].vclass ~= -1 then
                     if vehicle ~= nil then
                         if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
                             joinRace = false
-                            notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                            Notifications.warn("Cannot join race.  Player needs to be in vehicle of " ..
                             getClassName(starts[closestIndex].vclass) .. " class.")
                         end
                     else
                         joinRace = false
-                        notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                        Notifications.warn("Cannot join race.  Player needs to be in vehicle of " ..
                         getClassName(starts[closestIndex].vclass) .. " class.")
                     end
                 else
                     if #starts[closestIndex].vehicleList == 0 then
                         joinRace = false
-                        notifyPlayer("Cannot join race.  No valid vehicles in vehicle list.")
+                        Notifications.warn("Cannot join race.  No valid vehicles in vehicle list.")
                     else
                         local list = ""
                         for _, vehName in pairs(starts[closestIndex].vehicleList) do
@@ -2756,13 +2748,13 @@ function IdleUpdate(player, playerCoord)
                         if vehicle ~= nil then
                             if vehicleInList(vehicle, starts[closestIndex].vehicleList) == false then
                                 joinRace = false
-                                notifyPlayer(
+                                Notifications.warn(
                                 "Cannot join race.  Player needs to be in one of the following vehicles: " ..
                                 list)
                             end
                         else
                             joinRace = false
-                            notifyPlayer(
+                            Notifications.warn(
                             "Cannot join race.  Player needs to be in one of the following vehicles: " .. list)
                         end
                     end
@@ -2770,7 +2762,7 @@ function IdleUpdate(player, playerCoord)
             elseif "rand" == starts[closestIndex].rtype then
                 if #starts[closestIndex].vehicleList == 0 then
                     joinRace = false
-                    notifyPlayer("Cannot join race.  No valid vehicles in vehicle list.")
+                    Notifications.warn("Cannot join race.  No valid vehicles in vehicle list.")
                 else
                     if vehicle ~= nil then
                         originalVehicleHash = GetEntityModel(vehicle)
@@ -2781,12 +2773,12 @@ function IdleUpdate(player, playerCoord)
                             if vehicle ~= nil then
                                 if GetVehicleClass(vehicle) ~= starts[closestIndex].vclass then
                                     joinRace = false
-                                    notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                    Notifications.warn("Cannot join race.  Player needs to be in vehicle of " ..
                                     getClassName(starts[closestIndex].vclass) .. " class.")
                                 end
                             else
                                 joinRace = false
-                                notifyPlayer("Cannot join race.  Player needs to be in vehicle of " ..
+                                Notifications.warn("Cannot join race.  Player needs to be in vehicle of " ..
                                 getClassName(starts[closestIndex].vclass) .. " class.")
                             end
                         end

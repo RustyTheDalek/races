@@ -144,12 +144,16 @@ function mapToArray(tbl, f)
     return t
 end
 
-function notifyPlayer(source, msg)
-    TriggerClientEvent("chat:addMessage", source, {
-        color = { 255, 0, 0 },
-        multiline = true,
-        args = { "[races:server]", msg }
-    })
+function toast(source, msg)
+    TriggerClientEvent("races:toast", source, msg)
+end
+
+function warn(source, msg)
+    TriggerClientEvent("races:toastWarn", source, msg)
+end
+
+function error(source, msg)
+    TriggerClientEvent("races:toastError", source, msg)
 end
 
 function sendMessage(source, msg)

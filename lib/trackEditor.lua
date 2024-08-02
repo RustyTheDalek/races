@@ -174,7 +174,7 @@ function TrackEditor:OnNoSecondSelectedWaypoint()
     end
 
     if(self.track:GetWaypoint(self.selectedIndex0):NextEmpty()) then
-        sendMessage("Completing Split")
+        Notifications.toast("Completing Split")
         print("Completing split")
         self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
         self.track:SelectWaypoint(self.selectedIndex0);
@@ -367,10 +367,10 @@ function TrackEditor:Update(playerCoord, heading)
 
                 --If They're already linked then unlink them
                 if(self.track:GetWaypoint(self.selectedIndex0):HasNext(self.closestWaypointIndex)) then
-                    sendMessage("Unlinking")
+                    Notifications.toast("Unlinking")
                     self.track:GetWaypoint(self.selectedIndex0):RemoveNext(self.closestWaypointIndex)
                 else --Link them
-                    sendMessage("Linking")
+                    Notifications.toast("Linking")
                     self.track:GetWaypoint(self.selectedIndex0):AddNext(self.closestWaypointIndex)
                 end
 
@@ -419,13 +419,13 @@ function TrackEditor:TrySave(access, name)
             if #self.track.waypoints > 1 then
                 TriggerServerEvent("races:save", "pub" == access, name, self.track:SerialiseWaypoints(), self.track.map)
             else
-                sendMessage("Cannot save.  Track needs to have at least 2 waypoints.\n")
+                Notifications.warn("Cannot save.  Track needs to have at least 2 waypoints.\n")
             end
         else
-            sendMessage("Cannot save.  Name required.\n")
+            Notifications.warn("Cannot save.  Name required.\n")
         end
     else
-        sendMessage("Cannot save.  Invalid access type.\n")
+        Notifications.warn("Cannot save.  Invalid access type.\n")
     end
 end
 
@@ -438,13 +438,13 @@ function TrackEditor:TryOverwrite(access, trackName, map)
             if #self.track.waypoints > 1 then
                 TriggerServerEvent("races:overwrite", "pub" == access, trackName, self.track:SerialiseWaypoints(), map)
             else
-                sendMessage("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
+                Notifications.warn("Cannot overwrite.  Track needs to have at least 2 waypoints.\n")
             end
         else
-            sendMessage("Cannot overwrite.  Name required.\n")
+            Notifications.warn("Cannot overwrite.  Name required.\n")
         end
     else
-        sendMessage("Cannot overwrite.  Invalid access type.\n")
+        Notifications.warn("Cannot overwrite.  Invalid access type.\n")
     end
 end
 

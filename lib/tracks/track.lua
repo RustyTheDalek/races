@@ -697,7 +697,7 @@ function Track:OnStartRace()
     self:SetVisibleBlips()
 
     if (self.waypoints == nil or self.waypoints[1] == nil or self.waypoints[1].coord == nil) then
-        notifyPlayer("Could not start race no start waypoint");
+        Notifications.warn("Could not start race no start waypoint");
         return nil
     end
 
@@ -736,8 +736,6 @@ function Track:Validate()
     for waypointIndex, waypoint in ipairs(self.waypoints) do
         for nextIndex, pointsTo in ipairs(waypoint.next) do
             if(self.waypoints[pointsTo] == nil) then
-                sendMessage(("Waypoint %i Points to %i, but doesn't exist, removing..."):format(waypointIndex, pointsTo))
-
                 table.remove(self.waypoints[waypointIndex].next, nextIndex)
             end
         end
