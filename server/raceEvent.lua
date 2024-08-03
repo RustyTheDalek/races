@@ -365,6 +365,8 @@ function RaceEvent:Finish(source, raceFinishData)
         finishedRacer.data = GetGameTimer() - self.startTime
     end
 
+    finishedRacer.finishTime = GetGameTimer() - self.startTime
+
     print(("Finish Time: %i"):format(finishedRacer.data))
 
     local finishData = {
@@ -502,7 +504,8 @@ function RaceEvent:JoinRacer(source)
         ready = false,
         bestLapTime = -1,
         bestLapVehicleName = "",
-        currentLapTimeStart = -1
+        currentLapTimeStart = -1,
+        finishTime = -1
     }
 
     local racerDictionary = mapToArray(self.players,
@@ -738,7 +741,11 @@ function RaceEvent:PollPositionsUpdate()
     --TODO:Better way to determine progress with multiple sections
     if true == complete then -- all player clients have updated progress and data
         table.sort(sortedPlayers, function(racer1, racer2)
-            if racer1.lap ~= racer2.lap then
+            if racer1.finishTime ~= -1 and racer2.finishTime == -1 then
+                return true
+            elseif racer1.finishTime ~= -1 and racer2.finishTime ~= -1 then
+                return racer1.finishTime < racer2.finishTime
+            elseif racer1.lap ~= racer2.lap then
                 return racer1.lap > racer2.lap
             elseif racer1.distanceToEnd ~= racer2.distanceToEnd then
                 return racer1.distanceToEnd < racer2.distanceToEnd
