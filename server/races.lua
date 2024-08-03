@@ -994,10 +994,12 @@ end)
 function JoinRacer(source, rIndex)
     if rIndex == nil then
         error(source, "Ignoring join event.  Invalid parameters.\n")
+        return
     end
 
-    if races[rIndex] ~= nil then
+    if races[rIndex] == nil then
         error(source, "Cannot join.  Race does not exist.\n")
+        return
     end
 
     races[rIndex]:JoinRacer(source)
