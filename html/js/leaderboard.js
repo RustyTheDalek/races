@@ -98,8 +98,19 @@ function readLeaderBoardEvents(event) {
       StartLightsCountdown(data.time);
       break;
     case "update_fps":
-      UpdateFPS(data.source, data.fps)
+      UpdateFPS(data.source, data.fps);
+      break;
+    case "set_leaderboard_finished":
+      SetLeaderboardFinished(data.source);
+      break;
   }
+}
+
+function SetLeaderboardFinished(source) {
+  console.log(leaderboard);
+  console.log(source);
+  console.log(leaderboard.find(`#${source}`));
+  leaderboard.find(`#${source}`).addClass('flag-background');
 }
 
 function UpdateFPS(source, fps) {

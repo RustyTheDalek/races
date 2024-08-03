@@ -1953,33 +1953,45 @@ AddEventHandler("races:finish", function(finishData)
     local raceVehicleName = finishData.bestLapVehicleName
     local averageFPS = finishData.averageFPS
 
-    if rIndex ~= nil and playerName ~= nil and raceFinishTime ~= nil and raceBestLapTime ~= nil and raceVehicleName ~= nil then
-        if rIndex == raceIndex then
-            if -1 == raceFinishTime then
-                if -1 == raceBestLapTime then
-                    Notifications.toast(playerName .. " did not finish.\n")
-                else
-                    local minutes, seconds = minutesSeconds(raceBestLapTime)
-                    Notifications.toast(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(
-                    playerName, minutes, seconds, raceVehicleName))
-                end
-            else
-                local currentTime = GetGameTimer()
-                if false == beginDNFTimeout then
-                    beginDNFTimeout = true
-                    timeoutStart = currentTime
-                end
-                local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
-                local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
-                Notifications.toast(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s with an average FPS of %.2f.\n"):format(
-                playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName, averageFPS))
-            end
-            ResetCarTier();
-            playerDisplay:ResetRaceBlips()
+    if finishData == nil then
+        Notifications.warn("Ignoring finish event.  Invalid parameters.\n")
+        return
+    end
+
+    if rIndex ~= raceIndex then
+        return
+    end
+
+    if -1 == raceFinishTime then
+        if -1 == raceBestLapTime then
+            Notifications.toast(playerName .. " did not finish.\n")
+        else
+            local minutes, seconds = minutesSeconds(raceBestLapTime)
+            Notifications.toast(("%s did not finish and had a best lap time of %02d:%05.2f using %s.\n"):format(
+            playerName, minutes, seconds, raceVehicleName))
         end
     else
-        Notifications.warn("Ignoring finish event.  Invalid parameters.\n")
+        local currentTime = GetGameTimer()
+        if false == beginDNFTimeout then
+            beginDNFTimeout = true
+            timeoutStart = currentTime
+        end
+        local fMinutes, fSeconds = minutesSeconds(raceFinishTime)
+        local lMinutes, lSeconds = minutesSeconds(raceBestLapTime)
+        Notifications.toast(("%s finished in %02d:%05.2f and had a best lap time of %02d:%05.2f using %s with an average FPS of %.2f.\n"):format(
+        playerName, fMinutes, fSeconds, lMinutes, lSeconds, raceVehicleName, averageFPS))
+
+        print(dump(finishData))
+        print(dump(finishData.source))
+
+        SendNUIMessage({
+            type = "leaderboard",
+            action = "set_leaderboard_finished",
+            source = finishData.source
+        })
     end
+    ResetCarTier();
+    playerDisplay:ResetRaceBlips()
 end)
 
 -- SCENARIO:
@@ -2274,7 +2286,6 @@ end
 
 function ResetReady()
     ready = false
-    TriggerServerEvent("races:readyState", raceIndex, ready)
 end
 
 function SetRaceLeaderboard(enabled)

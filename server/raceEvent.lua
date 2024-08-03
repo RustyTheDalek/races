@@ -372,6 +372,7 @@ function RaceEvent:Finish(source, raceFinishData)
     local finishData = {
         raceIndex = self.index,
         playerName = finishedRacer.playerName,
+        source = finishedRacer.source,
         finishTime = finishedRacer.data,
         bestLapTime = finishedRacer.bestLapTime,
         bestLapVehicleName = finishedRacer.bestLapVehicleName,
