@@ -156,10 +156,6 @@ function error(source, msg)
     TriggerClientEvent("races:toastError", source, msg)
 end
 
-function sendMessage(source, msg)
-    TriggerClientEvent("races:message", source, msg)
-end
-
 function getClassName(vclass)
     if -1 == vclass then
         return "'Custom'(-1)"
