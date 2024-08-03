@@ -134,16 +134,6 @@ math.randomseed(GetCloudTimeAsInt())
 
 TriggerServerEvent("races:init")
 
-function sendMessage(msg)
-    if true == panelShown then
-        SendNUIMessage({
-            panel = "reply",
-            message = string.gsub(msg, "\n", "<br>")
-        })
-    end
-    notifyPlayer(msg)
-end
-
 local function TeleportPlayer(position, heading)
 
     local player = PlayerPedId()
@@ -689,7 +679,7 @@ local function saveList(access, name, vehicles)
     end
 
     -- if #vehicles == 0 then
-    --     sendMessage("Cannot save vehicle list.  List is empty.\n")
+    --     Notifications.error("Cannot save vehicle list.  List is empty.\n")
     --     return
     -- end
 
@@ -830,39 +820,43 @@ end
 local function endrace()
     TriggerServerEvent("races:endrace")
 end
-local function viewResults(chatOnly)
 
-    print(dump(results))
+local function viewResults()
 
-    local msg = nil
-    if #results > 0 then
-        -- results[] = {source, playerName, finishTime, bestLapTime, vehicleName}
-        msg = "Race results:\n"
-        for pos, result in ipairs(results) do
-            if -1 == result.finishTime then
-                msg = msg .. "DNF - " .. result.playerName
-                if result.bestLapTime >= 0 then
-                    local minutes, seconds = minutesSeconds(result.bestLapTime)
-                    msg = msg .. (" - best lap %02d:%05.2f using %s"):format(minutes, seconds, result.vehicleName)
-                end
-                msg = msg .. "\n"
-            else
-                local fMinutes, fSeconds = minutesSeconds(result.finishTime)
-                local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
-                msg = msg ..
-                ("%d - %02d:%05.2f - %s - best lap %02d:%05.2f using %s with and average FPS of %.2f\n"):format(pos, fMinutes, fSeconds,
-                result.playerName, lMinutes, lSeconds, result.vehicleName, result.averageFPS)
-            end
-        end
-    else
-        msg = "No results.\n"
+    if #results <= 0 then 
+        Notifications.warn("No Race results to show");
+        return 
     end
-    --TODO:Disply race results in NUI
-    if true == chatOnly then
-        notifyPlayer(msg)
-    else
-        sendMessage(msg)
+
+    local convertedResults = {}
+    for pos, result in ipairs(results) do
+
+        local fMinutes, fSeconds = minutesSeconds(result.finishTime)
+        local lMinutes, lSeconds = minutesSeconds(result.bestLapTime)
+
+        local finishTime = result.bestLapTime >= 0 and ("%02d:%05.2f"):format(fMinutes, fSeconds) or "N/A"
+        local bestLapTime = result.bestLapTime >= 0 and ("%02d:%05.2f"):format(lMinutes, lSeconds) or "N/A"
+
+        local result = {
+            position = result.finishTime ~= -1 and pos or "DNF",
+            playerName = result.playerName,
+            time = finishTime,
+            fastestLap = bestLapTime,
+            vehicleName = result.vehicleName,
+            averageFPS = result.averageFPS
+        }
+
+        table.insert(convertedResults, result)
     end
+
+    SendNUIMessage({
+        type = "results",
+        action = "show_race_results",
+        results = convertedResults,
+        numberOfLaps = numLaps,
+        trackName = currentRace.trackName,
+    })
+
 end
 
 local function spawn(vehicleHash)
@@ -1210,7 +1204,7 @@ RegisterNUICallback("respawn", function()
 end)
 
 RegisterNUICallback("results", function()
-    viewResults(false)
+    viewResults()
 end)
 
 RegisterNUICallback("spawn", function(data)
@@ -1415,7 +1409,7 @@ RegisterCommand("races", function(_, args)
     elseif "respawn" == args[1] then
         respawn:Respawn(PlayerPedId())
     elseif "results" == args[1] then
-        viewResults(true)
+        viewResults()
     elseif "spawn" == args[1] then
         spawn(args[2])
     elseif "speedo" == args[1] then
@@ -1479,12 +1473,6 @@ RegisterCommand("races", function(_, args)
     else
         Notifications.warn("Unknown command.\n")
     end
-end)
-
---TODO: Rework this
-RegisterNetEvent("races:message")
-AddEventHandler("races:message", function(msg)
-    sendMessage(msg)
 end)
 
 RegisterNetEvent("races:load")
@@ -1734,7 +1722,6 @@ AddEventHandler("races:start", function(rIndex, delay)
                     repairVehicle(vehicle)
                     resetupgrades(vehicle)
                     ClearReady();
-                    Notifications.toast("Vehicle fixed.\n")
 
                     SetLeaderboardLower(false)
                     StartCountdownLights(delay)
@@ -1840,100 +1827,106 @@ end)
 
 RegisterNetEvent("races:join")
 AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, racerDictionary)
-    if rIndex ~= nil and waypoints ~= nil then
-        if starts[rIndex] ~= nil then
-            if racingStates.Idle == raceState then
-                SetJoinMessage('')
-                raceState = racingStates.Joining
-                raceIndex = rIndex
-                numLaps = starts[rIndex].laps
-                DNFTimeout = starts[rIndex].timeout * 1000
-                restrictedHash = nil
-                restrictedClass = starts[rIndex].vclass
-                customClassVehicleList = {}
-                startVehicle = starts[rIndex].svehicle
-                if (startVehicle ~= nil) then
-                    Notifications.toast("Pre-loading starting car...")
-                    RequestModel(startVehicle)
-                    while HasModelLoaded(startVehicle) == false do
-                        Citizen.Wait(0)
-                    end
-                    Notifications.toast("Starting car loaded...")
-                end
-                randVehicles = {}
-                currentTrack:LoadWaypointBlips(waypoints)
-                currentTrack:IdentifySections();
-                playerDisplay:SetOwnRacerBlip()
-
-                currentRace.trackName = starts[rIndex].trackName
-                currentRace.raceType = starts[rIndex].rtype ~= nil and starts[rIndex].rtype  or 'normal'
-
-                local raceData = {
-                    laps = starts[rIndex].laps,
-                    totalCheckpoints = currentTrack.startIsFinish == true and currentTrack:GetTotalWaypoints() or currentTrack:GetTotalWaypoints() - 1
-                }
-                SendRaceData(raceData)
-                SetRaceLeaderboard(true)
-                AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
-
-                fpsMonitor:StartTracking()
-
-                local msg = "Joined race using "
-                if nil == starts[rIndex].trackName then
-                    msg = msg .. "unsaved track "
-                else
-                    msg = msg ..
-                    (true == starts[rIndex].isPublic and "publicly" or "privately") ..
-                    " saved track '" .. starts[rIndex].trackName .. "' "
-                end
-                msg = msg ..
-                ("registered by %s : tier %s : Special Class %s : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].tier, starts[rIndex].specialClass,
-                starts[rIndex].laps)
-                if "rest" == starts[rIndex].rtype then
-                    msg = msg .. " : using '" .. starts[rIndex].restrict .. "' vehicle"
-                    restrictedHash = GetHashKey(starts[rIndex].restrict)
-                elseif "class" == starts[rIndex].rtype then
-                    msg = msg .. " : using " .. getClassName(restrictedClass) .. " vehicle class"
-                    customClassVehicleList = starts[rIndex].vehicleList
-                elseif "rand" == starts[rIndex].rtype then
-                    msg = msg .. " : using random "
-                    if restrictedClass ~= nil then
-                        msg = msg .. getClassName(restrictedClass) .. " vehicle class"
-                    else
-                        msg = msg .. "vehicles"
-                    end
-                    if startVehicle ~= nil then
-                        msg = msg .. " : '" .. startVehicle .. "'"
-                    end
-                    randVehicles = starts[rIndex].vehicleList
-                    print(dump(starts[rIndex].vehicleList))
-                    print(dump(starts[rIndex]))
-                elseif "wanted" == starts[rIndex].rtype then
-                    msg = msg .. " : using wanted race mode"
-                elseif starts[rIndex].rtype == "ghost" then
-                    msg = msg .. " : using ghost race mode"
-                end
-
-                if(starts[rIndex].map ~= "") then
-                    msg = msg .. (" with map %s"):format(starts[rIndex].map);
-                end
-
-                msg = msg .. ".\n"
-                Notifications.toast(msg)
-                SendToRaceTier(tier, specialClass)
-                UpdateVehicleName()
-                SendVehicleName()
-            elseif racingStates.Editing == raceState then
-                Notifications.warn("Ignoring join event.  Currently editing.\n")
-            else
-                Notifications.warn("Ignoring join event.  Already joined to a race.\n")
-            end
-        else
-            Notifications.warn("Ignoring join event.  Race does not exist.\n")
-        end
-    else
+    if rIndex == nil or waypoints == nil then
         Notifications.warn("Ignoring join event.  Invalid parameters.\n")
+        return
     end
+
+    if starts[rIndex] == nil then
+        Notifications.warn("Ignoring join event.  Race does not exist.\n")
+        return 
+    end
+
+    if raceState == racingStates.Editing then
+        Notifications.warn("Ignoring join event.  Currently editing.\n")
+        return
+    end
+
+    if raceState ~= racingStates.Idle and raceState ~= racingStates.Editing then
+        Notifications.warn("Already joined, ignoring")
+        return
+    end
+
+    SetJoinMessage('')
+    raceState = racingStates.Joining
+    raceIndex = rIndex
+    numLaps = starts[rIndex].laps
+    DNFTimeout = starts[rIndex].timeout * 1000
+    restrictedHash = nil
+    restrictedClass = starts[rIndex].vclass
+    customClassVehicleList = {}
+    startVehicle = starts[rIndex].svehicle
+    if (startVehicle ~= nil) then
+        Notifications.toast("Pre-loading starting car...")
+        RequestModel(startVehicle)
+        while HasModelLoaded(startVehicle) == false do
+            Citizen.Wait(0)
+        end
+        Notifications.toast("Starting car loaded...")
+    end
+    randVehicles = {}
+    currentTrack:LoadWaypointBlips(waypoints)
+    currentTrack:IdentifySections();
+    playerDisplay:SetOwnRacerBlip()
+
+    currentRace.trackName = starts[rIndex].trackName
+    currentRace.raceType = starts[rIndex].rtype ~= nil and starts[rIndex].rtype  or 'normal'
+
+    local raceData = {
+        laps = starts[rIndex].laps,
+        totalCheckpoints = currentTrack.startIsFinish == true and currentTrack:GetTotalWaypoints() or currentTrack:GetTotalWaypoints() - 1
+    }
+    SendRaceData(raceData)
+    SetRaceLeaderboard(true)
+    AddRacersToLeaderboard(racerDictionary, GetPlayerServerId(PlayerId()))
+
+    fpsMonitor:StartTracking()
+
+    local msg = "Joined race using "
+    if nil == starts[rIndex].trackName then
+        msg = msg .. "unsaved track "
+    else
+        msg = msg ..
+        (true == starts[rIndex].isPublic and "publicly" or "privately") ..
+        " saved track '" .. starts[rIndex].trackName .. "' "
+    end
+    msg = msg ..
+    ("registered by %s : tier %s : Special Class %s : %d lap(s)"):format(starts[rIndex].owner, starts[rIndex].tier, starts[rIndex].specialClass,
+    starts[rIndex].laps)
+    if "rest" == starts[rIndex].rtype then
+        msg = msg .. " : using '" .. starts[rIndex].restrict .. "' vehicle"
+        restrictedHash = GetHashKey(starts[rIndex].restrict)
+    elseif "class" == starts[rIndex].rtype then
+        msg = msg .. " : using " .. getClassName(restrictedClass) .. " vehicle class"
+        customClassVehicleList = starts[rIndex].vehicleList
+    elseif "rand" == starts[rIndex].rtype then
+        msg = msg .. " : using random "
+        if restrictedClass ~= nil then
+            msg = msg .. getClassName(restrictedClass) .. " vehicle class"
+        else
+            msg = msg .. "vehicles"
+        end
+        if startVehicle ~= nil then
+            msg = msg .. " : '" .. startVehicle .. "'"
+        end
+        randVehicles = starts[rIndex].vehicleList
+        print(dump(starts[rIndex].vehicleList))
+        print(dump(starts[rIndex]))
+    elseif "wanted" == starts[rIndex].rtype then
+        msg = msg .. " : using wanted race mode"
+    elseif starts[rIndex].rtype == "ghost" then
+        msg = msg .. " : using ghost race mode"
+    end
+
+    if(starts[rIndex].map ~= "") then
+        msg = msg .. (" with map %s"):format(starts[rIndex].map);
+    end
+
+    msg = msg .. ".\n"
+    Notifications.toast(msg)
+    SendToRaceTier(tier, specialClass)
+    UpdateVehicleName()
+    SendVehicleName()
 end)
 
 RegisterNetEvent("races:racerJoined")
@@ -2006,7 +1999,7 @@ AddEventHandler("races:onendrace", function(rIndex, raceResults)
     if rIndex ~= nil and raceResults ~= nil then
         if rIndex == raceIndex then
             results = raceResults
-            viewResults(true)
+            viewResults()
         end
     else
         Notifications.warn("Ignoring results event.  Invalid parameters.\n")
@@ -2343,8 +2336,8 @@ function HandleJoinState(player)
         end
     end
 
-    --Down
     if IsControlJustReleased(0, 173) then
+        print("Down pressed")
         ready = not ready
         TriggerServerEvent("races:readyState", raceIndex, ready)
     end
@@ -2704,6 +2697,7 @@ function IdleUpdate(player, playerCoord)
 
         SetJoinMessage(msg)
         if IsControlJustReleased(0, 51) == 1 then -- E key or DPAD RIGHT
+            print("E pressed")
             local joinRace = true
             originalVehicleHash = nil
             colorPri = -1

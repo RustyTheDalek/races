@@ -70,7 +70,7 @@ function RaceEvent:Unregister()
     for k in next, self.gridLineup do rawset(self.gridLineup, k, nil) end
     TriggerClientEvent("races:cleargridpositions", self.index)
     TriggerClientEvent("races:unregister", -1, self.index)
-    notifyPlayer(self.index, "Race unregistered.\n")
+    toast(self.index, "Race unregistered.\n")
 end
 
 function RaceEvent:Update()
@@ -257,19 +257,22 @@ end
 
 function RaceEvent:Start(delay, override)
     if self.state ~= racingStates.Registering then
-        notifyPlayer(self.index, "Cannot start.  Race in progress.\n")
+        warn(self.index, "Cannot start.  Race in progress.\n")
+        return
     end
 
     if delay <= 5 then
-        notifyPlayer(self.index, "Cannot start.  Invalid delay.\n")
+        warn(self.index, "Cannot start.  Invalid delay.\n")
+        return
     end
 
     if self.numRacing <= 0 then
-        notifyPlayer(self.index, "Cannot start.  No players have joined race.\n")
+        warn(self.index, "Cannot start.  No players have joined race.\n")
+        return
     end
 
     if (self.numReady ~= self.numRacing and override == false) then
-        notifyPlayer(self.index, "Cannot start. Not all Players ready.\n")
+        warn(self.index, "Cannot start. Not all Players ready.\n")
         return
     end
 
@@ -282,7 +285,7 @@ function RaceEvent:Start(delay, override)
     self:TriggerEventForRacers("races:start", self.index, delay)
 
     TriggerClientEvent("races:hide", -1, self.index) -- hide race so no one else can join
-    notifyPlayer(self.index, "Race started.\n")
+    toast(self.index, "Race starting.\n")
 end
 
 function RaceEvent:StartRaceDelay(delay)
@@ -303,7 +306,7 @@ function RaceEvent:StartRace(delay)
 
     self:TriggerEventForRacers("races:start", self.index, delay)
     TriggerClientEvent("races:hide", -1, self.index) -- hide race so no one else can join
-    notifyPlayer(self.index, "Race started.\n")
+    toast(self.index, "Race started.\n")
 end
 
 function RaceEvent:OnPlayerDropped(source)
@@ -345,12 +348,12 @@ end
 function RaceEvent:Finish(source, raceFinishData)
 
     if self.state ~= racingStates.Racing then
-        notifyPlayer(source, "Cannot finish.  Race not in progress.\n")
+        warn(source, "Cannot finish.  Race not in progress.\n")
         return false
     end
 
     if self.players[source] == nil then
-        notifyPlayer(source, "Cannot finish.  Not a member of this race.\n")
+        warn(source, "Cannot finish.  Not a member of this race.\n")
         return false
     end
 
@@ -481,7 +484,8 @@ end
 
 function RaceEvent:JoinRacer(source)
     if self.state ~= racingStates.Registering then
-        notifyPlayer(source, "Cannot join.  Race in progress.\n")
+        warn(source, "Cannot join.  Race in progress.\n")
+        return
     end
 
     local playerName = GetPlayerName(source)
@@ -697,7 +701,7 @@ end
 
 function RaceEvent:Report(source, currentLap, currentWaypoint, distanceToEnd, distance)
     if self.players[source] == nil then
-        notifyPlayer(source, "Cannot report.  Not a member of this race.\n")
+        warn(source, "Cannot report.  Not a member of this race.\n")
     end
 
     self.players[source].lap = currentLap
