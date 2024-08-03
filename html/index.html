@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="index.css" type="text/css">
     <link rel="stylesheet" href="reset.css" type="text/css">
+    <link rel="stylesheet" href="css/results.css" type="text/css">
     <link rel="stylesheet" href="css/leaderboard.css">
     <link rel="stylesheet" href="css/editor.css">
     <link rel="stylesheet" href="css/style.css">
@@ -53,6 +54,23 @@
         </div>
         <ul id="leaderboard" class="lobby-view">
         </ul>
+    </div>
+    <div id="results_container" class="center panel">
+        <h1><span class="race_name">Airport Crossover</span> <span class="laps">3 laps</span> Results</h1>
+        <table class="leaderboard-results">
+            <thead>
+                <tr>
+                    <th>Place</th>
+                    <th>Racer</th>
+                    <th>Time</th>
+                    <th>Fastet Lap</th>
+                    <th>Vehicle</th>
+                    <th>Average FPS</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
     <p id="ready-message" class="ui-message center-view">Press Down Arrow or D-PAD Down to toggle ready</p>
     <p id="join-message" class="ui-message center-view"></p>
@@ -403,6 +421,7 @@
         <button id="reply_close">Close</button>
     </div>
     <script src="js/utility.js" type="text/javascript"></script>
+    <script src="js/results.js" type="text/javascript"></script>
     <script src="js/leaderboard.js" type="text/javascript"></script>
     <script src="js/grid-lineup.js" type="text/javascript"></script>
     <script src="js/vehicle-list.js" type="text/javascript"></script>

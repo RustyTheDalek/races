@@ -1,0 +1,125 @@
+
+#results_container {
+    top: 200%;
+    padding: 0;
+    width: 90%;
+    background-color: black;
+    border-radius: 1rem;
+    transition: top 1s cubic-bezier(.68, -0.55, .27, 1.55);
+}
+
+#results_container.visible {
+    top: 50%;
+}
+
+#results_container h1 {
+    padding: 1rem;
+}
+
+.leaderboard-results {
+    border-collapse: collapse;
+    text-align: center;
+    width: 100%;
+}
+
+.leaderboard-results thead th {
+    padding: 0.25rem 1rem;
+    color: #b3b3b3;
+    font-size: 1rem;
+    font-weight: bold;
+    border-bottom: .1rem solid white;
+}
+
+.leaderboard-results tbody td {
+    padding: 0.5rem 2rem;
+    background: black;
+    font-size: 1rem;
+}
+
+.leaderboard-results tbody tr:not(:last-of-type) {
+    border-bottom: .1rem solid #232323;
+}
+
+.leaderboard-results tbody tr:last-of-type td:first-child {
+    border-bottom-left-radius: 1rem;
+}
+
+.leaderboard-results tbody tr:last-of-type td:last-child {
+    border-bottom-right-radius: 1rem;
+}
+
+.leaderboard-results tbody td:nth-of-type(7) {
+    font-weight: bold;
+}
+
+.leaderboard-results tbody tr {
+    color: white;
+}
+
+.leaderboard-results tbody tr:first-child {
+    font-weight: 700;
+    color: gold;
+}
+
+.leaderboard-results tbody tr:nth-child(2) {
+    font-weight: 600;
+    color: silver;
+
+}
+
+.leaderboard-results tbody tr:nth-child(3) {
+    font-weight: 500;
+    color: #cd7f32;
+}
+
+.leaderboard-results tbody tr td:first-child:after {
+    position: relative;
+    top: -0.5em;
+    font-size: 80%;
+}
+
+.leaderboard-results tbody tr:nth-child(1) td:first-child:after {
+    content: "st";
+}
+
+.leaderboard-results tbody tr:nth-child(2) td:first-child:after {
+    content: "nd";
+}
+
+.leaderboard-results tbody tr:nth-child(3) td:first-child:after {
+    content: "rd";
+}
+
+.leaderboard-results tbody tr:nth-child(4) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(5) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(6) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(7) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(8) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(9) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody tr:nth-child(10) td:first-child:after {
+    content: "th";
+}
+
+.leaderboard-results tbody span {
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 50%;
+}
