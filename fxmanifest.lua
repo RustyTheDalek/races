@@ -20,7 +20,7 @@ client_scripts {
     "lib/*.lua",
     "client/respawn.lua",
     "client/race.lua",
-    "client/*.lua"
+    "client/notifications.lua"
 }
 
 server_scripts {
