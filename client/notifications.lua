@@ -31,7 +31,7 @@ end
 
 RegisterNetEvent("races:toast")
 AddEventHandler("races:toast", function(msg)
-    Notifications.toastNotification(msg)
+    Notifications.toast(msg)
 end)
 
 RegisterNetEvent("races:toastWarn")
