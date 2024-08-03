@@ -97,9 +97,6 @@ function Respawn:IsRespawnPressed(player, currentTime)
         self.respawnCtrlPressed = false
         self.respawnLock = true
         self:Respawn(player)
-        if(RaceType() ~= nil and RaceType() ~= "" and RaceType() ~= 'ghost') then
-            self.ghosting:StartGhostingDefault()
-        end
     end
 end
 
@@ -144,6 +141,11 @@ function Respawn:Respawn()
     self:TeleportToRespawnPosition(entityToMove)
 
     self.vehicle = nil
+
+    if(RaceType() ~= nil and RaceType() ~= "" and RaceType() ~= 'ghost') then
+        self.ghosting:StartGhostingDefault()
+    end
+
 end
 
 function Respawn:RespawnWithNewVehicle(player, passengers)
