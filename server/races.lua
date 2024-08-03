@@ -793,10 +793,12 @@ AddEventHandler("races:autojoin", function()
     --#region Validation
     if races[source] == nil then
         error(source, "Cannot autojoin. Race does not exist.\n")
+        return
     end
 
-    if racingStates.Registering ~= races[source].state then
+    if races[source].state ~= racingStates.Registering then
         error(source, "Cannot autojoin.  Race in progress.\n")
+        return
     end
 
     local playersToJoin = {}
