@@ -733,7 +733,8 @@ function RaceEvent:PollPositionsUpdate()
                 waypoint = player.waypoint,
                 lap = player.lap,
                 data = player.data,
-                playerName = GetPlayerName(player.source)
+                playerName = GetPlayerName(player.source),
+                finishTime = player.finishTime
             }
         end
     end
@@ -741,10 +742,12 @@ function RaceEvent:PollPositionsUpdate()
     --TODO:Better way to determine progress with multiple sections
     if true == complete then -- all player clients have updated progress and data
         table.sort(sortedPlayers, function(racer1, racer2)
-            if racer1.finishTime ~= -1 and racer2.finishTime == -1 then
-                return true
-            elseif racer1.finishTime ~= -1 and racer2.finishTime ~= -1 then
+            if racer1.finishTime ~= -1 and racer2.finishTime ~= -1 then
                 return racer1.finishTime < racer2.finishTime
+            elseif racer1.finishTime ~= -1 and racer2.finishTime == -1 then
+                return true
+            elseif racer1.finishTime == -1 and racer2.finishTime ~= -1 then
+                return false
             elseif racer1.lap ~= racer2.lap then
                 return racer1.lap > racer2.lap
             elseif racer1.distanceToEnd ~= racer2.distanceToEnd then
