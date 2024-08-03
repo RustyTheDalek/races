@@ -15,11 +15,8 @@ function readResultEvents(event) {
 
     if(data.type !== "results") return;
 
-    console.log("Race results");
-
     switch(data.action) {
         case "show_race_results":
-            console.log("showing race results");
             showRaceResults(data.results, data.numberOfLaps, data.trackName);
             break;
     }
@@ -49,8 +46,6 @@ function populateResults(results) {
 }
 
 function addResult(result) {
-
-    console.log(result);
 
     let resultRow = $("<tr/>");
 
