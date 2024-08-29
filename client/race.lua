@@ -1910,8 +1910,6 @@ AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, ra
             msg = msg .. " : '" .. startVehicle .. "'"
         end
         randVehicles = starts[rIndex].vehicleList
-        print(dump(starts[rIndex].vehicleList))
-        print(dump(starts[rIndex]))
     elseif "wanted" == starts[rIndex].rtype then
         msg = msg .. " : using wanted race mode"
     elseif starts[rIndex].rtype == "ghost" then
