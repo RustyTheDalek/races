@@ -2572,6 +2572,7 @@ function OnNewLap(player)
             if randVehicle ~= nil then
                 SetEntityAsNoLongerNeeded(randVehicle)
             end
+            Respawn:UpdateCurrentVehicle(player)
             PlaySoundFrontend(-1, "CHARACTER_SELECT", "HUD_FRONTEND_DEFAULT_SOUNDSET", true)
         end
     else
