@@ -514,7 +514,7 @@ $(function () {
       $("#vclass").show();
       $("#sveh").hide();
     } else if ($("#rtype").val() == "rand") {
-      DisplayRandomOptions(html);
+      DisplayRandomOptions();
     }
   });
 
@@ -681,7 +681,7 @@ $(function () {
   }
 });
 
-function DisplayRandomOptions(html) {
+function DisplayRandomOptions() {
   $("#rest").hide();
   $("#vehicle-list-options").show();
   $("#vclass").show();
