@@ -25,6 +25,7 @@ RaceEvent = {
     countdown = false,
     countdownTimeStart = 0,
     players = {},
+    afkPlayers = {},
     results = {},
     previousRaceResults = {},
     gridLineup = {},
@@ -329,20 +330,36 @@ function RaceEvent:OnPlayerDropped(source)
         self:OnPlayerLeave(source)
         -- TODO:Find the ready state of player and remove appropriately, probably need an array with the net ids as indexs for ready
     else
-        self:TriggerEventForRacers("races:removeFromLeaderboard", source)
+        self:SetRacerAFK(source)
 
-        local finishData = {
-            raceIndex = source,
-            playerName = nil,
-            data = 0,
-            bestLapTime = -1,
-            bestLapVehicleName = "",
-            dnf = true,
-            averageFPS = 0
-        }
+        -- local finishData = {
+        --     raceIndex = source,
+        --     playerName = nil,
+        --     data = 0,
+        --     bestLapTime = -1,
+        --     bestLapVehicleName = "",
+        --     dnf = true,
+        --     averageFPS = 0
+        -- }
 
-        TriggerEvent("races:finish", self.index, finishData, source)
+        -- TriggerEvent("races:finish", self.index, finishData, source)
     end
+end
+
+function RaceEvent:SetRacerAFK(source)
+    
+    if self.players[source] == nil then
+        print("No racer data to AFK")
+        return false
+    end
+
+    local racer = self.players[source]
+
+    dump(racer)
+    afkPlayers[source] = racer
+    self.players[source] = nil
+    
+    self:TriggerEventForRacers("races:setRacerAFK", source, true)
 end
 
 function RaceEvent:Finish(source, raceFinishData)

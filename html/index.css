@@ -79,6 +79,10 @@ input:checked+.slider:before {
     background:repeating-conic-gradient(#999 0% 25%, transparent 0% 50%) 50% / 80px 80px
 }
 
+.flag-background {
+    background: gray;
+}
+
 .error {
     color: red;
 }

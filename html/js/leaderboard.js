@@ -103,7 +103,19 @@ function readLeaderBoardEvents(event) {
     case "set_leaderboard_finished":
       SetLeaderboardFinished(data.source);
       break;
+    case "set_afk":
+      SetAFK(data.source, data.on);
+      break;
   }
+}
+
+function setAFK(source, active) {
+  console.log(source);
+  console.log(active);
+  if(active)
+    leaderboard.find(`#${source}`).addClass('afk');
+    else
+    leaderboard.find(`#${source}`).removeClass('afk');
 }
 
 function SetLeaderboardFinished(source) {

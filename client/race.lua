@@ -1825,6 +1825,16 @@ AddEventHandler("races:removeFromLeaderboard", function(source)
     RemoveRacerFromLeaderboard(source)
 end)
 
+RegisterNetEvent("races:setRacerAFK")
+AddEventHandler("races:setRacerAFK", function(source, on)
+    SendNUIMessage({
+        type = 'leaderboard',
+        action = 'set_afk',
+        source = source,
+        on = on
+    })
+end)
+
 RegisterNetEvent("races:join")
 AddEventHandler("races:join", function(rIndex, tier, specialClass, waypoints, racerDictionary)
     if rIndex == nil or waypoints == nil then
